@@ -1,0 +1,116 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+)
+
+type CronjobRunActionResource struct {
+	client *client.Client
+}
+
+type CronjobRunActionResourceModel struct {
+	ID types.String `tfsdk:"id"`
+	ResourceID types.String `tfsdk:"resource_id"`
+	SkipDisabled types.String `tfsdk:"skip_disabled"`
+}
+
+func NewCronjobRunActionResource() resource.Resource {
+	return &CronjobRunActionResource{}
+}
+
+func (r *CronjobRunActionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_cronjob_run_action"
+}
+
+func (r *CronjobRunActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Executes run action on cronjob resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"resource_id": schema.StringAttribute{
+				Required: true,
+				Description: "ID of the resource to perform action on",
+			},
+			"skip_disabled": schema.StringAttribute{
+				Optional: true,
+			},
+		},
+	}
+}
+
+func (r *CronjobRunActionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	client, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError("Unexpected Resource Configure Type", "Expected *client.Client")
+		return
+	}
+	r.client = client
+}
+
+func (r *CronjobRunActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data CronjobRunActionResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := map[string]interface{}{}
+		if !data.SkipDisabled.IsNull() {
+			params["skip_disabled"] = data.SkipDisabled.ValueString()
+		}
+
+	_, err := r.client.Call("cronjob/run", data.ResourceID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute run: %s", err.Error()))
+		return
+	}
+
+	// Use timestamp as ID since actions are ephemeral
+	data.ID = types.StringValue(fmt.Sprintf("%s-%d", data.ResourceID.ValueString(), time.Now().Unix()))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *CronjobRunActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	// Actions are ephemeral - nothing to read
+	var data CronjobRunActionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+}
+
+func (r *CronjobRunActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	// Actions are immutable - re-execute on update
+	var data CronjobRunActionResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := map[string]interface{}{}
+		if !data.SkipDisabled.IsNull() {
+			params["skip_disabled"] = data.SkipDisabled.ValueString()
+		}
+
+	_, err := r.client.Call("cronjob/run", data.ResourceID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute run: %s", err.Error()))
+		return
+	}
+
+	data.ID = types.StringValue(fmt.Sprintf("%s-%d", data.ResourceID.ValueString(), time.Now().Unix()))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *CronjobRunActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Actions cannot be undone - just remove from state
+}

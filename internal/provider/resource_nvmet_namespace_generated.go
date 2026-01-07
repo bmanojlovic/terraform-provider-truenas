@@ -1,0 +1,164 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+)
+
+type NvmetNamespaceResource struct {
+	client *client.Client
+}
+
+type NvmetNamespaceResourceModel struct {
+	ID types.String `tfsdk:"id"`
+	Nsid types.String `tfsdk:"nsid"`
+	DeviceType types.String `tfsdk:"device_type"`
+	DevicePath types.String `tfsdk:"device_path"`
+	Filesize types.String `tfsdk:"filesize"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	SubsysId types.Int64 `tfsdk:"subsys_id"`
+}
+
+func NewNvmetNamespaceResource() resource.Resource {
+	return &NvmetNamespaceResource{}
+}
+
+func (r *NvmetNamespaceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_nvmet_namespace"
+}
+
+func (r *NvmetNamespaceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "TrueNAS nvmet_namespace resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"nsid": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+			},
+			"device_type": schema.StringAttribute{
+				Required: true,
+				Optional: false,
+			},
+			"device_path": schema.StringAttribute{
+				Required: true,
+				Optional: false,
+			},
+			"filesize": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+			},
+			"enabled": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+			},
+			"subsys_id": schema.Int64Attribute{
+				Required: true,
+				Optional: false,
+			},
+		},
+	}
+}
+
+func (r *NvmetNamespaceResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	client, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError("Unexpected Resource Configure Type", "Expected *client.Client")
+		return
+	}
+	r.client = client
+}
+
+func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data NvmetNamespaceResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := map[string]interface{}{
+		"nsid": data.Nsid.ValueString(),
+		"device_type": data.DeviceType.ValueString(),
+		"device_path": data.DevicePath.ValueString(),
+		"filesize": data.Filesize.ValueString(),
+		"enabled": data.Enabled.ValueBool(),
+		"subsys_id": data.SubsysId.ValueInt64(),
+	}
+
+	result, err := r.client.Call("nvmet/namespace.create", params)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if id, exists := resultMap["id"]; exists {
+			data.ID = types.StringValue(fmt.Sprintf("%v", id))
+		}
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data NvmetNamespaceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	_, err := r.client.Call("nvmet/namespace.get_instance", data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data NvmetNamespaceResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := map[string]interface{}{
+		"nsid": data.Nsid.ValueString(),
+		"device_type": data.DeviceType.ValueString(),
+		"device_path": data.DevicePath.ValueString(),
+		"filesize": data.Filesize.ValueString(),
+		"enabled": data.Enabled.ValueBool(),
+		"subsys_id": data.SubsysId.ValueInt64(),
+	}
+
+	_, err := r.client.Call("nvmet/namespace.update", []interface{}{data.ID.ValueString(), params})
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NvmetNamespaceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data NvmetNamespaceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	_, err := r.client.Call("nvmet/namespace.delete", data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+}

@@ -1,0 +1,56 @@
+---
+page_title: "Provider: TrueNAS"
+description: |-
+  The TrueNAS provider is used to interact with TrueNAS SCALE systems via JSON-RPC over WebSocket.
+---
+
+# TrueNAS Provider
+
+The TrueNAS provider is used to interact with TrueNAS SCALE systems. It uses the native JSON-RPC 2.0 protocol over WebSocket for optimal performance.
+
+## Example Usage
+
+```terraform
+terraform {
+  required_providers {
+    truenas = {
+      source = "bmanojlovic/truenas"
+    }
+  }
+}
+
+provider "truenas" {
+  host  = "192.168.1.100"
+  token = "your-api-token"
+}
+```
+
+## Schema
+
+### Required
+
+- `host` (String) TrueNAS host address (IP or hostname)
+- `token` (String) API token for authentication
+
+### Optional
+
+- `port` (Number) WebSocket port (default: 80 for HTTP, 443 for HTTPS)
+- `use_ssl` (Boolean) Use HTTPS/WSS (default: false)
+
+## Authentication
+
+The provider uses API tokens for authentication. To create an API token:
+
+1. Log into your TrueNAS web interface
+2. Go to Account -> API Keys
+3. Click "Add" to create a new API key
+4. Copy the generated token and use it in your provider configuration
+
+## WebSocket Connection
+
+This provider uses WebSocket connections with JSON-RPC 2.0 protocol, providing:
+
+- Real-time communication
+- Better performance than REST APIs
+- Native TrueNAS protocol support
+- Persistent connections for bulk operations
