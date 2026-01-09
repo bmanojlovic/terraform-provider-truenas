@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -19,7 +20,7 @@ type VmDeviceResourceModel struct {
 	ID types.String `tfsdk:"id"`
 	Attributes types.String `tfsdk:"attributes"`
 	Vm types.Int64 `tfsdk:"vm"`
-	Order types.String `tfsdk:"order"`
+	Order types.Int64 `tfsdk:"order"`
 }
 
 func NewVmDeviceResource() resource.Resource {
@@ -45,7 +46,7 @@ func (r *VmDeviceResource) Schema(ctx context.Context, req resource.SchemaReques
 				Required: true,
 				Optional: false,
 			},
-			"order": schema.StringAttribute{
+			"order": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -73,10 +74,15 @@ func (r *VmDeviceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	params := map[string]interface{}{}
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["vm"] = data.Vm.ValueInt64()
 	if !data.Order.IsNull() {
-		params["order"] = data.Order.ValueString()
+		params["order"] = data.Order.ValueInt64()
 	}
 
 	result, err := r.client.Call("vm.device.create", params)
@@ -131,10 +137,15 @@ func (r *VmDeviceResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	params := map[string]interface{}{}
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["vm"] = data.Vm.ValueInt64()
 	if !data.Order.IsNull() {
-		params["order"] = data.Order.ValueString()
+		params["order"] = data.Order.ValueInt64()
 	}
 
 	// Convert string ID to integer for TrueNAS API

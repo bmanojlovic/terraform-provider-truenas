@@ -20,10 +20,10 @@ type NvmetSubsysResourceModel struct {
 	Name types.String `tfsdk:"name"`
 	Subnqn types.String `tfsdk:"subnqn"`
 	AllowAnyHost types.Bool `tfsdk:"allow_any_host"`
-	PiEnable types.String `tfsdk:"pi_enable"`
-	QidMax types.String `tfsdk:"qid_max"`
+	PiEnable types.Bool `tfsdk:"pi_enable"`
+	QidMax types.Int64 `tfsdk:"qid_max"`
 	IeeeOui types.String `tfsdk:"ieee_oui"`
-	Ana types.String `tfsdk:"ana"`
+	Ana types.Bool `tfsdk:"ana"`
 }
 
 func NewNvmetSubsysResource() resource.Resource {
@@ -53,11 +53,11 @@ func (r *NvmetSubsysResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"pi_enable": schema.StringAttribute{
+			"pi_enable": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 			},
-			"qid_max": schema.StringAttribute{
+			"qid_max": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -65,7 +65,7 @@ func (r *NvmetSubsysResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"ana": schema.StringAttribute{
+			"ana": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 			},
@@ -101,16 +101,16 @@ func (r *NvmetSubsysResource) Create(ctx context.Context, req resource.CreateReq
 		params["allow_any_host"] = data.AllowAnyHost.ValueBool()
 	}
 	if !data.PiEnable.IsNull() {
-		params["pi_enable"] = data.PiEnable.ValueString()
+		params["pi_enable"] = data.PiEnable.ValueBool()
 	}
 	if !data.QidMax.IsNull() {
-		params["qid_max"] = data.QidMax.ValueString()
+		params["qid_max"] = data.QidMax.ValueInt64()
 	}
 	if !data.IeeeOui.IsNull() {
 		params["ieee_oui"] = data.IeeeOui.ValueString()
 	}
 	if !data.Ana.IsNull() {
-		params["ana"] = data.Ana.ValueString()
+		params["ana"] = data.Ana.ValueBool()
 	}
 
 	result, err := r.client.Call("nvmet.subsys.create", params)
@@ -173,16 +173,16 @@ func (r *NvmetSubsysResource) Update(ctx context.Context, req resource.UpdateReq
 		params["allow_any_host"] = data.AllowAnyHost.ValueBool()
 	}
 	if !data.PiEnable.IsNull() {
-		params["pi_enable"] = data.PiEnable.ValueString()
+		params["pi_enable"] = data.PiEnable.ValueBool()
 	}
 	if !data.QidMax.IsNull() {
-		params["qid_max"] = data.QidMax.ValueString()
+		params["qid_max"] = data.QidMax.ValueInt64()
 	}
 	if !data.IeeeOui.IsNull() {
 		params["ieee_oui"] = data.IeeeOui.ValueString()
 	}
 	if !data.Ana.IsNull() {
-		params["ana"] = data.Ana.ValueString()
+		params["ana"] = data.Ana.ValueBool()
 	}
 
 	// Convert string ID to integer for TrueNAS API

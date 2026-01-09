@@ -20,11 +20,11 @@ type ReplicationResourceModel struct {
 	Name types.String `tfsdk:"name"`
 	Direction types.String `tfsdk:"direction"`
 	Transport types.String `tfsdk:"transport"`
-	SshCredentials types.String `tfsdk:"ssh_credentials"`
+	SshCredentials types.Int64 `tfsdk:"ssh_credentials"`
 	NetcatActiveSide types.String `tfsdk:"netcat_active_side"`
 	NetcatActiveSideListenAddress types.String `tfsdk:"netcat_active_side_listen_address"`
-	NetcatActiveSidePortMin types.String `tfsdk:"netcat_active_side_port_min"`
-	NetcatActiveSidePortMax types.String `tfsdk:"netcat_active_side_port_max"`
+	NetcatActiveSidePortMin types.Int64 `tfsdk:"netcat_active_side_port_min"`
+	NetcatActiveSidePortMax types.Int64 `tfsdk:"netcat_active_side_port_max"`
 	NetcatPassiveSideConnectAddress types.String `tfsdk:"netcat_passive_side_connect_address"`
 	Sudo types.Bool `tfsdk:"sudo"`
 	SourceDatasets types.List `tfsdk:"source_datasets"`
@@ -36,7 +36,7 @@ type ReplicationResourceModel struct {
 	PropertiesOverride types.Object `tfsdk:"properties_override"`
 	Replicate types.Bool `tfsdk:"replicate"`
 	Encryption types.Bool `tfsdk:"encryption"`
-	EncryptionInherit types.String `tfsdk:"encryption_inherit"`
+	EncryptionInherit types.Bool `tfsdk:"encryption_inherit"`
 	EncryptionKey types.String `tfsdk:"encryption_key"`
 	EncryptionKeyFormat types.String `tfsdk:"encryption_key_format"`
 	EncryptionKeyLocation types.String `tfsdk:"encryption_key_location"`
@@ -45,18 +45,18 @@ type ReplicationResourceModel struct {
 	AlsoIncludeNamingSchema types.List `tfsdk:"also_include_naming_schema"`
 	NameRegex types.String `tfsdk:"name_regex"`
 	Auto types.Bool `tfsdk:"auto"`
-	Schedule types.String `tfsdk:"schedule"`
-	RestrictSchedule types.String `tfsdk:"restrict_schedule"`
+	Schedule types.Object `tfsdk:"schedule"`
+	RestrictSchedule types.Object `tfsdk:"restrict_schedule"`
 	OnlyMatchingSchedule types.Bool `tfsdk:"only_matching_schedule"`
 	AllowFromScratch types.Bool `tfsdk:"allow_from_scratch"`
 	Readonly types.String `tfsdk:"readonly"`
 	HoldPendingSnapshots types.Bool `tfsdk:"hold_pending_snapshots"`
 	RetentionPolicy types.String `tfsdk:"retention_policy"`
-	LifetimeValue types.String `tfsdk:"lifetime_value"`
+	LifetimeValue types.Int64 `tfsdk:"lifetime_value"`
 	LifetimeUnit types.String `tfsdk:"lifetime_unit"`
 	Lifetimes types.List `tfsdk:"lifetimes"`
 	Compression types.String `tfsdk:"compression"`
-	SpeedLimit types.String `tfsdk:"speed_limit"`
+	SpeedLimit types.Int64 `tfsdk:"speed_limit"`
 	LargeBlock types.Bool `tfsdk:"large_block"`
 	Embed types.Bool `tfsdk:"embed"`
 	Compressed types.Bool `tfsdk:"compressed"`
@@ -92,7 +92,7 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: true,
 				Optional: false,
 			},
-			"ssh_credentials": schema.StringAttribute{
+			"ssh_credentials": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -104,11 +104,11 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"netcat_active_side_port_min": schema.StringAttribute{
+			"netcat_active_side_port_min": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
-			"netcat_active_side_port_max": schema.StringAttribute{
+			"netcat_active_side_port_max": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -155,7 +155,7 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"encryption_inherit": schema.StringAttribute{
+			"encryption_inherit": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 			},
@@ -194,14 +194,6 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: true,
 				Optional: false,
 			},
-			"schedule": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-			},
-			"restrict_schedule": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-			},
 			"only_matching_schedule": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
@@ -222,7 +214,7 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: true,
 				Optional: false,
 			},
-			"lifetime_value": schema.StringAttribute{
+			"lifetime_value": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -239,7 +231,7 @@ func (r *ReplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"speed_limit": schema.StringAttribute{
+			"speed_limit": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -295,7 +287,7 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 	params["direction"] = data.Direction.ValueString()
 	params["transport"] = data.Transport.ValueString()
 	if !data.SshCredentials.IsNull() {
-		params["ssh_credentials"] = data.SshCredentials.ValueString()
+		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
 	if !data.NetcatActiveSide.IsNull() {
 		params["netcat_active_side"] = data.NetcatActiveSide.ValueString()
@@ -304,10 +296,10 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 		params["netcat_active_side_listen_address"] = data.NetcatActiveSideListenAddress.ValueString()
 	}
 	if !data.NetcatActiveSidePortMin.IsNull() {
-		params["netcat_active_side_port_min"] = data.NetcatActiveSidePortMin.ValueString()
+		params["netcat_active_side_port_min"] = data.NetcatActiveSidePortMin.ValueInt64()
 	}
 	if !data.NetcatActiveSidePortMax.IsNull() {
-		params["netcat_active_side_port_max"] = data.NetcatActiveSidePortMax.ValueString()
+		params["netcat_active_side_port_max"] = data.NetcatActiveSidePortMax.ValueInt64()
 	}
 	if !data.NetcatPassiveSideConnectAddress.IsNull() {
 		params["netcat_passive_side_connect_address"] = data.NetcatPassiveSideConnectAddress.ValueString()
@@ -327,7 +319,7 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 		params["encryption"] = data.Encryption.ValueBool()
 	}
 	if !data.EncryptionInherit.IsNull() {
-		params["encryption_inherit"] = data.EncryptionInherit.ValueString()
+		params["encryption_inherit"] = data.EncryptionInherit.ValueBool()
 	}
 	if !data.EncryptionKey.IsNull() {
 		params["encryption_key"] = data.EncryptionKey.ValueString()
@@ -342,12 +334,6 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 		params["name_regex"] = data.NameRegex.ValueString()
 	}
 	params["auto"] = data.Auto.ValueBool()
-	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
-	}
-	if !data.RestrictSchedule.IsNull() {
-		params["restrict_schedule"] = data.RestrictSchedule.ValueString()
-	}
 	if !data.OnlyMatchingSchedule.IsNull() {
 		params["only_matching_schedule"] = data.OnlyMatchingSchedule.ValueBool()
 	}
@@ -362,7 +348,7 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	params["retention_policy"] = data.RetentionPolicy.ValueString()
 	if !data.LifetimeValue.IsNull() {
-		params["lifetime_value"] = data.LifetimeValue.ValueString()
+		params["lifetime_value"] = data.LifetimeValue.ValueInt64()
 	}
 	if !data.LifetimeUnit.IsNull() {
 		params["lifetime_unit"] = data.LifetimeUnit.ValueString()
@@ -371,7 +357,7 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 		params["compression"] = data.Compression.ValueString()
 	}
 	if !data.SpeedLimit.IsNull() {
-		params["speed_limit"] = data.SpeedLimit.ValueString()
+		params["speed_limit"] = data.SpeedLimit.ValueInt64()
 	}
 	if !data.LargeBlock.IsNull() {
 		params["large_block"] = data.LargeBlock.ValueBool()
@@ -448,7 +434,7 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	params["direction"] = data.Direction.ValueString()
 	params["transport"] = data.Transport.ValueString()
 	if !data.SshCredentials.IsNull() {
-		params["ssh_credentials"] = data.SshCredentials.ValueString()
+		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
 	if !data.NetcatActiveSide.IsNull() {
 		params["netcat_active_side"] = data.NetcatActiveSide.ValueString()
@@ -457,10 +443,10 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		params["netcat_active_side_listen_address"] = data.NetcatActiveSideListenAddress.ValueString()
 	}
 	if !data.NetcatActiveSidePortMin.IsNull() {
-		params["netcat_active_side_port_min"] = data.NetcatActiveSidePortMin.ValueString()
+		params["netcat_active_side_port_min"] = data.NetcatActiveSidePortMin.ValueInt64()
 	}
 	if !data.NetcatActiveSidePortMax.IsNull() {
-		params["netcat_active_side_port_max"] = data.NetcatActiveSidePortMax.ValueString()
+		params["netcat_active_side_port_max"] = data.NetcatActiveSidePortMax.ValueInt64()
 	}
 	if !data.NetcatPassiveSideConnectAddress.IsNull() {
 		params["netcat_passive_side_connect_address"] = data.NetcatPassiveSideConnectAddress.ValueString()
@@ -480,7 +466,7 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		params["encryption"] = data.Encryption.ValueBool()
 	}
 	if !data.EncryptionInherit.IsNull() {
-		params["encryption_inherit"] = data.EncryptionInherit.ValueString()
+		params["encryption_inherit"] = data.EncryptionInherit.ValueBool()
 	}
 	if !data.EncryptionKey.IsNull() {
 		params["encryption_key"] = data.EncryptionKey.ValueString()
@@ -495,12 +481,6 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		params["name_regex"] = data.NameRegex.ValueString()
 	}
 	params["auto"] = data.Auto.ValueBool()
-	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
-	}
-	if !data.RestrictSchedule.IsNull() {
-		params["restrict_schedule"] = data.RestrictSchedule.ValueString()
-	}
 	if !data.OnlyMatchingSchedule.IsNull() {
 		params["only_matching_schedule"] = data.OnlyMatchingSchedule.ValueBool()
 	}
@@ -515,7 +495,7 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	params["retention_policy"] = data.RetentionPolicy.ValueString()
 	if !data.LifetimeValue.IsNull() {
-		params["lifetime_value"] = data.LifetimeValue.ValueString()
+		params["lifetime_value"] = data.LifetimeValue.ValueInt64()
 	}
 	if !data.LifetimeUnit.IsNull() {
 		params["lifetime_unit"] = data.LifetimeUnit.ValueString()
@@ -524,7 +504,7 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		params["compression"] = data.Compression.ValueString()
 	}
 	if !data.SpeedLimit.IsNull() {
-		params["speed_limit"] = data.SpeedLimit.ValueString()
+		params["speed_limit"] = data.SpeedLimit.ValueInt64()
 	}
 	if !data.LargeBlock.IsNull() {
 		params["large_block"] = data.LargeBlock.ValueBool()

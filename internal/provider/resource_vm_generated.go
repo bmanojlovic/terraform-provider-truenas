@@ -33,7 +33,7 @@ type VmResourceModel struct {
 	SuspendOnSnapshot types.Bool `tfsdk:"suspend_on_snapshot"`
 	TrustedPlatformModule types.Bool `tfsdk:"trusted_platform_module"`
 	Memory types.Int64 `tfsdk:"memory"`
-	MinMemory types.String `tfsdk:"min_memory"`
+	MinMemory types.Int64 `tfsdk:"min_memory"`
 	HypervEnlightenments types.Bool `tfsdk:"hyperv_enlightenments"`
 	Bootloader types.String `tfsdk:"bootloader"`
 	BootloaderOvmf types.String `tfsdk:"bootloader_ovmf"`
@@ -126,7 +126,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required: true,
 				Optional: false,
 			},
-			"min_memory": schema.StringAttribute{
+			"min_memory": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -240,7 +240,7 @@ func (r *VmResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 	params["memory"] = data.Memory.ValueInt64()
 	if !data.MinMemory.IsNull() {
-		params["min_memory"] = data.MinMemory.ValueString()
+		params["min_memory"] = data.MinMemory.ValueInt64()
 	}
 	if !data.HypervEnlightenments.IsNull() {
 		params["hyperv_enlightenments"] = data.HypervEnlightenments.ValueBool()
@@ -387,7 +387,7 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 	params["memory"] = data.Memory.ValueInt64()
 	if !data.MinMemory.IsNull() {
-		params["min_memory"] = data.MinMemory.ValueString()
+		params["min_memory"] = data.MinMemory.ValueInt64()
 	}
 	if !data.HypervEnlightenments.IsNull() {
 		params["hyperv_enlightenments"] = data.HypervEnlightenments.ValueBool()

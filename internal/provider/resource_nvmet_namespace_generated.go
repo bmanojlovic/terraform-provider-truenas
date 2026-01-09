@@ -17,10 +17,10 @@ type NvmetNamespaceResource struct {
 
 type NvmetNamespaceResourceModel struct {
 	ID types.String `tfsdk:"id"`
-	Nsid types.String `tfsdk:"nsid"`
+	Nsid types.Int64 `tfsdk:"nsid"`
 	DeviceType types.String `tfsdk:"device_type"`
 	DevicePath types.String `tfsdk:"device_path"`
-	Filesize types.String `tfsdk:"filesize"`
+	Filesize types.Int64 `tfsdk:"filesize"`
 	Enabled types.Bool `tfsdk:"enabled"`
 	SubsysId types.Int64 `tfsdk:"subsys_id"`
 }
@@ -40,7 +40,7 @@ func (r *NvmetNamespaceResource) Schema(ctx context.Context, req resource.Schema
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
-			"nsid": schema.StringAttribute{
+			"nsid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -52,7 +52,7 @@ func (r *NvmetNamespaceResource) Schema(ctx context.Context, req resource.Schema
 				Required: true,
 				Optional: false,
 			},
-			"filesize": schema.StringAttribute{
+			"filesize": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -89,12 +89,12 @@ func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.Create
 
 	params := map[string]interface{}{}
 	if !data.Nsid.IsNull() {
-		params["nsid"] = data.Nsid.ValueString()
+		params["nsid"] = data.Nsid.ValueInt64()
 	}
 	params["device_type"] = data.DeviceType.ValueString()
 	params["device_path"] = data.DevicePath.ValueString()
 	if !data.Filesize.IsNull() {
-		params["filesize"] = data.Filesize.ValueString()
+		params["filesize"] = data.Filesize.ValueInt64()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
@@ -154,12 +154,12 @@ func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.Update
 
 	params := map[string]interface{}{}
 	if !data.Nsid.IsNull() {
-		params["nsid"] = data.Nsid.ValueString()
+		params["nsid"] = data.Nsid.ValueInt64()
 	}
 	params["device_type"] = data.DeviceType.ValueString()
 	params["device_path"] = data.DevicePath.ValueString()
 	if !data.Filesize.IsNull() {
-		params["filesize"] = data.Filesize.ValueString()
+		params["filesize"] = data.Filesize.ValueInt64()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()

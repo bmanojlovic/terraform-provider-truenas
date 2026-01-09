@@ -17,7 +17,7 @@ type GroupResource struct {
 
 type GroupResourceModel struct {
 	ID types.String `tfsdk:"id"`
-	Gid types.String `tfsdk:"gid"`
+	Gid types.Int64 `tfsdk:"gid"`
 	Name types.String `tfsdk:"name"`
 	SudoCommands types.List `tfsdk:"sudo_commands"`
 	SudoCommandsNopasswd types.List `tfsdk:"sudo_commands_nopasswd"`
@@ -41,7 +41,7 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
-			"gid": schema.StringAttribute{
+			"gid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -97,7 +97,7 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	params := map[string]interface{}{}
 	if !data.Gid.IsNull() {
-		params["gid"] = data.Gid.ValueString()
+		params["gid"] = data.Gid.ValueInt64()
 	}
 	params["name"] = data.Name.ValueString()
 	if !data.Smb.IsNull() {
@@ -160,7 +160,7 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	params := map[string]interface{}{}
 	if !data.Gid.IsNull() {
-		params["gid"] = data.Gid.ValueString()
+		params["gid"] = data.Gid.ValueInt64()
 	}
 	params["name"] = data.Name.ValueString()
 	if !data.Smb.IsNull() {

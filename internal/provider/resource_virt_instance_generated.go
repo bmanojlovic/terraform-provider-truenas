@@ -26,11 +26,11 @@ type VirtInstanceResourceModel struct {
 	RootDiskIoBus types.String `tfsdk:"root_disk_io_bus"`
 	Remote types.String `tfsdk:"remote"`
 	InstanceType types.String `tfsdk:"instance_type"`
-	Environment types.String `tfsdk:"environment"`
-	Autostart types.String `tfsdk:"autostart"`
+	Environment types.Object `tfsdk:"environment"`
+	Autostart types.Bool `tfsdk:"autostart"`
 	Cpu types.String `tfsdk:"cpu"`
-	Devices types.String `tfsdk:"devices"`
-	Memory types.String `tfsdk:"memory"`
+	Devices types.List `tfsdk:"devices"`
+	Memory types.Int64 `tfsdk:"memory"`
 	PrivilegedMode types.Bool `tfsdk:"privileged_mode"`
 }
 
@@ -85,11 +85,7 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required: false,
 				Optional: true,
 			},
-			"environment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-			},
-			"autostart": schema.StringAttribute{
+			"autostart": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 			},
@@ -97,11 +93,12 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required: false,
 				Optional: true,
 			},
-			"devices": schema.StringAttribute{
+			"devices": schema.ListAttribute{
+				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
 			},
-			"memory": schema.StringAttribute{
+			"memory": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -153,20 +150,14 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	if !data.InstanceType.IsNull() {
 		params["instance_type"] = data.InstanceType.ValueString()
 	}
-	if !data.Environment.IsNull() {
-		params["environment"] = data.Environment.ValueString()
-	}
 	if !data.Autostart.IsNull() {
-		params["autostart"] = data.Autostart.ValueString()
+		params["autostart"] = data.Autostart.ValueBool()
 	}
 	if !data.Cpu.IsNull() {
 		params["cpu"] = data.Cpu.ValueString()
 	}
-	if !data.Devices.IsNull() {
-		params["devices"] = data.Devices.ValueString()
-	}
 	if !data.Memory.IsNull() {
-		params["memory"] = data.Memory.ValueString()
+		params["memory"] = data.Memory.ValueInt64()
 	}
 	if !data.PrivilegedMode.IsNull() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
@@ -261,20 +252,14 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 	if !data.InstanceType.IsNull() {
 		params["instance_type"] = data.InstanceType.ValueString()
 	}
-	if !data.Environment.IsNull() {
-		params["environment"] = data.Environment.ValueString()
-	}
 	if !data.Autostart.IsNull() {
-		params["autostart"] = data.Autostart.ValueString()
+		params["autostart"] = data.Autostart.ValueBool()
 	}
 	if !data.Cpu.IsNull() {
 		params["cpu"] = data.Cpu.ValueString()
 	}
-	if !data.Devices.IsNull() {
-		params["devices"] = data.Devices.ValueString()
-	}
 	if !data.Memory.IsNull() {
-		params["memory"] = data.Memory.ValueString()
+		params["memory"] = data.Memory.ValueInt64()
 	}
 	if !data.PrivilegedMode.IsNull() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()

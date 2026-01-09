@@ -36,5 +36,5 @@ variable "truenas_iso_url" {
 variable "bridge_interface" {
   description = "Bridge interface for VM network"
   type        = string
-  default     = "br0"
+  default     = "eno1"
 }

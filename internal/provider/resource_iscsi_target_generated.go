@@ -22,7 +22,7 @@ type IscsiTargetResourceModel struct {
 	Mode types.String `tfsdk:"mode"`
 	Groups types.List `tfsdk:"groups"`
 	AuthNetworks types.List `tfsdk:"auth_networks"`
-	IscsiParameters types.String `tfsdk:"iscsi_parameters"`
+	IscsiParameters types.Object `tfsdk:"iscsi_parameters"`
 }
 
 func NewIscsiTargetResource() resource.Resource {
@@ -62,10 +62,6 @@ func (r *IscsiTargetResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"iscsi_parameters": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-			},
 		},
 	}
 }
@@ -96,9 +92,6 @@ func (r *IscsiTargetResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	if !data.Mode.IsNull() {
 		params["mode"] = data.Mode.ValueString()
-	}
-	if !data.IscsiParameters.IsNull() {
-		params["iscsi_parameters"] = data.IscsiParameters.ValueString()
 	}
 
 	result, err := r.client.Call("iscsi.target.create", params)
@@ -159,9 +152,6 @@ func (r *IscsiTargetResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.Mode.IsNull() {
 		params["mode"] = data.Mode.ValueString()
-	}
-	if !data.IscsiParameters.IsNull() {
-		params["iscsi_parameters"] = data.IscsiParameters.ValueString()
 	}
 
 	// Convert string ID to integer for TrueNAS API

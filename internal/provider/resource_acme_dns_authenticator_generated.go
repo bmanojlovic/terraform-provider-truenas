@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -68,7 +69,12 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 	}
 
 	params := map[string]interface{}{}
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["name"] = data.Name.ValueString()
 
 	result, err := r.client.Call("acme.dns.authenticator.create", params)
@@ -123,7 +129,12 @@ func (r *AcmeDnsAuthenticatorResource) Update(ctx context.Context, req resource.
 	}
 
 	params := map[string]interface{}{}
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["name"] = data.Name.ValueString()
 
 	// Convert string ID to integer for TrueNAS API

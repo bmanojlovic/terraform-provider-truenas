@@ -2,4 +2,4 @@
 pool_name = "media"
 
 # Network Configuration
-bridge_interface = "br0"
+bridge_interface = "eno1"

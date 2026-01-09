@@ -17,14 +17,14 @@ type UserResource struct {
 
 type UserResourceModel struct {
 	ID types.String `tfsdk:"id"`
-	Uid types.String `tfsdk:"uid"`
+	Uid types.Int64 `tfsdk:"uid"`
 	Username types.String `tfsdk:"username"`
 	Home types.String `tfsdk:"home"`
 	Shell types.String `tfsdk:"shell"`
 	FullName types.String `tfsdk:"full_name"`
 	Smb types.Bool `tfsdk:"smb"`
-	UsernsIdmap types.String `tfsdk:"userns_idmap"`
-	Group types.String `tfsdk:"group"`
+	UsernsIdmap types.Int64 `tfsdk:"userns_idmap"`
+	Group types.Int64 `tfsdk:"group"`
 	Groups types.List `tfsdk:"groups"`
 	PasswordDisabled types.Bool `tfsdk:"password_disabled"`
 	SshPasswordEnabled types.Bool `tfsdk:"ssh_password_enabled"`
@@ -55,7 +55,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
-			"uid": schema.StringAttribute{
+			"uid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -79,11 +79,11 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required: false,
 				Optional: true,
 			},
-			"userns_idmap": schema.StringAttribute{
+			"userns_idmap": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
-			"group": schema.StringAttribute{
+			"group": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -167,7 +167,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	params := map[string]interface{}{}
 	if !data.Uid.IsNull() {
-		params["uid"] = data.Uid.ValueString()
+		params["uid"] = data.Uid.ValueInt64()
 	}
 	params["username"] = data.Username.ValueString()
 	if !data.Home.IsNull() {
@@ -181,10 +181,10 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		params["smb"] = data.Smb.ValueBool()
 	}
 	if !data.UsernsIdmap.IsNull() {
-		params["userns_idmap"] = data.UsernsIdmap.ValueString()
+		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
 	if !data.Group.IsNull() {
-		params["group"] = data.Group.ValueString()
+		params["group"] = data.Group.ValueInt64()
 	}
 	if !data.PasswordDisabled.IsNull() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()
@@ -270,7 +270,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	params := map[string]interface{}{}
 	if !data.Uid.IsNull() {
-		params["uid"] = data.Uid.ValueString()
+		params["uid"] = data.Uid.ValueInt64()
 	}
 	params["username"] = data.Username.ValueString()
 	if !data.Home.IsNull() {
@@ -284,10 +284,10 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		params["smb"] = data.Smb.ValueBool()
 	}
 	if !data.UsernsIdmap.IsNull() {
-		params["userns_idmap"] = data.UsernsIdmap.ValueString()
+		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
 	if !data.Group.IsNull() {
-		params["group"] = data.Group.ValueString()
+		params["group"] = data.Group.ValueInt64()
 	}
 	if !data.PasswordDisabled.IsNull() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()

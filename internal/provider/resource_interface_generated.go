@@ -24,8 +24,8 @@ type InterfaceResourceModel struct {
 	Ipv6Auto types.Bool `tfsdk:"ipv6_auto"`
 	Aliases types.List `tfsdk:"aliases"`
 	FailoverCritical types.Bool `tfsdk:"failover_critical"`
-	FailoverGroup types.String `tfsdk:"failover_group"`
-	FailoverVhid types.String `tfsdk:"failover_vhid"`
+	FailoverGroup types.Int64 `tfsdk:"failover_group"`
+	FailoverVhid types.Int64 `tfsdk:"failover_vhid"`
 	FailoverAliases types.List `tfsdk:"failover_aliases"`
 	FailoverVirtualAliases types.List `tfsdk:"failover_virtual_aliases"`
 	BridgeMembers types.List `tfsdk:"bridge_members"`
@@ -37,8 +37,8 @@ type InterfaceResourceModel struct {
 	LagPorts types.List `tfsdk:"lag_ports"`
 	VlanParentInterface types.String `tfsdk:"vlan_parent_interface"`
 	VlanTag types.Int64 `tfsdk:"vlan_tag"`
-	VlanPcp types.String `tfsdk:"vlan_pcp"`
-	Mtu types.String `tfsdk:"mtu"`
+	VlanPcp types.Int64 `tfsdk:"vlan_pcp"`
+	Mtu types.Int64 `tfsdk:"mtu"`
 }
 
 func NewInterfaceResource() resource.Resource {
@@ -85,11 +85,11 @@ func (r *InterfaceResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: false,
 				Optional: true,
 			},
-			"failover_group": schema.StringAttribute{
+			"failover_group": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
-			"failover_vhid": schema.StringAttribute{
+			"failover_vhid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -141,11 +141,11 @@ func (r *InterfaceResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: false,
 				Optional: true,
 			},
-			"vlan_pcp": schema.StringAttribute{
+			"vlan_pcp": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
-			"mtu": schema.StringAttribute{
+			"mtu": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -190,10 +190,10 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		params["failover_critical"] = data.FailoverCritical.ValueBool()
 	}
 	if !data.FailoverGroup.IsNull() {
-		params["failover_group"] = data.FailoverGroup.ValueString()
+		params["failover_group"] = data.FailoverGroup.ValueInt64()
 	}
 	if !data.FailoverVhid.IsNull() {
-		params["failover_vhid"] = data.FailoverVhid.ValueString()
+		params["failover_vhid"] = data.FailoverVhid.ValueInt64()
 	}
 	if !data.EnableLearning.IsNull() {
 		params["enable_learning"] = data.EnableLearning.ValueBool()
@@ -217,10 +217,10 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		params["vlan_tag"] = data.VlanTag.ValueInt64()
 	}
 	if !data.VlanPcp.IsNull() {
-		params["vlan_pcp"] = data.VlanPcp.ValueString()
+		params["vlan_pcp"] = data.VlanPcp.ValueInt64()
 	}
 	if !data.Mtu.IsNull() {
-		params["mtu"] = data.Mtu.ValueString()
+		params["mtu"] = data.Mtu.ValueInt64()
 	}
 
 	result, err := r.client.Call("interface.create", params)
@@ -292,10 +292,10 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		params["failover_critical"] = data.FailoverCritical.ValueBool()
 	}
 	if !data.FailoverGroup.IsNull() {
-		params["failover_group"] = data.FailoverGroup.ValueString()
+		params["failover_group"] = data.FailoverGroup.ValueInt64()
 	}
 	if !data.FailoverVhid.IsNull() {
-		params["failover_vhid"] = data.FailoverVhid.ValueString()
+		params["failover_vhid"] = data.FailoverVhid.ValueInt64()
 	}
 	if !data.EnableLearning.IsNull() {
 		params["enable_learning"] = data.EnableLearning.ValueBool()
@@ -319,10 +319,10 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		params["vlan_tag"] = data.VlanTag.ValueInt64()
 	}
 	if !data.VlanPcp.IsNull() {
-		params["vlan_pcp"] = data.VlanPcp.ValueString()
+		params["vlan_pcp"] = data.VlanPcp.ValueInt64()
 	}
 	if !data.Mtu.IsNull() {
-		params["mtu"] = data.Mtu.ValueString()
+		params["mtu"] = data.Mtu.ValueInt64()
 	}
 
 	// Convert string ID to integer for TrueNAS API

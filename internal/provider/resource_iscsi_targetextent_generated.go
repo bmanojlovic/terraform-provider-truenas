@@ -18,7 +18,7 @@ type IscsiTargetextentResource struct {
 type IscsiTargetextentResourceModel struct {
 	ID types.String `tfsdk:"id"`
 	Target types.Int64 `tfsdk:"target"`
-	Lunid types.String `tfsdk:"lunid"`
+	Lunid types.Int64 `tfsdk:"lunid"`
 	Extent types.Int64 `tfsdk:"extent"`
 }
 
@@ -41,7 +41,7 @@ func (r *IscsiTargetextentResource) Schema(ctx context.Context, req resource.Sch
 				Required: true,
 				Optional: false,
 			},
-			"lunid": schema.StringAttribute{
+			"lunid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -75,7 +75,7 @@ func (r *IscsiTargetextentResource) Create(ctx context.Context, req resource.Cre
 	params := map[string]interface{}{}
 	params["target"] = data.Target.ValueInt64()
 	if !data.Lunid.IsNull() {
-		params["lunid"] = data.Lunid.ValueString()
+		params["lunid"] = data.Lunid.ValueInt64()
 	}
 	params["extent"] = data.Extent.ValueInt64()
 
@@ -133,7 +133,7 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 	params := map[string]interface{}{}
 	params["target"] = data.Target.ValueInt64()
 	if !data.Lunid.IsNull() {
-		params["lunid"] = data.Lunid.ValueString()
+		params["lunid"] = data.Lunid.ValueInt64()
 	}
 	params["extent"] = data.Extent.ValueInt64()
 

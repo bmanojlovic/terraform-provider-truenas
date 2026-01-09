@@ -21,9 +21,9 @@ type RsynctaskResourceModel struct {
 	User types.String `tfsdk:"user"`
 	Mode types.String `tfsdk:"mode"`
 	Remotehost types.String `tfsdk:"remotehost"`
-	Remoteport types.String `tfsdk:"remoteport"`
+	Remoteport types.Int64 `tfsdk:"remoteport"`
 	Remotemodule types.String `tfsdk:"remotemodule"`
-	SshCredentials types.String `tfsdk:"ssh_credentials"`
+	SshCredentials types.Int64 `tfsdk:"ssh_credentials"`
 	Remotepath types.String `tfsdk:"remotepath"`
 	Direction types.String `tfsdk:"direction"`
 	Desc types.String `tfsdk:"desc"`
@@ -74,7 +74,7 @@ func (r *RsynctaskResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: false,
 				Optional: true,
 			},
-			"remoteport": schema.StringAttribute{
+			"remoteport": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -82,7 +82,7 @@ func (r *RsynctaskResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: false,
 				Optional: true,
 			},
-			"ssh_credentials": schema.StringAttribute{
+			"ssh_credentials": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -184,13 +184,13 @@ func (r *RsynctaskResource) Create(ctx context.Context, req resource.CreateReque
 		params["remotehost"] = data.Remotehost.ValueString()
 	}
 	if !data.Remoteport.IsNull() {
-		params["remoteport"] = data.Remoteport.ValueString()
+		params["remoteport"] = data.Remoteport.ValueInt64()
 	}
 	if !data.Remotemodule.IsNull() {
 		params["remotemodule"] = data.Remotemodule.ValueString()
 	}
 	if !data.SshCredentials.IsNull() {
-		params["ssh_credentials"] = data.SshCredentials.ValueString()
+		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
 	if !data.Remotepath.IsNull() {
 		params["remotepath"] = data.Remotepath.ValueString()
@@ -299,13 +299,13 @@ func (r *RsynctaskResource) Update(ctx context.Context, req resource.UpdateReque
 		params["remotehost"] = data.Remotehost.ValueString()
 	}
 	if !data.Remoteport.IsNull() {
-		params["remoteport"] = data.Remoteport.ValueString()
+		params["remoteport"] = data.Remoteport.ValueInt64()
 	}
 	if !data.Remotemodule.IsNull() {
 		params["remotemodule"] = data.Remotemodule.ValueString()
 	}
 	if !data.SshCredentials.IsNull() {
-		params["ssh_credentials"] = data.SshCredentials.ValueString()
+		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
 	if !data.Remotepath.IsNull() {
 		params["remotepath"] = data.Remotepath.ValueString()

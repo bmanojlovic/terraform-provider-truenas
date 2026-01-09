@@ -19,7 +19,7 @@ type FilesystemAcltemplateResourceModel struct {
 	ID types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	Acltype types.String `tfsdk:"acltype"`
-	Acl types.String `tfsdk:"acl"`
+	Acl types.List `tfsdk:"acl"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -46,7 +46,8 @@ func (r *FilesystemAcltemplateResource) Schema(ctx context.Context, req resource
 				Required: true,
 				Optional: false,
 			},
-			"acl": schema.StringAttribute{
+			"acl": schema.ListAttribute{
+				ElementType: types.StringType,
 				Required: true,
 				Optional: false,
 			},
@@ -80,7 +81,6 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
 	params["acltype"] = data.Acltype.ValueString()
-	params["acl"] = data.Acl.ValueString()
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()
 	}
@@ -139,7 +139,6 @@ func (r *FilesystemAcltemplateResource) Update(ctx context.Context, req resource
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
 	params["acltype"] = data.Acltype.ValueString()
-	params["acl"] = data.Acl.ValueString()
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()
 	}

@@ -144,8 +144,8 @@ func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resou
 		NewVmResource,
 		NewVmDeviceResource,
 		NewVmwareResource,
-		NewDiskResource,
 		NewServiceResource,
+		NewDiskResource,
 	}
 }
 

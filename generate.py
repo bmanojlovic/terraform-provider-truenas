@@ -10,6 +10,7 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 
 # Load templates from files
 GO_RESOURCE_TEMPLATE = (TEMPLATE_DIR / 'resource.go.tmpl').read_text()
+GO_RESOURCE_WITH_JSON_TEMPLATE = (TEMPLATE_DIR / 'resource_with_json.go.tmpl').read_text()
 GO_RESOURCE_UPDATE_ONLY_TEMPLATE = (TEMPLATE_DIR / 'resource_update_only.go.tmpl').read_text()
 ACTION_RESOURCE_TEMPLATE = (TEMPLATE_DIR / 'action_resource.go.tmpl').read_text()
 RESOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / 'resource_doc.md.tmpl').read_text()
@@ -250,7 +251,28 @@ def generate_resource(name, path, schema, spec, update_only=False):
         normalized_name = prop_name.lower().replace('-', '_')
         
         go_name = ''.join(w.capitalize() for w in normalized_name.split('_'))
-        prop_type = prop_spec.get('type', 'string')
+        
+        # Detect type - handle anyOf/oneOf
+        prop_type = prop_spec.get('type')
+        if not prop_type:
+            # Check for anyOf/oneOf patterns
+            any_of = prop_spec.get('anyOf', [])
+            one_of = prop_spec.get('oneOf', [])
+            types_list = any_of or one_of
+            if types_list:
+                # Get first non-null type
+                for t in types_list:
+                    if t.get('type') and t.get('type') != 'null':
+                        prop_type = t.get('type')
+                        break
+        
+        # Special case: vm_device attributes with discriminator should be String (JSON)
+        if prop_name == 'attributes' and 'discriminator' in prop_spec:
+            prop_type = 'string'
+        
+        if not prop_type:
+            prop_type = 'string'  # default fallback
+            
         go_type = TYPE_MAP.get(prop_type, 'String')
         required = prop_name in required_fields
         
@@ -269,7 +291,14 @@ def generate_resource(name, path, schema, spec, update_only=False):
         # Build params conditionally
         if go_type in ['String', 'Int64', 'Bool']:
             method = {'String': 'ValueString', 'Int64': 'ValueInt64', 'Bool': 'ValueBool'}[go_type]
-            if required:
+            
+            # Special case: attributes field with discriminator needs JSON parsing
+            if prop_name == 'attributes' and 'discriminator' in prop_spec:
+                if required:
+                    create_params.append(f'\tvar {prop_name}Map map[string]interface{{}}\n\tif err := json.Unmarshal([]byte(data.{go_name}.{method}()), &{prop_name}Map); err != nil {{\n\t\tresp.Diagnostics.AddError("JSON Parse Error", err.Error())\n\t\treturn\n\t}}\n\tparams["{prop_name}"] = {prop_name}Map')
+                else:
+                    create_params.append(f'\tif !data.{go_name}.IsNull() {{\n\t\tvar {prop_name}Map map[string]interface{{}}\n\t\tif err := json.Unmarshal([]byte(data.{go_name}.{method}()), &{prop_name}Map); err != nil {{\n\t\t\tresp.Diagnostics.AddError("JSON Parse Error", err.Error())\n\t\t\treturn\n\t\t}}\n\t\tparams["{prop_name}"] = {prop_name}Map\n\t}}')
+            elif required:
                 create_params.append(f'\tparams["{prop_name}"] = data.{go_name}.{method}()')
             else:
                 # Optional fields - only include if not null
@@ -277,6 +306,9 @@ def generate_resource(name, path, schema, spec, update_only=False):
     
     resource_name = name.replace('/', '_').replace('-', '_').title().replace('_', '')
     api_name = path.strip('/').replace('/', '.')
+    
+    # Check if we need json import
+    needs_json = any('json.Unmarshal' in p for p in create_params)
     
     # Generate lifecycle action code
     lifecycle_code = ''
@@ -312,7 +344,8 @@ def generate_resource(name, path, schema, spec, update_only=False):
             ReadMapping=''
         )
     else:
-        return GO_RESOURCE_TEMPLATE.format(
+        template = GO_RESOURCE_WITH_JSON_TEMPLATE if needs_json else GO_RESOURCE_TEMPLATE
+        return template.format(
             resource_name=resource_name,
             name=name.replace('/', '_').replace('-', '_'),
             api_name=api_name,

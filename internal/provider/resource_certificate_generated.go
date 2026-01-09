@@ -23,7 +23,7 @@ type CertificateResourceModel struct {
 	Certificate types.String `tfsdk:"certificate"`
 	Privatekey types.String `tfsdk:"privatekey"`
 	Csr types.String `tfsdk:"csr"`
-	KeyLength types.String `tfsdk:"key_length"`
+	KeyLength types.Int64 `tfsdk:"key_length"`
 	KeyType types.String `tfsdk:"key_type"`
 	EcCurve types.String `tfsdk:"ec_curve"`
 	Passphrase types.String `tfsdk:"passphrase"`
@@ -38,8 +38,8 @@ type CertificateResourceModel struct {
 	San types.List `tfsdk:"san"`
 	CertExtensions types.Object `tfsdk:"cert_extensions"`
 	AcmeDirectoryUri types.String `tfsdk:"acme_directory_uri"`
-	CsrId types.String `tfsdk:"csr_id"`
-	Tos types.String `tfsdk:"tos"`
+	CsrId types.Int64 `tfsdk:"csr_id"`
+	Tos types.Bool `tfsdk:"tos"`
 	DnsMapping types.Object `tfsdk:"dns_mapping"`
 	RenewDays types.Int64 `tfsdk:"renew_days"`
 }
@@ -83,7 +83,7 @@ func (r *CertificateResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"key_length": schema.StringAttribute{
+			"key_length": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -140,11 +140,11 @@ func (r *CertificateResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"csr_id": schema.StringAttribute{
+			"csr_id": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
-			"tos": schema.StringAttribute{
+			"tos": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 			},
@@ -191,7 +191,7 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		params["CSR"] = data.Csr.ValueString()
 	}
 	if !data.KeyLength.IsNull() {
-		params["key_length"] = data.KeyLength.ValueString()
+		params["key_length"] = data.KeyLength.ValueInt64()
 	}
 	if !data.KeyType.IsNull() {
 		params["key_type"] = data.KeyType.ValueString()
@@ -230,10 +230,10 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
 	if !data.CsrId.IsNull() {
-		params["csr_id"] = data.CsrId.ValueString()
+		params["csr_id"] = data.CsrId.ValueInt64()
 	}
 	if !data.Tos.IsNull() {
-		params["tos"] = data.Tos.ValueString()
+		params["tos"] = data.Tos.ValueBool()
 	}
 	if !data.RenewDays.IsNull() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
@@ -306,7 +306,7 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 		params["CSR"] = data.Csr.ValueString()
 	}
 	if !data.KeyLength.IsNull() {
-		params["key_length"] = data.KeyLength.ValueString()
+		params["key_length"] = data.KeyLength.ValueInt64()
 	}
 	if !data.KeyType.IsNull() {
 		params["key_type"] = data.KeyType.ValueString()
@@ -345,10 +345,10 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
 	if !data.CsrId.IsNull() {
-		params["csr_id"] = data.CsrId.ValueString()
+		params["csr_id"] = data.CsrId.ValueInt64()
 	}
 	if !data.Tos.IsNull() {
-		params["tos"] = data.Tos.ValueString()
+		params["tos"] = data.Tos.ValueBool()
 	}
 	if !data.RenewDays.IsNull() {
 		params["renew_days"] = data.RenewDays.ValueInt64()

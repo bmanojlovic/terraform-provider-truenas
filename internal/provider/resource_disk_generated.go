@@ -23,7 +23,7 @@ type DiskResourceModel struct {
 	Hddstandby types.String `tfsdk:"hddstandby"`
 	Advpowermgmt types.String `tfsdk:"advpowermgmt"`
 	Bus types.String `tfsdk:"bus"`
-	Enclosure types.String `tfsdk:"enclosure"`
+	Enclosure types.Object `tfsdk:"enclosure"`
 	Pool types.String `tfsdk:"pool"`
 	Passwd types.String `tfsdk:"passwd"`
 }
@@ -64,10 +64,6 @@ func (r *DiskResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional: true,
 			},
 			"bus": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-			},
-			"enclosure": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 			},
@@ -133,9 +129,6 @@ func (r *DiskResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	if !data.Bus.IsNull() {
 		params["bus"] = data.Bus.ValueString()
-	}
-	if !data.Enclosure.IsNull() {
-		params["enclosure"] = data.Enclosure.ValueString()
 	}
 	if !data.Pool.IsNull() {
 		params["pool"] = data.Pool.ValueString()
@@ -210,9 +203,6 @@ func (r *DiskResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	if !data.Bus.IsNull() {
 		params["bus"] = data.Bus.ValueString()
-	}
-	if !data.Enclosure.IsNull() {
-		params["enclosure"] = data.Enclosure.ValueString()
 	}
 	if !data.Pool.IsNull() {
 		params["pool"] = data.Pool.ValueString()

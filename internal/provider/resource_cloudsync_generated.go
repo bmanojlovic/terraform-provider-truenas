@@ -30,7 +30,7 @@ type CloudsyncResourceModel struct {
 	Args types.String `tfsdk:"args"`
 	Enabled types.Bool `tfsdk:"enabled"`
 	Bwlimit types.List `tfsdk:"bwlimit"`
-	Transfers types.String `tfsdk:"transfers"`
+	Transfers types.Int64 `tfsdk:"transfers"`
 	Direction types.String `tfsdk:"direction"`
 	TransferMode types.String `tfsdk:"transfer_mode"`
 	Encryption types.Bool `tfsdk:"encryption"`
@@ -103,7 +103,7 @@ func (r *CloudsyncResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: false,
 				Optional: true,
 			},
-			"transfers": schema.StringAttribute{
+			"transfers": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -184,7 +184,7 @@ func (r *CloudsyncResource) Create(ctx context.Context, req resource.CreateReque
 		params["enabled"] = data.Enabled.ValueBool()
 	}
 	if !data.Transfers.IsNull() {
-		params["transfers"] = data.Transfers.ValueString()
+		params["transfers"] = data.Transfers.ValueInt64()
 	}
 	params["direction"] = data.Direction.ValueString()
 	params["transfer_mode"] = data.TransferMode.ValueString()
@@ -280,7 +280,7 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 		params["enabled"] = data.Enabled.ValueBool()
 	}
 	if !data.Transfers.IsNull() {
-		params["transfers"] = data.Transfers.ValueString()
+		params["transfers"] = data.Transfers.ValueInt64()
 	}
 	params["direction"] = data.Direction.ValueString()
 	params["transfer_mode"] = data.TransferMode.ValueString()

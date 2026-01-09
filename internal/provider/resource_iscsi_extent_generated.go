@@ -25,7 +25,7 @@ type IscsiExtentResourceModel struct {
 	Filesize types.String `tfsdk:"filesize"`
 	Blocksize types.Int64 `tfsdk:"blocksize"`
 	Pblocksize types.Bool `tfsdk:"pblocksize"`
-	AvailThreshold types.String `tfsdk:"avail_threshold"`
+	AvailThreshold types.Int64 `tfsdk:"avail_threshold"`
 	Comment types.String `tfsdk:"comment"`
 	InsecureTpc types.Bool `tfsdk:"insecure_tpc"`
 	Xen types.Bool `tfsdk:"xen"`
@@ -82,7 +82,7 @@ func (r *IscsiExtentResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"avail_threshold": schema.StringAttribute{
+			"avail_threshold": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -161,7 +161,7 @@ func (r *IscsiExtentResource) Create(ctx context.Context, req resource.CreateReq
 		params["pblocksize"] = data.Pblocksize.ValueBool()
 	}
 	if !data.AvailThreshold.IsNull() {
-		params["avail_threshold"] = data.AvailThreshold.ValueString()
+		params["avail_threshold"] = data.AvailThreshold.ValueInt64()
 	}
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()
@@ -260,7 +260,7 @@ func (r *IscsiExtentResource) Update(ctx context.Context, req resource.UpdateReq
 		params["pblocksize"] = data.Pblocksize.ValueBool()
 	}
 	if !data.AvailThreshold.IsNull() {
-		params["avail_threshold"] = data.AvailThreshold.ValueString()
+		params["avail_threshold"] = data.AvailThreshold.ValueInt64()
 	}
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()

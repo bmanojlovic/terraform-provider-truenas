@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -74,7 +75,12 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 
 	params := map[string]interface{}{}
 	params["enabled"] = data.Enabled.ValueBool()
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["name"] = data.Name.ValueString()
 
 	result, err := r.client.Call("reporting.exporters.create", params)
@@ -130,7 +136,12 @@ func (r *ReportingExportersResource) Update(ctx context.Context, req resource.Up
 
 	params := map[string]interface{}{}
 	params["enabled"] = data.Enabled.ValueBool()
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["name"] = data.Name.ValueString()
 
 	// Convert string ID to integer for TrueNAS API

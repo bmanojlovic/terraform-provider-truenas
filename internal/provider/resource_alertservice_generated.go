@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -79,7 +80,12 @@ func (r *AlertserviceResource) Create(ctx context.Context, req resource.CreateRe
 
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["level"] = data.Level.ValueString()
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
@@ -138,7 +144,12 @@ func (r *AlertserviceResource) Update(ctx context.Context, req resource.UpdateRe
 
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
-	params["attributes"] = data.Attributes.ValueString()
+	var attributesMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
+		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+		return
+	}
+	params["attributes"] = attributesMap
 	params["level"] = data.Level.ValueString()
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()

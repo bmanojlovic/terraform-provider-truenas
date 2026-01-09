@@ -34,7 +34,7 @@ type CloudBackupResourceModel struct {
 	TransferSetting types.String `tfsdk:"transfer_setting"`
 	AbsolutePaths types.Bool `tfsdk:"absolute_paths"`
 	CachePath types.String `tfsdk:"cache_path"`
-	RateLimit types.String `tfsdk:"rate_limit"`
+	RateLimit types.Int64 `tfsdk:"rate_limit"`
 }
 
 func NewCloudBackupResource() resource.Resource {
@@ -114,7 +114,7 @@ func (r *CloudBackupResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 			},
-			"rate_limit": schema.StringAttribute{
+			"rate_limit": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
 			},
@@ -174,7 +174,7 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 		params["cache_path"] = data.CachePath.ValueString()
 	}
 	if !data.RateLimit.IsNull() {
-		params["rate_limit"] = data.RateLimit.ValueString()
+		params["rate_limit"] = data.RateLimit.ValueInt64()
 	}
 
 	result, err := r.client.Call("cloud_backup.create", params)
@@ -261,7 +261,7 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 		params["cache_path"] = data.CachePath.ValueString()
 	}
 	if !data.RateLimit.IsNull() {
-		params["rate_limit"] = data.RateLimit.ValueString()
+		params["rate_limit"] = data.RateLimit.ValueInt64()
 	}
 
 	// Convert string ID to integer for TrueNAS API
