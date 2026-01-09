@@ -14,6 +14,7 @@ GO_RESOURCE_WITH_JSON_TEMPLATE = (TEMPLATE_DIR / 'resource_with_json.go.tmpl').r
 GO_RESOURCE_VM_DEVICE_TEMPLATE = (TEMPLATE_DIR / 'resource_vm_device.go.tmpl').read_text()
 GO_RESOURCE_UPDATE_ONLY_TEMPLATE = (TEMPLATE_DIR / 'resource_update_only.go.tmpl').read_text()
 ACTION_RESOURCE_TEMPLATE = (TEMPLATE_DIR / 'action_resource.go.tmpl').read_text()
+ACTION_FILE_UPLOAD_TEMPLATE = (TEMPLATE_DIR / 'action_file_upload.go.tmpl').read_text()
 RESOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / 'resource_doc.md.tmpl').read_text()
 DATASOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / 'datasource_doc.md.tmpl').read_text()
 PROVIDER_DOC = (TEMPLATE_DIR / 'provider_doc.md.tmpl').read_text()
@@ -379,8 +380,11 @@ def generate_resource(name, path, schema, spec, update_only=False):
             ReadMapping=chr(10).join(read_mapping) if read_mapping else '\t\t// No fields to map'
         )
     else:
+        # Special template for filesystem.put (file upload)
+        if api_name == 'filesystem.put':
+            template = ACTION_FILE_UPLOAD_TEMPLATE
         # Special template for vm_device (needs VM stop before delete)
-        if api_name == 'vm.device':
+        elif api_name == 'vm.device':
             template = GO_RESOURCE_VM_DEVICE_TEMPLATE
         else:
             template = GO_RESOURCE_WITH_JSON_TEMPLATE if needs_json else GO_RESOURCE_TEMPLATE
@@ -630,6 +634,9 @@ def main():
                 Path(f'docs/resources/{resource_name.lower()}.md').write_text(doc)
                 
                 resources.append(resource_name)
+    
+    # Add manually created resources
+    resources.append('filesystem_put')
     
     # Output summary
     print(f"\nGenerated {len(resources)} resources (including action resources)")

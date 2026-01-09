@@ -1,9 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"sync"
@@ -13,12 +17,13 @@ import (
 )
 
 type Client struct {
-	host     string
-	token    string
-	conn     *websocket.Conn
-	mu       sync.Mutex
-	requests map[string]chan DDPResponse
-	nextID   int
+	host       string
+	token      string
+	conn       *websocket.Conn
+	httpClient *http.Client
+	mu         sync.Mutex
+	requests   map[string]chan DDPResponse
+	nextID     int
 }
 
 type DDPMessage struct {
@@ -43,6 +48,12 @@ func NewClient(host, token string) (*Client, error) {
 		host:     host,
 		token:    token,
 		requests: make(map[string]chan DDPResponse),
+		httpClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Timeout: 30 * time.Second,
+		},
 	}, nil
 }
 
@@ -180,6 +191,67 @@ func (c *Client) Call(method string, params interface{}) (interface{}, error) {
 	}
 	
 	return response.Result, nil
+}
+
+// UploadFile performs a multipart file upload to the specified endpoint
+func (c *Client) UploadFile(endpoint string, jsonData map[string]interface{}, fileContent []byte, filename string) (interface{}, error) {
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	
+	// Add JSON data part
+	jsonBytes, err := json.Marshal(jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON data: %v", err)
+	}
+	if err := writer.WriteField("data", string(jsonBytes)); err != nil {
+		return nil, fmt.Errorf("failed to write data field: %v", err)
+	}
+	
+	// Add file part
+	part, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %v", err)
+	}
+	if _, err := io.Copy(part, bytes.NewReader(fileContent)); err != nil {
+		return nil, fmt.Errorf("failed to write file content: %v", err)
+	}
+	
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %v", err)
+	}
+	
+	// Create HTTP request
+	url := fmt.Sprintf("https://%s%s", c.host, endpoint)
+	req, err := http.NewRequest("POST", url, &buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+	
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	
+	// Execute request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %v", err)
+	}
+	defer resp.Body.Close()
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %v", err)
+	}
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+	
+	var result interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+	
+	return result, nil
 }
 
 func (c *Client) Close() error {
