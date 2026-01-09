@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -189,7 +190,13 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		startOnCreate = data.StartOnCreate.ValueBool()
 	}
 	if startOnCreate {
-		_, err = r.client.Call("virt/instance.start", data.ID.ValueString())
+		// Convert string ID to integer for TrueNAS API
+		vmID, err := strconv.Atoi(data.ID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+			return
+		}
+		_, err = r.client.Call("virt/instance.start", vmID)
 		if err != nil {
 			resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 		}

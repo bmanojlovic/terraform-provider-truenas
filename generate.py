@@ -228,7 +228,13 @@ def generate_resource(name, path, schema, spec):
 \t\tstartOnCreate = data.StartOnCreate.ValueBool()
 \t}}
 \tif startOnCreate {{
-\t\t_, err = r.client.Call("{api_name}.start", data.ID.ValueString())
+\t\t// Convert string ID to integer for TrueNAS API
+\t\tvmID, err := strconv.Atoi(data.ID.ValueString())
+\t\tif err != nil {{
+\t\t\tresp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+\t\t\treturn
+\t\t}}
+\t\t_, err = r.client.Call("{api_name}.start", vmID)
 \t\tif err != nil {{
 \t\t\tresp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 \t\t}}
@@ -241,7 +247,8 @@ def generate_resource(name, path, schema, spec):
         fields=chr(10).join(fields),
         schema_attrs=chr(10).join(schema_attrs),
         create_params=chr(10).join(create_params),
-        lifecycle_code=lifecycle_code
+        lifecycle_code=lifecycle_code,
+        strconv_import='\t"strconv"' if has_start else ''
     )
 
 
@@ -471,6 +478,7 @@ GO_RESOURCE_TEMPLATE = '''package provider
 import (
 \t"context"
 \t"fmt"
+{strconv_import}
 
 \t"github.com/hashicorp/terraform-plugin-framework/resource"
 \t"github.com/hashicorp/terraform-plugin-framework/resource/schema"
