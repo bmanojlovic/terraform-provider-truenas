@@ -193,7 +193,7 @@ def generate_resource(name, path, schema, spec):
     # Add start_on_create field if resource has start action
     if has_start:
         fields.append('\tStartOnCreate types.Bool `tfsdk:"start_on_create"`')
-        schema_attrs.append('\t\t\t"start_on_create": schema.BoolAttribute{\n\t\t\t\tOptional: true,\n\t\t\t\tComputed: true,\n\t\t\t\tDescription: "Automatically start after creation (default: true)",\n\t\t\t},')
+        schema_attrs.append('\t\t\t"start_on_create": schema.BoolAttribute{\n\t\t\t\tOptional: true,\n\t\t\t\tDescription: "Start the resource immediately after creation (default: true if not specified)",\n\t\t\t},')
     
     for prop_name, prop_spec in properties.items():
         if prop_name in ['uuid', 'id']:
@@ -223,7 +223,7 @@ def generate_resource(name, path, schema, spec):
     if has_start:
         lifecycle_code = f'''
 \t// Handle lifecycle action - start on create if requested
-\tstartOnCreate := true  // default
+\tstartOnCreate := true  // default when not specified
 \tif !data.StartOnCreate.IsNull() {{
 \t\tstartOnCreate = data.StartOnCreate.ValueBool()
 \t}}
@@ -232,10 +232,6 @@ def generate_resource(name, path, schema, spec):
 \t\tif err != nil {{
 \t\t\tresp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 \t\t}}
-\t}}
-\t// Set default for start_on_create if not specified
-\tif data.StartOnCreate.IsNull() {{
-\t\tdata.StartOnCreate = types.BoolValue(true)
 \t}}'''
     
     return GO_RESOURCE_TEMPLATE.format(
@@ -282,7 +278,7 @@ def generate_resource_docs(name, schema, spec, path):
     
     # Add start_on_create if resource has start action
     if has_start:
-        args.append('- `start_on_create` (Optional) - Automatically start after creation. Default: `true`. Type: `boolean`')
+        args.append('- `start_on_create` (Optional) - Start the resource immediately after creation. Default behavior: starts if not specified. Type: `boolean`')
     
     for prop_name, prop_spec in properties.items():
         if prop_name in ['uuid', 'id']:

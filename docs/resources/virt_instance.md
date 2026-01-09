@@ -33,7 +33,7 @@ resource "truenas_virt_instance" "example" {
 
 ### Optional
 
-- `start_on_create` (Optional) - Automatically start after creation. Default: `true`. Type: `boolean`
+- `start_on_create` (Optional) - Start the resource immediately after creation. Default behavior: starts if not specified. Type: `boolean`
 - `source_type` (Optional) - Source type for instance creation. Valid values: `IMAGE` Default: `IMAGE`. Type: `string`
 - `storage_pool` (Optional) - Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.global.config output under "storage_pools". If None (default) then the pool     specified in the global configuration will be used.. Type: `string`
 - `root_disk_size` (Optional) - This can be specified when creating VMs so the root device's size can be configured. Root device for VMs     is a sparse zvol and the field specifies space in GBs and defaults to 10 GBs. Default: `10`. Type: `integer`

@@ -33,7 +33,7 @@ resource "truenas_vm" "example" {
 
 ### Optional
 
-- `start_on_create` (Optional) - Automatically start after creation. Default: `true`. Type: `boolean`
+- `start_on_create` (Optional) - Start the resource immediately after creation. Default behavior: starts if not specified. Type: `boolean`
 - `command_line_args` (Optional) - Additional command line arguments passed to the VM hypervisor. Default: ``. Type: `string`
 - `cpu_mode` (Optional) - CPU virtualization mode.
 

@@ -63,8 +63,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 			"start_on_create": schema.BoolAttribute{
 				Optional: true,
-				Computed: true,
-				Description: "Automatically start after creation (default: true)",
+				Description: "Start the resource immediately after creation (default: true if not specified)",
 			},
 			"command_line_args": schema.StringAttribute{
 				Required: false,
@@ -289,7 +288,7 @@ func (r *VmResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	// Handle lifecycle action - start on create if requested
-	startOnCreate := true  // default
+	startOnCreate := true  // default when not specified
 	if !data.StartOnCreate.IsNull() {
 		startOnCreate = data.StartOnCreate.ValueBool()
 	}
@@ -298,10 +297,6 @@ func (r *VmResource) Create(ctx context.Context, req resource.CreateRequest, res
 		if err != nil {
 			resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 		}
-	}
-	// Set default for start_on_create if not specified
-	if data.StartOnCreate.IsNull() {
-		data.StartOnCreate = types.BoolValue(true)
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

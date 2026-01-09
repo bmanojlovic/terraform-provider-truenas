@@ -34,7 +34,7 @@ resource "truenas_app" "example" {
 
 ### Optional
 
-- `start_on_create` (Optional) - Automatically start after creation. Default: `true`. Type: `boolean`
+- `start_on_create` (Optional) - Start the resource immediately after creation. Default behavior: starts if not specified. Type: `boolean`
 - `custom_app` (Optional) - Whether to create a custom application (`true`) or install from catalog (`false`). Default: `False`. Type: `boolean`
 - `values` (Optional) - Configuration values for the application installation.. Type: `object`
 - `custom_compose_config` (Optional) - Docker Compose configuration as a structured object for custom applications.. Type: `object`

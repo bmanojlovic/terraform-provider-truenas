@@ -44,8 +44,7 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			},
 			"start_on_create": schema.BoolAttribute{
 				Optional: true,
-				Computed: true,
-				Description: "Automatically start after creation (default: true)",
+				Description: "Start the resource immediately after creation (default: true if not specified)",
 			},
 			"custom_app": schema.BoolAttribute{
 				Required: false,
@@ -133,7 +132,7 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	// Handle lifecycle action - start on create if requested
-	startOnCreate := true  // default
+	startOnCreate := true  // default when not specified
 	if !data.StartOnCreate.IsNull() {
 		startOnCreate = data.StartOnCreate.ValueBool()
 	}
@@ -142,10 +141,6 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		if err != nil {
 			resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 		}
-	}
-	// Set default for start_on_create if not specified
-	if data.StartOnCreate.IsNull() {
-		data.StartOnCreate = types.BoolValue(true)
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
