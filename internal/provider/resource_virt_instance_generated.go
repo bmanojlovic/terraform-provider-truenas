@@ -172,7 +172,7 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
 
-	result, err := r.client.Call("virt/instance.create", params)
+	result, err := r.client.Call("virt.instance.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -196,7 +196,7 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 			resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
 			return
 		}
-		_, err = r.client.Call("virt/instance.start", vmID)
+		_, err = r.client.Call("virt.instance.start", vmID)
 		if err != nil {
 			resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 		}
@@ -218,7 +218,7 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	_, err = r.client.Call("virt/instance.get_instance", resourceID)
+	_, err = r.client.Call("virt.instance.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -287,7 +287,7 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	_, err = r.client.Call("virt/instance.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("virt.instance.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -312,7 +312,7 @@ func (r *VirtInstanceResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	_, err = r.client.Call("virt/instance.delete", resourceID)
+	_, err = r.client.Call("virt.instance.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

@@ -128,7 +128,7 @@ func (r *SharingSmbResource) Create(ctx context.Context, req resource.CreateRequ
 		params["options"] = data.Options.ValueString()
 	}
 
-	result, err := r.client.Call("sharing/smb.create", params)
+	result, err := r.client.Call("sharing.smb.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -157,7 +157,7 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	_, err = r.client.Call("sharing/smb.get_instance", resourceID)
+	_, err = r.client.Call("sharing.smb.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -211,7 +211,7 @@ func (r *SharingSmbResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	_, err = r.client.Call("sharing/smb.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("sharing.smb.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -236,7 +236,7 @@ func (r *SharingSmbResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	_, err = r.client.Call("sharing/smb.delete", resourceID)
+	_, err = r.client.Call("sharing.smb.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

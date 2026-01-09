@@ -120,7 +120,6 @@ func (c *Client) call(method string, params interface{}) (*DDPResponse, error) {
 	id := fmt.Sprintf("req%d", c.nextID)
 	respChan := make(chan DDPResponse, 1)
 	c.requests[id] = respChan
-	c.mu.Unlock()
 	
 	msg := DDPMessage{
 		Msg:    "method",
@@ -130,11 +129,11 @@ func (c *Client) call(method string, params interface{}) (*DDPResponse, error) {
 	}
 	
 	if err := c.conn.WriteJSON(msg); err != nil {
-		c.mu.Lock()
 		delete(c.requests, id)
 		c.mu.Unlock()
 		return nil, fmt.Errorf("failed to send message: %v", err)
 	}
+	c.mu.Unlock()
 	
 	select {
 	case response := <-respChan:

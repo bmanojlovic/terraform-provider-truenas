@@ -90,7 +90,7 @@ func (r *PoolScrubResource) Create(ctx context.Context, req resource.CreateReque
 		params["enabled"] = data.Enabled.ValueBool()
 	}
 
-	result, err := r.client.Call("pool/scrub.create", params)
+	result, err := r.client.Call("pool.scrub.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -119,7 +119,7 @@ func (r *PoolScrubResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	_, err = r.client.Call("pool/scrub.get_instance", resourceID)
+	_, err = r.client.Call("pool.scrub.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -160,7 +160,7 @@ func (r *PoolScrubResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	_, err = r.client.Call("pool/scrub.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("pool.scrub.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -185,7 +185,7 @@ func (r *PoolScrubResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, err = r.client.Call("pool/scrub.delete", resourceID)
+	_, err = r.client.Call("pool.scrub.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

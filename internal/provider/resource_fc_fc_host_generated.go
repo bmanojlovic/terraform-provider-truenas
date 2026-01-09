@@ -89,7 +89,7 @@ func (r *FcFcHostResource) Create(ctx context.Context, req resource.CreateReques
 		params["npiv"] = data.Npiv.ValueInt64()
 	}
 
-	result, err := r.client.Call("fc/fc_host.create", params)
+	result, err := r.client.Call("fc.fc_host.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -118,7 +118,7 @@ func (r *FcFcHostResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	_, err = r.client.Call("fc/fc_host.get_instance", resourceID)
+	_, err = r.client.Call("fc.fc_host.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -159,7 +159,7 @@ func (r *FcFcHostResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	_, err = r.client.Call("fc/fc_host.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("fc.fc_host.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -184,7 +184,7 @@ func (r *FcFcHostResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	_, err = r.client.Call("fc/fc_host.delete", resourceID)
+	_, err = r.client.Call("fc.fc_host.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

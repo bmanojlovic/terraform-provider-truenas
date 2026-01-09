@@ -93,7 +93,7 @@ func (r *AppRegistryResource) Create(ctx context.Context, req resource.CreateReq
 		params["uri"] = data.Uri.ValueString()
 	}
 
-	result, err := r.client.Call("app/registry.create", params)
+	result, err := r.client.Call("app.registry.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -122,7 +122,7 @@ func (r *AppRegistryResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	_, err = r.client.Call("app/registry.get_instance", resourceID)
+	_, err = r.client.Call("app.registry.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -162,7 +162,7 @@ func (r *AppRegistryResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	_, err = r.client.Call("app/registry.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("app.registry.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -187,7 +187,7 @@ func (r *AppRegistryResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	_, err = r.client.Call("app/registry.delete", resourceID)
+	_, err = r.client.Call("app.registry.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

@@ -60,7 +60,7 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 	params := map[string]interface{}{}
 
 
-	result, err := r.client.Call("pool/dataset.create", params)
+	result, err := r.client.Call("pool.dataset.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -89,7 +89,7 @@ func (r *PoolDatasetResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	_, err = r.client.Call("pool/dataset.get_instance", resourceID)
+	_, err = r.client.Call("pool.dataset.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -121,7 +121,7 @@ func (r *PoolDatasetResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	_, err = r.client.Call("pool/dataset.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("pool.dataset.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -146,7 +146,7 @@ func (r *PoolDatasetResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	_, err = r.client.Call("pool/dataset.delete", resourceID)
+	_, err = r.client.Call("pool.dataset.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

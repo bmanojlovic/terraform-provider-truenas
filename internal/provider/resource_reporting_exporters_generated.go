@@ -77,7 +77,7 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 	params["attributes"] = data.Attributes.ValueString()
 	params["name"] = data.Name.ValueString()
 
-	result, err := r.client.Call("reporting/exporters.create", params)
+	result, err := r.client.Call("reporting.exporters.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -106,7 +106,7 @@ func (r *ReportingExportersResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	_, err = r.client.Call("reporting/exporters.get_instance", resourceID)
+	_, err = r.client.Call("reporting.exporters.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -140,7 +140,7 @@ func (r *ReportingExportersResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	_, err = r.client.Call("reporting/exporters.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("reporting.exporters.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -165,7 +165,7 @@ func (r *ReportingExportersResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	_, err = r.client.Call("reporting/exporters.delete", resourceID)
+	_, err = r.client.Call("reporting.exporters.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

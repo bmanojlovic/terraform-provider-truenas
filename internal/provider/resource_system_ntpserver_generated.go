@@ -113,7 +113,7 @@ func (r *SystemNtpserverResource) Create(ctx context.Context, req resource.Creat
 		params["force"] = data.Force.ValueBool()
 	}
 
-	result, err := r.client.Call("system/ntpserver.create", params)
+	result, err := r.client.Call("system.ntpserver.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -142,7 +142,7 @@ func (r *SystemNtpserverResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	_, err = r.client.Call("system/ntpserver.get_instance", resourceID)
+	_, err = r.client.Call("system.ntpserver.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -192,7 +192,7 @@ func (r *SystemNtpserverResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	_, err = r.client.Call("system/ntpserver.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("system.ntpserver.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -217,7 +217,7 @@ func (r *SystemNtpserverResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	_, err = r.client.Call("system/ntpserver.delete", resourceID)
+	_, err = r.client.Call("system.ntpserver.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

@@ -71,7 +71,7 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 	params["attributes"] = data.Attributes.ValueString()
 	params["name"] = data.Name.ValueString()
 
-	result, err := r.client.Call("acme/dns/authenticator.create", params)
+	result, err := r.client.Call("acme.dns.authenticator.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -100,7 +100,7 @@ func (r *AcmeDnsAuthenticatorResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	_, err = r.client.Call("acme/dns/authenticator.get_instance", resourceID)
+	_, err = r.client.Call("acme.dns.authenticator.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -133,7 +133,7 @@ func (r *AcmeDnsAuthenticatorResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	_, err = r.client.Call("acme/dns/authenticator.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("acme.dns.authenticator.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -158,7 +158,7 @@ func (r *AcmeDnsAuthenticatorResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	_, err = r.client.Call("acme/dns/authenticator.delete", resourceID)
+	_, err = r.client.Call("acme.dns.authenticator.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

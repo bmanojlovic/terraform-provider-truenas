@@ -71,7 +71,7 @@ func (r *KerberosKeytabResource) Create(ctx context.Context, req resource.Create
 	params["name"] = data.Name.ValueString()
 	params["file"] = data.File.ValueString()
 
-	result, err := r.client.Call("kerberos/keytab.create", params)
+	result, err := r.client.Call("kerberos.keytab.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -100,7 +100,7 @@ func (r *KerberosKeytabResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	_, err = r.client.Call("kerberos/keytab.get_instance", resourceID)
+	_, err = r.client.Call("kerberos.keytab.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -133,7 +133,7 @@ func (r *KerberosKeytabResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	_, err = r.client.Call("kerberos/keytab.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("kerberos.keytab.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -158,7 +158,7 @@ func (r *KerberosKeytabResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	_, err = r.client.Call("kerberos/keytab.delete", resourceID)
+	_, err = r.client.Call("kerberos.keytab.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

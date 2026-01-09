@@ -79,7 +79,7 @@ func (r *VmDeviceResource) Create(ctx context.Context, req resource.CreateReques
 		params["order"] = data.Order.ValueString()
 	}
 
-	result, err := r.client.Call("vm/device.create", params)
+	result, err := r.client.Call("vm.device.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -108,7 +108,7 @@ func (r *VmDeviceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	_, err = r.client.Call("vm/device.get_instance", resourceID)
+	_, err = r.client.Call("vm.device.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -144,7 +144,7 @@ func (r *VmDeviceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	_, err = r.client.Call("vm/device.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("vm.device.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -169,7 +169,7 @@ func (r *VmDeviceResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	_, err = r.client.Call("vm/device.delete", resourceID)
+	_, err = r.client.Call("vm.device.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

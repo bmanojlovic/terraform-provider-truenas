@@ -60,7 +60,7 @@ func (r *NvmetPortResource) Create(ctx context.Context, req resource.CreateReque
 	params := map[string]interface{}{}
 
 
-	result, err := r.client.Call("nvmet/port.create", params)
+	result, err := r.client.Call("nvmet.port.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -89,7 +89,7 @@ func (r *NvmetPortResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	_, err = r.client.Call("nvmet/port.get_instance", resourceID)
+	_, err = r.client.Call("nvmet.port.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -121,7 +121,7 @@ func (r *NvmetPortResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	_, err = r.client.Call("nvmet/port.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("nvmet.port.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -146,7 +146,7 @@ func (r *NvmetPortResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, err = r.client.Call("nvmet/port.delete", resourceID)
+	_, err = r.client.Call("nvmet.port.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

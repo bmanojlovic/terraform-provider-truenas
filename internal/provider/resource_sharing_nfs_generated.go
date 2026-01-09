@@ -153,7 +153,7 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 		params["expose_snapshots"] = data.ExposeSnapshots.ValueBool()
 	}
 
-	result, err := r.client.Call("sharing/nfs.create", params)
+	result, err := r.client.Call("sharing.nfs.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -182,7 +182,7 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	_, err = r.client.Call("sharing/nfs.get_instance", resourceID)
+	_, err = r.client.Call("sharing.nfs.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -238,7 +238,7 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	_, err = r.client.Call("sharing/nfs.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("sharing.nfs.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -263,7 +263,7 @@ func (r *SharingNfsResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	_, err = r.client.Call("sharing/nfs.delete", resourceID)
+	_, err = r.client.Call("sharing.nfs.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

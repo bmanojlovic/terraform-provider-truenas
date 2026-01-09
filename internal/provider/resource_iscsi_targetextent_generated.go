@@ -79,7 +79,7 @@ func (r *IscsiTargetextentResource) Create(ctx context.Context, req resource.Cre
 	}
 	params["extent"] = data.Extent.ValueInt64()
 
-	result, err := r.client.Call("iscsi/targetextent.create", params)
+	result, err := r.client.Call("iscsi.targetextent.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -108,7 +108,7 @@ func (r *IscsiTargetextentResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	_, err = r.client.Call("iscsi/targetextent.get_instance", resourceID)
+	_, err = r.client.Call("iscsi.targetextent.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -144,7 +144,7 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	_, err = r.client.Call("iscsi/targetextent.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("iscsi.targetextent.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -169,7 +169,7 @@ func (r *IscsiTargetextentResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	_, err = r.client.Call("iscsi/targetextent.delete", resourceID)
+	_, err = r.client.Call("iscsi.targetextent.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

@@ -73,7 +73,7 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 		params["comment"] = data.Comment.ValueString()
 	}
 
-	result, err := r.client.Call("iscsi/initiator.create", params)
+	result, err := r.client.Call("iscsi.initiator.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -102,7 +102,7 @@ func (r *IscsiInitiatorResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	_, err = r.client.Call("iscsi/initiator.get_instance", resourceID)
+	_, err = r.client.Call("iscsi.initiator.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -136,7 +136,7 @@ func (r *IscsiInitiatorResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	_, err = r.client.Call("iscsi/initiator.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("iscsi.initiator.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -161,7 +161,7 @@ func (r *IscsiInitiatorResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	_, err = r.client.Call("iscsi/initiator.delete", resourceID)
+	_, err = r.client.Call("iscsi.initiator.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

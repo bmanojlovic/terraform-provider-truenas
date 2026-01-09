@@ -73,7 +73,7 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 		params["comment"] = data.Comment.ValueString()
 	}
 
-	result, err := r.client.Call("iscsi/portal.create", params)
+	result, err := r.client.Call("iscsi.portal.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -102,7 +102,7 @@ func (r *IscsiPortalResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	_, err = r.client.Call("iscsi/portal.get_instance", resourceID)
+	_, err = r.client.Call("iscsi.portal.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -136,7 +136,7 @@ func (r *IscsiPortalResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	_, err = r.client.Call("iscsi/portal.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("iscsi.portal.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -161,7 +161,7 @@ func (r *IscsiPortalResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	_, err = r.client.Call("iscsi/portal.delete", resourceID)
+	_, err = r.client.Call("iscsi.portal.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

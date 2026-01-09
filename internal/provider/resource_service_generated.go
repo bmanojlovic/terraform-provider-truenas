@@ -2,9 +2,9 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -73,17 +73,17 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// Perform update with provided configuration
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
 	params := map[string]interface{}{}
 	params["enable"] = data.Enable.ValueBool()
 
-	_, err = r.client.Call("service.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("service.update", []interface{}{id, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -99,13 +99,14 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
-	result, err := r.client.Call("service.get_instance", []interface{}{resourceID})
+	result, err := r.client.Call("service.get_instance", id)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -123,16 +124,17 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
 	params := map[string]interface{}{}
 	params["enable"] = data.Enable.ValueBool()
 
-	_, err = r.client.Call("service.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("service.update", []interface{}{id, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -143,4 +145,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// Update-only resource: just remove from state, don't delete on server
+}
+
+func (r *ServiceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import by ID (e.g., "ssh" for SSH service)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 }

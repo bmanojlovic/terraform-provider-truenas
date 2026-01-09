@@ -85,7 +85,7 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 		params["comment"] = data.Comment.ValueString()
 	}
 
-	result, err := r.client.Call("filesystem/acltemplate.create", params)
+	result, err := r.client.Call("filesystem.acltemplate.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -114,7 +114,7 @@ func (r *FilesystemAcltemplateResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	_, err = r.client.Call("filesystem/acltemplate.get_instance", resourceID)
+	_, err = r.client.Call("filesystem.acltemplate.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -151,7 +151,7 @@ func (r *FilesystemAcltemplateResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	_, err = r.client.Call("filesystem/acltemplate.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("filesystem.acltemplate.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -176,7 +176,7 @@ func (r *FilesystemAcltemplateResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	_, err = r.client.Call("filesystem/acltemplate.delete", resourceID)
+	_, err = r.client.Call("filesystem.acltemplate.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

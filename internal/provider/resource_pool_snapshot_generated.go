@@ -60,7 +60,7 @@ func (r *PoolSnapshotResource) Create(ctx context.Context, req resource.CreateRe
 	params := map[string]interface{}{}
 
 
-	result, err := r.client.Call("pool/snapshot.create", params)
+	result, err := r.client.Call("pool.snapshot.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -89,7 +89,7 @@ func (r *PoolSnapshotResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	_, err = r.client.Call("pool/snapshot.get_instance", resourceID)
+	_, err = r.client.Call("pool.snapshot.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -121,7 +121,7 @@ func (r *PoolSnapshotResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	_, err = r.client.Call("pool/snapshot.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("pool.snapshot.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -146,7 +146,7 @@ func (r *PoolSnapshotResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	_, err = r.client.Call("pool/snapshot.delete", resourceID)
+	_, err = r.client.Call("pool.snapshot.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

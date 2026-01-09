@@ -101,7 +101,7 @@ func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.Create
 	}
 	params["subsys_id"] = data.SubsysId.ValueInt64()
 
-	result, err := r.client.Call("nvmet/namespace.create", params)
+	result, err := r.client.Call("nvmet.namespace.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -130,7 +130,7 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	_, err = r.client.Call("nvmet/namespace.get_instance", resourceID)
+	_, err = r.client.Call("nvmet.namespace.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -173,7 +173,7 @@ func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	_, err = r.client.Call("nvmet/namespace.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("nvmet.namespace.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -198,7 +198,7 @@ func (r *NvmetNamespaceResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	_, err = r.client.Call("nvmet/namespace.delete", resourceID)
+	_, err = r.client.Call("nvmet.namespace.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

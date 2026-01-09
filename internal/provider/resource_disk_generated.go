@@ -2,9 +2,9 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -108,10 +108,10 @@ func (r *DiskResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// Perform update with provided configuration
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
@@ -144,7 +144,7 @@ func (r *DiskResource) Create(ctx context.Context, req resource.CreateRequest, r
 		params["passwd"] = data.Passwd.ValueString()
 	}
 
-	_, err = r.client.Call("disk.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("disk.update", []interface{}{id, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -160,13 +160,14 @@ func (r *DiskResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
-	result, err := r.client.Call("disk.get_instance", []interface{}{resourceID})
+	result, err := r.client.Call("disk.get_instance", id)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -184,9 +185,10 @@ func (r *DiskResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	// Convert string ID to integer for API call
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("ID must be a valid integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", "ID must be a valid integer")
 		return
 	}
 
@@ -219,7 +221,7 @@ func (r *DiskResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		params["passwd"] = data.Passwd.ValueString()
 	}
 
-	_, err = r.client.Call("disk.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("disk.update", []interface{}{id, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -230,4 +232,9 @@ func (r *DiskResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 func (r *DiskResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// Update-only resource: just remove from state, don't delete on server
+}
+
+func (r *DiskResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import by ID (e.g., "ssh" for SSH service)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 }

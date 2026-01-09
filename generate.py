@@ -276,7 +276,7 @@ def generate_resource(name, path, schema, spec, update_only=False):
                 create_params.append(f'\tif !data.{go_name}.IsNull() {{\n\t\tparams["{prop_name}"] = data.{go_name}.{method}()\n\t}}')
     
     resource_name = name.replace('/', '_').replace('-', '_').title().replace('_', '')
-    api_name = path.strip('/')
+    api_name = path.strip('/').replace('/', '.')
     
     # Generate lifecycle action code
     lifecycle_code = ''

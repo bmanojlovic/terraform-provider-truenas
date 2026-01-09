@@ -101,7 +101,7 @@ func (r *IscsiAuthResource) Create(ctx context.Context, req resource.CreateReque
 		params["discovery_auth"] = data.DiscoveryAuth.ValueString()
 	}
 
-	result, err := r.client.Call("iscsi/auth.create", params)
+	result, err := r.client.Call("iscsi.auth.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -130,7 +130,7 @@ func (r *IscsiAuthResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	_, err = r.client.Call("iscsi/auth.get_instance", resourceID)
+	_, err = r.client.Call("iscsi.auth.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -173,7 +173,7 @@ func (r *IscsiAuthResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	_, err = r.client.Call("iscsi/auth.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("iscsi.auth.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -198,7 +198,7 @@ func (r *IscsiAuthResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, err = r.client.Call("iscsi/auth.delete", resourceID)
+	_, err = r.client.Call("iscsi.auth.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

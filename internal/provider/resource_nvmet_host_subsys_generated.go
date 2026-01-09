@@ -71,7 +71,7 @@ func (r *NvmetHostSubsysResource) Create(ctx context.Context, req resource.Creat
 	params["host_id"] = data.HostId.ValueInt64()
 	params["subsys_id"] = data.SubsysId.ValueInt64()
 
-	result, err := r.client.Call("nvmet/host_subsys.create", params)
+	result, err := r.client.Call("nvmet.host_subsys.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -100,7 +100,7 @@ func (r *NvmetHostSubsysResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host_subsys.get_instance", resourceID)
+	_, err = r.client.Call("nvmet.host_subsys.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -133,7 +133,7 @@ func (r *NvmetHostSubsysResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host_subsys.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("nvmet.host_subsys.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -158,7 +158,7 @@ func (r *NvmetHostSubsysResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host_subsys.delete", resourceID)
+	_, err = r.client.Call("nvmet.host_subsys.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

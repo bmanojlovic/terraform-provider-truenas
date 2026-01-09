@@ -97,7 +97,7 @@ func (r *NvmetHostResource) Create(ctx context.Context, req resource.CreateReque
 		params["dhchap_hash"] = data.DhchapHash.ValueString()
 	}
 
-	result, err := r.client.Call("nvmet/host.create", params)
+	result, err := r.client.Call("nvmet.host.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -126,7 +126,7 @@ func (r *NvmetHostResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host.get_instance", resourceID)
+	_, err = r.client.Call("nvmet.host.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -170,7 +170,7 @@ func (r *NvmetHostResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("nvmet.host.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -195,7 +195,7 @@ func (r *NvmetHostResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, err = r.client.Call("nvmet/host.delete", resourceID)
+	_, err = r.client.Call("nvmet.host.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

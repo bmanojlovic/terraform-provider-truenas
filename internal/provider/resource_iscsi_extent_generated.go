@@ -185,7 +185,7 @@ func (r *IscsiExtentResource) Create(ctx context.Context, req resource.CreateReq
 		params["product_id"] = data.ProductId.ValueString()
 	}
 
-	result, err := r.client.Call("iscsi/extent.create", params)
+	result, err := r.client.Call("iscsi.extent.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -214,7 +214,7 @@ func (r *IscsiExtentResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	_, err = r.client.Call("iscsi/extent.get_instance", resourceID)
+	_, err = r.client.Call("iscsi.extent.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -291,7 +291,7 @@ func (r *IscsiExtentResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	_, err = r.client.Call("iscsi/extent.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("iscsi.extent.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -316,7 +316,7 @@ func (r *IscsiExtentResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	_, err = r.client.Call("iscsi/extent.delete", resourceID)
+	_, err = r.client.Call("iscsi.extent.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

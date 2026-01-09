@@ -89,7 +89,7 @@ func (r *VirtVolumeResource) Create(ctx context.Context, req resource.CreateRequ
 		params["storage_pool"] = data.StoragePool.ValueString()
 	}
 
-	result, err := r.client.Call("virt/volume.create", params)
+	result, err := r.client.Call("virt.volume.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -118,7 +118,7 @@ func (r *VirtVolumeResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	_, err = r.client.Call("virt/volume.get_instance", resourceID)
+	_, err = r.client.Call("virt.volume.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -159,7 +159,7 @@ func (r *VirtVolumeResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	_, err = r.client.Call("virt/volume.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("virt.volume.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -184,7 +184,7 @@ func (r *VirtVolumeResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	_, err = r.client.Call("virt/volume.delete", resourceID)
+	_, err = r.client.Call("virt.volume.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

@@ -65,7 +65,7 @@ func (r *CloudsyncCredentialsResource) Create(ctx context.Context, req resource.
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
 
-	result, err := r.client.Call("cloudsync/credentials.create", params)
+	result, err := r.client.Call("cloudsync.credentials.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -94,7 +94,7 @@ func (r *CloudsyncCredentialsResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	_, err = r.client.Call("cloudsync/credentials.get_instance", resourceID)
+	_, err = r.client.Call("cloudsync.credentials.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -126,7 +126,7 @@ func (r *CloudsyncCredentialsResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	_, err = r.client.Call("cloudsync/credentials.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("cloudsync.credentials.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -151,7 +151,7 @@ func (r *CloudsyncCredentialsResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	_, err = r.client.Call("cloudsync/credentials.delete", resourceID)
+	_, err = r.client.Call("cloudsync.credentials.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

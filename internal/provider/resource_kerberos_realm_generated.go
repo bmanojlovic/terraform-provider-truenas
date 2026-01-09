@@ -91,7 +91,7 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
 
-	result, err := r.client.Call("kerberos/realm.create", params)
+	result, err := r.client.Call("kerberos.realm.create", params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -120,7 +120,7 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	_, err = r.client.Call("kerberos/realm.get_instance", resourceID)
+	_, err = r.client.Call("kerberos.realm.get_instance", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -155,7 +155,7 @@ func (r *KerberosRealmResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	_, err = r.client.Call("kerberos/realm.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("kerberos.realm.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -180,7 +180,7 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	_, err = r.client.Call("kerberos/realm.delete", resourceID)
+	_, err = r.client.Call("kerberos.realm.delete", resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
