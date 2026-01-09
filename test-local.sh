@@ -23,8 +23,19 @@ export TF_ACC=1
 echo "Running acceptance tests against TrueNAS at $TRUENAS_HOST"
 echo "=================================================="
 
-# Run all acceptance tests
-go test ./internal/provider -v -run TestAcc
+# Run acceptance tests one at a time with delays to avoid rate limiting
+for test in TestAccVmResource_basic TestAccVmResource_update TestAccVmResource_startOnCreate; do
+    echo ""
+    echo "Running $test..."
+    go test ./internal/provider -v -run "^${test}$" -timeout 5m
+    if [ $? -eq 0 ]; then
+        echo "✓ $test passed"
+    else
+        echo "✗ $test failed"
+    fi
+    echo "Waiting 5 seconds to avoid rate limiting..."
+    sleep 5
+done
 
 echo ""
 echo "=================================================="
