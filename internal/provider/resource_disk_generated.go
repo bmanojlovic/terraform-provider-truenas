@@ -167,7 +167,34 @@ func (r *DiskResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	_ = result // TODO: Map result to data fields
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if val, ok := resultMap["number"]; ok && val != nil {
+			if intVal, ok := val.(float64); ok {
+				data.Number = types.Int64Value(int64(intVal))
+			}
+		}
+		if val, ok := resultMap["lunid"]; ok && val != nil {
+			data.Lunid = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["description"]; ok && val != nil {
+			data.Description = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["hddstandby"]; ok && val != nil {
+			data.Hddstandby = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["advpowermgmt"]; ok && val != nil {
+			data.Advpowermgmt = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["bus"]; ok && val != nil {
+			data.Bus = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["pool"]; ok && val != nil {
+			data.Pool = types.StringValue(fmt.Sprintf("%v", val))
+		}
+		if val, ok := resultMap["passwd"]; ok && val != nil {
+			data.Passwd = types.StringValue(fmt.Sprintf("%v", val))
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

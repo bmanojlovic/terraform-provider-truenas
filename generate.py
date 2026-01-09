@@ -310,6 +310,40 @@ def generate_resource(name, path, schema, spec, update_only=False):
     # Check if we need json import
     needs_json = any('json.Unmarshal' in p for p in create_params)
     
+    # Generate read mapping for update-only resources
+    read_mapping = []
+    for prop_name, prop_spec in properties.items():
+        if prop_name in ['uuid', 'id', 'provider']:
+            continue
+        
+        normalized_name = prop_name.lower().replace('-', '_')
+        go_name = ''.join(w.capitalize() for w in normalized_name.split('_'))
+        
+        # Detect type
+        prop_type = prop_spec.get('type')
+        if not prop_type:
+            any_of = prop_spec.get('anyOf', [])
+            one_of = prop_spec.get('oneOf', [])
+            types_list = any_of or one_of
+            if types_list:
+                for t in types_list:
+                    if t.get('type') and t.get('type') != 'null':
+                        prop_type = t.get('type')
+                        break
+        if not prop_type:
+            prop_type = 'string'
+        
+        go_type = TYPE_MAP.get(prop_type, 'String')
+        
+        if go_type == 'String':
+            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tdata.{go_name} = types.StringValue(fmt.Sprintf("%v", val))\n\t\t}}')
+        elif go_type == 'Int64':
+            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif intVal, ok := val.(float64); ok {{\n\t\t\t\tdata.{go_name} = types.Int64Value(int64(intVal))\n\t\t\t}}\n\t\t}}')
+        elif go_type == 'Bool':
+            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif boolVal, ok := val.(bool); ok {{\n\t\t\t\tdata.{go_name} = types.BoolValue(boolVal)\n\t\t\t}}\n\t\t}}')
+        elif go_type == 'Float64':
+            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif floatVal, ok := val.(float64); ok {{\n\t\t\t\tdata.{go_name} = types.Float64Value(floatVal)\n\t\t\t}}\n\t\t}}')
+    
     # Generate lifecycle action code
     lifecycle_code = ''
     if has_start:
@@ -341,7 +375,7 @@ def generate_resource(name, path, schema, spec, update_only=False):
             SchemaAttributes=chr(10).join(schema_attrs),
             CreateParams=chr(10).join(create_params),
             UpdateParams=chr(10).join(create_params),
-            ReadMapping=''
+            ReadMapping=chr(10).join(read_mapping) if read_mapping else '\t\t// No fields to map'
         )
     else:
         template = GO_RESOURCE_WITH_JSON_TEMPLATE if needs_json else GO_RESOURCE_TEMPLATE

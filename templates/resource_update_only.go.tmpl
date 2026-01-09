@@ -101,7 +101,9 @@ func (r *{ResourceType}Resource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}}
 
-	_ = result // TODO: Map result to data fields
+	if resultMap, ok := result.(map[string]interface{{}}); ok {{
+{ReadMapping}
+	}}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }}

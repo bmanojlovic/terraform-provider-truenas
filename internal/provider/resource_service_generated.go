@@ -113,7 +113,13 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	_ = result // TODO: Map result to data fields
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if val, ok := resultMap["enable"]; ok && val != nil {
+			if boolVal, ok := val.(bool); ok {
+				data.Enable = types.BoolValue(boolVal)
+			}
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
