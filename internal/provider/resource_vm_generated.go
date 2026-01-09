@@ -330,6 +330,13 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		return
 	}
 
+	// Get ID from current state (not plan)
+	var state VmResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	params := map[string]interface{}{}
 	if !data.CommandLineArgs.IsNull() {
 		params["command_line_args"] = data.CommandLineArgs.ValueString()
@@ -409,11 +416,21 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		params["enable_secure_boot"] = data.EnableSecureBoot.ValueBool()
 	}
 
-	_, err := r.client.Call("vm.update", []interface{}{data.ID.ValueString(), params})
+	// Convert string ID to integer for TrueNAS API
+	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		return
+	}
+
+	_, err = r.client.Call("vm.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
+	
+	// Preserve the ID in the new state
+	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

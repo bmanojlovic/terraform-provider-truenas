@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -160,6 +160,13 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
+	// Get ID from current state (not plan)
+	var state PoolSnapshottaskResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	params := map[string]interface{}{}
 	params["dataset"] = data.Dataset.ValueString()
 	if !data.Recursive.IsNull() {
@@ -181,11 +188,21 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		params["allow_empty"] = data.AllowEmpty.ValueBool()
 	}
 
-	_, err := r.client.Call("pool/snapshottask.update", []interface{}{data.ID.ValueString(), params})
+	// Convert string ID to integer for TrueNAS API
+	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		return
+	}
+
+	_, err = r.client.Call("pool/snapshottask.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
+	
+	// Preserve the ID in the new state
+	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -116,6 +116,13 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	// Get ID from current state (not plan)
+	var state IscsiTargetextentResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	params := map[string]interface{}{}
 	params["target"] = data.Target.ValueInt64()
 	if !data.Lunid.IsNull() {
@@ -123,11 +130,21 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 	}
 	params["extent"] = data.Extent.ValueInt64()
 
-	_, err := r.client.Call("iscsi/targetextent.update", []interface{}{data.ID.ValueString(), params})
+	// Convert string ID to integer for TrueNAS API
+	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		return
+	}
+
+	_, err = r.client.Call("iscsi/targetextent.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
+	
+	// Preserve the ID in the new state
+	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

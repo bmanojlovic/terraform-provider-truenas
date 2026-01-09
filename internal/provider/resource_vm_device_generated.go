@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -116,6 +116,13 @@ func (r *VmDeviceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
+	// Get ID from current state (not plan)
+	var state VmDeviceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	params := map[string]interface{}{}
 	params["attributes"] = data.Attributes.ValueString()
 	params["vm"] = data.Vm.ValueInt64()
@@ -123,11 +130,21 @@ func (r *VmDeviceResource) Update(ctx context.Context, req resource.UpdateReques
 		params["order"] = data.Order.ValueString()
 	}
 
-	_, err := r.client.Call("vm/device.update", []interface{}{data.ID.ValueString(), params})
+	// Convert string ID to integer for TrueNAS API
+	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		return
+	}
+
+	_, err = r.client.Call("vm/device.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
+	
+	// Preserve the ID in the new state
+	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

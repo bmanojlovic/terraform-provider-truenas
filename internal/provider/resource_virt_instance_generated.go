@@ -226,6 +226,13 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	// Get ID from current state (not plan)
+	var state VirtInstanceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	params := map[string]interface{}{}
 	params["name"] = data.Name.ValueString()
 	if !data.SourceType.IsNull() {
@@ -266,11 +273,21 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
 
-	_, err := r.client.Call("virt/instance.update", []interface{}{data.ID.ValueString(), params})
+	// Convert string ID to integer for TrueNAS API
+	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		return
+	}
+
+	_, err = r.client.Call("virt/instance.update", []interface{}{resourceID, params})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
+	
+	// Preserve the ID in the new state
+	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
