@@ -2,22 +2,22 @@
 page_title: "truenas_vmware Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for creating a new VMware integration.
+  Create VMWare snapshot.
 ---
 
 # truenas_vmware (Resource)
 
-Configuration for creating a new VMware integration.
+Create VMWare snapshot.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_vmware" "example" {
-  datastore = "example-datastore"
-  filesystem = "example-filesystem"
-  hostname = "example-hostname"
-  username = "example-username"
-  password = "example-password"
+  datastore = "example-value"
+  filesystem = "example-value"
+  hostname = "example-value"
+  password = "example-value"
+  username = "example-value"
 }
 ```
 
@@ -25,11 +25,11 @@ resource "truenas_vmware" "example" {
 
 ### Required
 
-- `datastore` (Required) - Valid datastore name which exists on the VMWare host.. Type: `string`
-- `filesystem` (Required) - ZFS filesystem or dataset to use for VMware storage.. Type: `string`
-- `hostname` (Required) - Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cluster.. Type: `string`
-- `username` (Required) - Credentials used to authorize access to the VMWare host.. Type: `string`
-- `password` (Required) - Password for VMware host authentication.. Type: `string`
+- `datastore` (String) - Valid datastore name which exists on the VMWare host.
+- `filesystem` (String) - ZFS filesystem or dataset to use for VMware storage.
+- `hostname` (String) - Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cluster.
+- `password` (String) - Password for VMware host authentication.
+- `username` (String) - Credentials used to authorize access to the VMWare host.
 
 ### Optional
 

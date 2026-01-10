@@ -1,0 +1,108 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
+	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+)
+
+var _ datasource.DataSource = &{resource_name}DataSource{{}}
+
+func New{resource_name}DataSource() datasource.DataSource {{
+	return &{resource_name}DataSource{{}}
+}}
+
+type {resource_name}DataSource struct {{
+	client *client.Client
+}}
+
+type {resource_name}DataSourceModel struct {{
+	Items types.List `tfsdk:"items"`
+}}
+
+type {resource_name}ItemModel struct {{
+{fields}
+}}
+
+func (d *{resource_name}DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {{
+	resp.TypeName = req.ProviderTypeName + "_{name}"
+}}
+
+func (d *{resource_name}DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {{
+	resp.Schema = schema.Schema{{
+		Description: "{description}",
+		Attributes: map[string]schema.Attribute{{
+			"items": schema.ListNestedAttribute{{
+				Computed: true,
+				Description: "List of {name} resources",
+				NestedObject: schema.NestedAttributeObject{{
+					Attributes: map[string]schema.Attribute{{
+{schema_attrs}
+					}},
+				}},
+			}},
+		}},
+	}}
+}}
+
+func (d *{resource_name}DataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {{
+	if req.ProviderData == nil {{
+		return
+	}}
+	client, ok := req.ProviderData.(*client.Client)
+	if !ok {{
+		resp.Diagnostics.AddError("Unexpected Data Source Configure Type", fmt.Sprintf("Expected *client.Client, got: %T", req.ProviderData))
+		return
+	}}
+	d.client = client
+}}
+
+func (d *{resource_name}DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {{
+	var data {resource_name}DataSourceModel
+
+	// Call query method with empty filters to get all items
+	result, err := d.client.Call("{api_name}.query", []interface{{}}{{}})
+	if err != nil {{
+		resp.Diagnostics.AddError("API Error", fmt.Sprintf("Failed to query {name}: %s", err.Error()))
+		return
+	}}
+
+	resultList, ok := result.([]interface{{}})
+	if !ok {{
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response as list")
+		return
+	}}
+
+	// Convert results to items
+	items := make([]{resource_name}ItemModel, 0, len(resultList))
+	for _, item := range resultList {{
+		resultMap, ok := item.(map[string]interface{{}})
+		if !ok {{
+			continue
+		}}
+
+		itemModel := {resource_name}ItemModel{{}}
+{read_mapping}
+		items = append(items, itemModel)
+	}}
+
+	// Convert to types.List
+	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{{
+		AttrTypes: map[string]attr.Type{{
+{attr_types}
+		}},
+	}}, items)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {{
+		return
+	}}
+
+	data.Items = itemsValue
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}}

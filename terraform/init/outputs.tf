@@ -20,3 +20,28 @@ output "device_ids" {
     nic        = truenas_vm_device.nic.id
   }
 }
+
+
+
+
+# Data source outputs
+output "vm_lookup_name" {
+  description = "VM name from data source"
+  value       = data.truenas_vm.test_lookup.name
+}
+
+output "vm_lookup_memory" {
+  description = "VM memory from data source"
+  value       = data.truenas_vm.test_lookup.memory
+}
+
+# Query data source outputs
+output "all_vms_count" {
+  description = "Total number of VMs"
+  value       = length(data.truenas_vms.all.items)
+}
+
+output "all_vm_names" {
+  description = "Names of all VMs"
+  value       = [for vm in data.truenas_vms.all.items : vm.name]
+}

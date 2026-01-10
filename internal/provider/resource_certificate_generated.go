@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -36,11 +38,11 @@ type CertificateResourceModel struct {
 	State types.String `tfsdk:"state"`
 	DigestAlgorithm types.String `tfsdk:"digest_algorithm"`
 	San types.List `tfsdk:"san"`
-	CertExtensions types.Object `tfsdk:"cert_extensions"`
+	CertExtensions types.String `tfsdk:"cert_extensions"`
 	AcmeDirectoryUri types.String `tfsdk:"acme_directory_uri"`
 	CsrId types.Int64 `tfsdk:"csr_id"`
-	Tos types.Bool `tfsdk:"tos"`
-	DnsMapping types.Object `tfsdk:"dns_mapping"`
+	Tos types.String `tfsdk:"tos"`
+	DnsMapping types.String `tfsdk:"dns_mapping"`
 	RenewDays types.Int64 `tfsdk:"renew_days"`
 }
 
@@ -52,105 +54,140 @@ func (r *CertificateResource) Metadata(ctx context.Context, req resource.Metadat
 	resp.TypeName = req.ProviderTypeName + "_certificate"
 }
 
+func (r *CertificateResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *CertificateResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS certificate resource",
+		MarkdownDescription: "Create a new Certificate",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Certificate name.",
 			},
 			"create_type": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Type of certificate creation operation.",
 			},
 			"add_to_trusted_store": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to add this certificate to the trusted certificate store.",
 			},
 			"certificate": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "PEM-encoded certificate to import or `null`.",
 			},
 			"privatekey": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "PEM-encoded private key to import or `null`.",
 			},
 			"csr": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "PEM-encoded certificate signing request to import or `null`.",
 			},
 			"key_length": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "RSA key length in bits or `null`.",
 			},
 			"key_type": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Type of cryptographic key to generate.",
 			},
 			"ec_curve": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Elliptic curve to use for EC keys.",
 			},
 			"passphrase": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Passphrase to protect the private key or `null`.",
 			},
 			"city": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "City or locality name for certificate subject or `null`.",
 			},
 			"common": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Common name for certificate subject or `null`.",
 			},
 			"country": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Country name for certificate subject or `null`.",
 			},
 			"email": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Email address for certificate subject or `null`.",
 			},
 			"organization": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Organization name for certificate subject or `null`.",
 			},
 			"organizational_unit": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Organizational unit for certificate subject or `null`.",
 			},
 			"state": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "State or province name for certificate subject or `null`.",
 			},
 			"digest_algorithm": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Hash algorithm for certificate signing.",
 			},
 			"san": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Subject alternative names for the certificate.",
+			},
+			"cert_extensions": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Certificate extensions configuration.",
 			},
 			"acme_directory_uri": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "ACME directory URI to be used for ACME certificate creation.",
 			},
 			"csr_id": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "CSR to be used for ACME certificate creation.",
 			},
-			"tos": schema.BoolAttribute{
+			"tos": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Set this when creating an ACME certificate to accept terms of service of the ACME service.",
+			},
+			"dns_mapping": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the",
 			},
 			"renew_days": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Number of days before the certificate expiration date to attempt certificate renewal. If certificate",
 			},
 		},
 	}
@@ -176,8 +213,12 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["create_type"] = data.CreateType.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.CreateType.IsNull() {
+		params["create_type"] = data.CreateType.ValueString()
+	}
 	if !data.AddToTrustedStore.IsNull() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
@@ -226,6 +267,14 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.DigestAlgorithm.IsNull() {
 		params["digest_algorithm"] = data.DigestAlgorithm.ValueString()
 	}
+	if !data.San.IsNull() {
+		var sanList []string
+		data.San.ElementsAs(ctx, &sanList, false)
+		params["san"] = sanList
+	}
+	if !data.CertExtensions.IsNull() {
+		params["cert_extensions"] = data.CertExtensions.ValueString()
+	}
 	if !data.AcmeDirectoryUri.IsNull() {
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
@@ -233,18 +282,22 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		params["csr_id"] = data.CsrId.ValueInt64()
 	}
 	if !data.Tos.IsNull() {
-		params["tos"] = data.Tos.ValueBool()
+		params["tos"] = data.Tos.ValueString()
+	}
+	if !data.DnsMapping.IsNull() {
+		params["dns_mapping"] = data.DnsMapping.ValueString()
 	}
 	if !data.RenewDays.IsNull() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
 
-	result, err := r.client.Call("certificate.create", params)
+	result, err := r.client.CallWithJob("certificate.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create certificate: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -261,18 +314,101 @@ func (r *CertificateResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("certificate.get_instance", resourceID)
+	result, err := r.client.Call("certificate.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read certificate: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["create_type"]; ok && v != nil {
+			data.CreateType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["add_to_trusted_store"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.AddToTrustedStore = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["certificate"]; ok && v != nil {
+			data.Certificate = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["privatekey"]; ok && v != nil {
+			data.Privatekey = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["CSR"]; ok && v != nil {
+			data.Csr = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["key_length"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.KeyLength = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["key_type"]; ok && v != nil {
+			data.KeyType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["ec_curve"]; ok && v != nil {
+			data.EcCurve = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["passphrase"]; ok && v != nil {
+			data.Passphrase = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["city"]; ok && v != nil {
+			data.City = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["common"]; ok && v != nil {
+			data.Common = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["country"]; ok && v != nil {
+			data.Country = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["email"]; ok && v != nil {
+			data.Email = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["organization"]; ok && v != nil {
+			data.Organization = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["organizational_unit"]; ok && v != nil {
+			data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["state"]; ok && v != nil {
+			data.State = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["digest_algorithm"]; ok && v != nil {
+			data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["san"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.San, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["cert_extensions"]; ok && v != nil {
+			data.CertExtensions = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["acme_directory_uri"]; ok && v != nil {
+			data.AcmeDirectoryUri = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["csr_id"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.CsrId = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["tos"]; ok && v != nil {
+			data.Tos = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["dns_mapping"]; ok && v != nil {
+			data.DnsMapping = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["renew_days"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.RenewDays = types.Int64Value(int64(fv)) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -283,16 +419,25 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state CertificateResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["create_type"] = data.CreateType.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.CreateType.IsNull() {
+		params["create_type"] = data.CreateType.ValueString()
+	}
 	if !data.AddToTrustedStore.IsNull() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
@@ -341,6 +486,14 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.DigestAlgorithm.IsNull() {
 		params["digest_algorithm"] = data.DigestAlgorithm.ValueString()
 	}
+	if !data.San.IsNull() {
+		var sanList []string
+		data.San.ElementsAs(ctx, &sanList, false)
+		params["san"] = sanList
+	}
+	if !data.CertExtensions.IsNull() {
+		params["cert_extensions"] = data.CertExtensions.ValueString()
+	}
 	if !data.AcmeDirectoryUri.IsNull() {
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
@@ -348,26 +501,21 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 		params["csr_id"] = data.CsrId.ValueInt64()
 	}
 	if !data.Tos.IsNull() {
-		params["tos"] = data.Tos.ValueBool()
+		params["tos"] = data.Tos.ValueString()
+	}
+	if !data.DnsMapping.IsNull() {
+		params["dns_mapping"] = data.DnsMapping.ValueString()
 	}
 	if !data.RenewDays.IsNull() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.CallWithJob("certificate.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update certificate: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("certificate.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -379,16 +527,15 @@ func (r *CertificateResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("certificate.delete", resourceID)
+	_, err = r.client.CallWithJob("certificate.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete certificate: %s", err))
 		return
 	}
 }

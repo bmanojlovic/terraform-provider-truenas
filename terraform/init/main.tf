@@ -1,11 +1,19 @@
 # TrueNAS test VM
 resource "truenas_vm" "test_truenas" {
-  name        = "testtruenas"
+  name        = "testvm5"
   description = "TrueNAS VM for provider testing"
   vcpus       = 4
   memory      = 10240  # 10GB
   autostart   = false
 }
+
+# Data source to verify VM was created
+data "truenas_vm" "test_lookup" {
+  id = truenas_vm.test_truenas.id
+}
+
+# Query data source to list all VMs
+data "truenas_vms" "all" {}
 
 # Boot disk - 30GB
 resource "truenas_vm_device" "boot_disk" {
@@ -13,7 +21,7 @@ resource "truenas_vm_device" "boot_disk" {
   attributes = jsonencode({
     dtype = "DISK"
     create_zvol = true
-    zvol_name = "${var.pool_name}/vm-testtruenas-boot"
+    zvol_name = "${var.pool_name}/vm-test5-boot"
     zvol_volsize = 32212254720  # 30GB in bytes
     type = "VIRTIO"
   })
@@ -26,7 +34,7 @@ resource "truenas_vm_device" "data_disk_1" {
   attributes = jsonencode({
     dtype = "DISK"
     create_zvol = true
-    zvol_name = "${var.pool_name}/vm-testtruenas-data1"
+    zvol_name = "${var.pool_name}/vm-test5-data1"
     zvol_volsize = 137438953472  # 128GB in bytes
     type = "VIRTIO"
   })
@@ -39,7 +47,7 @@ resource "truenas_vm_device" "data_disk_2" {
   attributes = jsonencode({
     dtype = "DISK"
     create_zvol = true
-    zvol_name = "${var.pool_name}/vm-testtruenas-data2"
+    zvol_name = "${var.pool_name}/vm-test5-data2"
     zvol_volsize = 137438953472
     type = "VIRTIO"
   })
@@ -52,7 +60,7 @@ resource "truenas_vm_device" "data_disk_3" {
   attributes = jsonencode({
     dtype = "DISK"
     create_zvol = true
-    zvol_name = "${var.pool_name}/vm-testtruenas-data3"
+    zvol_name = "${var.pool_name}/vm-test5-data3"
     zvol_volsize = 137438953472
     type = "VIRTIO"
   })
@@ -65,7 +73,7 @@ resource "truenas_vm_device" "data_disk_4" {
   attributes = jsonencode({
     dtype = "DISK"
     create_zvol = true
-    zvol_name = "${var.pool_name}/vm-testtruenas-data4"
+    zvol_name = "${var.pool_name}/vm-test5-data4"
     zvol_volsize = 137438953472
     type = "VIRTIO"
   })

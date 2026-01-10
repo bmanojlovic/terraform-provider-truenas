@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -33,36 +34,44 @@ func (r *IscsiAuthResource) Metadata(ctx context.Context, req resource.MetadataR
 	resp.TypeName = req.ProviderTypeName + "_iscsi_auth"
 }
 
+func (r *IscsiAuthResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *IscsiAuthResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS iscsi_auth resource",
+		MarkdownDescription: "Create an iSCSI Authorized Access.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"tag": schema.Int64Attribute{
 				Required: true,
 				Optional: false,
+				Description: "Numeric tag used to associate this credential with iSCSI targets.",
 			},
 			"user": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Username for iSCSI CHAP authentication.",
 			},
 			"secret": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Password/secret for iSCSI CHAP authentication.",
 			},
 			"peeruser": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Username for mutual CHAP authentication or empty string if not configured.",
 			},
 			"peersecret": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Password/secret for mutual CHAP authentication or empty string if not configured.",
 			},
 			"discovery_auth": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Authentication method for target discovery. If \"CHAP_MUTUAL\" is selected for target discovery, it is",
 			},
 		},
 	}
@@ -88,9 +97,15 @@ func (r *IscsiAuthResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	params := map[string]interface{}{}
-	params["tag"] = data.Tag.ValueInt64()
-	params["user"] = data.User.ValueString()
-	params["secret"] = data.Secret.ValueString()
+	if !data.Tag.IsNull() {
+		params["tag"] = data.Tag.ValueInt64()
+	}
+	if !data.User.IsNull() {
+		params["user"] = data.User.ValueString()
+	}
+	if !data.Secret.IsNull() {
+		params["secret"] = data.Secret.ValueString()
+	}
 	if !data.Peeruser.IsNull() {
 		params["peeruser"] = data.Peeruser.ValueString()
 	}
@@ -103,10 +118,11 @@ func (r *IscsiAuthResource) Create(ctx context.Context, req resource.CreateReque
 
 	result, err := r.client.Call("iscsi.auth.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create iscsi_auth: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -123,18 +139,40 @@ func (r *IscsiAuthResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("iscsi.auth.get_instance", resourceID)
+	result, err := r.client.Call("iscsi.auth.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read iscsi_auth: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["tag"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Tag = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["user"]; ok && v != nil {
+			data.User = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["secret"]; ok && v != nil {
+			data.Secret = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["peeruser"]; ok && v != nil {
+			data.Peeruser = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["peersecret"]; ok && v != nil {
+			data.Peersecret = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["discovery_auth"]; ok && v != nil {
+			data.DiscoveryAuth = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -145,17 +183,28 @@ func (r *IscsiAuthResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state IscsiAuthResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["tag"] = data.Tag.ValueInt64()
-	params["user"] = data.User.ValueString()
-	params["secret"] = data.Secret.ValueString()
+	if !data.Tag.IsNull() {
+		params["tag"] = data.Tag.ValueInt64()
+	}
+	if !data.User.IsNull() {
+		params["user"] = data.User.ValueString()
+	}
+	if !data.Secret.IsNull() {
+		params["secret"] = data.Secret.ValueString()
+	}
 	if !data.Peeruser.IsNull() {
 		params["peeruser"] = data.Peeruser.ValueString()
 	}
@@ -166,20 +215,12 @@ func (r *IscsiAuthResource) Update(ctx context.Context, req resource.UpdateReque
 		params["discovery_auth"] = data.DiscoveryAuth.ValueString()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("iscsi.auth.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update iscsi_auth: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("iscsi.auth.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -191,16 +232,15 @@ func (r *IscsiAuthResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("iscsi.auth.delete", resourceID)
+	_, err = r.client.Call("iscsi.auth.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_auth: %s", err))
 		return
 	}
 }

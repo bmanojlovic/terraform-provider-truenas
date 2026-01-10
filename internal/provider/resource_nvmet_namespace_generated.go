@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -33,36 +34,44 @@ func (r *NvmetNamespaceResource) Metadata(ctx context.Context, req resource.Meta
 	resp.TypeName = req.ProviderTypeName + "_nvmet_namespace"
 }
 
+func (r *NvmetNamespaceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *NvmetNamespaceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS nvmet_namespace resource",
+		MarkdownDescription: "Create a NVMe target namespace in a subsystem (`subsys`).",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"nsid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Namespace ID (NSID).  Each namespace within a subsystem has an associated NSID, unique within that s",
 			},
 			"device_type": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Type of device (or file) used to implement the namespace. ",
 			},
 			"device_path": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Normalized path to the device or file for the namespace.",
 			},
 			"filesize": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "When `device_type` is \"FILE\" then this will be the size of the file in bytes.",
 			},
 			"enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "If `enabled` is `False` then the namespace will not be accessible.  Some namespace configuration cha",
 			},
 			"subsys_id": schema.Int64Attribute{
 				Required: true,
 				Optional: false,
+				Description: "ID of the NVMe-oF subsystem to contain this namespace.",
 			},
 		},
 	}
@@ -91,22 +100,29 @@ func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.Create
 	if !data.Nsid.IsNull() {
 		params["nsid"] = data.Nsid.ValueInt64()
 	}
-	params["device_type"] = data.DeviceType.ValueString()
-	params["device_path"] = data.DevicePath.ValueString()
+	if !data.DeviceType.IsNull() {
+		params["device_type"] = data.DeviceType.ValueString()
+	}
+	if !data.DevicePath.IsNull() {
+		params["device_path"] = data.DevicePath.ValueString()
+	}
 	if !data.Filesize.IsNull() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	params["subsys_id"] = data.SubsysId.ValueInt64()
+	if !data.SubsysId.IsNull() {
+		params["subsys_id"] = data.SubsysId.ValueInt64()
+	}
 
 	result, err := r.client.Call("nvmet.namespace.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create nvmet_namespace: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -123,18 +139,40 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("nvmet.namespace.get_instance", resourceID)
+	result, err := r.client.Call("nvmet.namespace.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read nvmet_namespace: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["nsid"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Nsid = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["device_type"]; ok && v != nil {
+			data.DeviceType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["device_path"]; ok && v != nil {
+			data.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["filesize"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Filesize = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["subsys_id"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -145,10 +183,15 @@ func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state NvmetNamespaceResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
@@ -156,30 +199,28 @@ func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.Update
 	if !data.Nsid.IsNull() {
 		params["nsid"] = data.Nsid.ValueInt64()
 	}
-	params["device_type"] = data.DeviceType.ValueString()
-	params["device_path"] = data.DevicePath.ValueString()
+	if !data.DeviceType.IsNull() {
+		params["device_type"] = data.DeviceType.ValueString()
+	}
+	if !data.DevicePath.IsNull() {
+		params["device_path"] = data.DevicePath.ValueString()
+	}
 	if !data.Filesize.IsNull() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	params["subsys_id"] = data.SubsysId.ValueInt64()
+	if !data.SubsysId.IsNull() {
+		params["subsys_id"] = data.SubsysId.ValueInt64()
+	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("nvmet.namespace.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update nvmet_namespace: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("nvmet.namespace.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -191,16 +232,15 @@ func (r *NvmetNamespaceResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("nvmet.namespace.delete", resourceID)
+	_, err = r.client.Call("nvmet.namespace.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete nvmet_namespace: %s", err))
 		return
 	}
 }

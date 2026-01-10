@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,35 +34,42 @@ func (r *PrivilegeResource) Metadata(ctx context.Context, req resource.MetadataR
 	resp.TypeName = req.ProviderTypeName + "_privilege"
 }
 
+func (r *PrivilegeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *PrivilegeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS privilege resource",
+		MarkdownDescription: "Creates a privilege.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Display name of the privilege.",
 			},
 			"local_groups": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Array of local group IDs to assign to this privilege.",
 			},
 			"ds_groups": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Array of directory service group IDs or SIDs to assign to this privilege.",
 			},
 			"roles": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Array of role names included in this privilege.",
 			},
 			"web_shell": schema.BoolAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Whether this privilege grants access to the web shell.",
 			},
 		},
 	}
@@ -86,15 +95,35 @@ func (r *PrivilegeResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["web_shell"] = data.WebShell.ValueBool()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.LocalGroups.IsNull() {
+		var local_groupsList []string
+		data.LocalGroups.ElementsAs(ctx, &local_groupsList, false)
+		params["local_groups"] = local_groupsList
+	}
+	if !data.DsGroups.IsNull() {
+		var ds_groupsList []string
+		data.DsGroups.ElementsAs(ctx, &ds_groupsList, false)
+		params["ds_groups"] = ds_groupsList
+	}
+	if !data.Roles.IsNull() {
+		var rolesList []string
+		data.Roles.ElementsAs(ctx, &rolesList, false)
+		params["roles"] = rolesList
+	}
+	if !data.WebShell.IsNull() {
+		params["web_shell"] = data.WebShell.ValueBool()
+	}
 
 	result, err := r.client.Call("privilege.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create privilege: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -111,18 +140,49 @@ func (r *PrivilegeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("privilege.get_instance", resourceID)
+	result, err := r.client.Call("privilege.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read privilege: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["local_groups"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.LocalGroups, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["ds_groups"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.DsGroups, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["roles"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Roles, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["web_shell"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.WebShell = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -133,31 +193,47 @@ func (r *PrivilegeResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state PrivilegeResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["web_shell"] = data.WebShell.ValueBool()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.LocalGroups.IsNull() {
+		var local_groupsList []string
+		data.LocalGroups.ElementsAs(ctx, &local_groupsList, false)
+		params["local_groups"] = local_groupsList
+	}
+	if !data.DsGroups.IsNull() {
+		var ds_groupsList []string
+		data.DsGroups.ElementsAs(ctx, &ds_groupsList, false)
+		params["ds_groups"] = ds_groupsList
+	}
+	if !data.Roles.IsNull() {
+		var rolesList []string
+		data.Roles.ElementsAs(ctx, &rolesList, false)
+		params["roles"] = rolesList
+	}
+	if !data.WebShell.IsNull() {
+		params["web_shell"] = data.WebShell.ValueBool()
+	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("privilege.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update privilege: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("privilege.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -169,16 +245,15 @@ func (r *PrivilegeResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("privilege.delete", resourceID)
+	_, err = r.client.Call("privilege.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete privilege: %s", err))
 		return
 	}
 }

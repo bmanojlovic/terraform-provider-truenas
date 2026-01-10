@@ -2,25 +2,25 @@
 page_title: "truenas_replication Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for creating a new replication task.
+  Create a Replication Task that will push or pull ZFS snapshots to or from remote host.
 ---
 
 # truenas_replication (Resource)
 
-Configuration for creating a new replication task.
+Create a Replication Task that will push or pull ZFS snapshots to or from remote host.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_replication" "example" {
-  name = "example-name"
-  direction = "PUSH"
-  transport = "SSH"
-  source_datasets = []
-  target_dataset = "example-target_dataset"
-  recursive = false
-  auto = false
-  retention_policy = "SOURCE"
+  auto = true
+  direction = "example-value"
+  name = "example-value"
+  recursive = true
+  retention_policy = "example-value"
+  source_datasets = ["item1"]
+  target_dataset = "example-value"
+  transport = "example-value"
 }
 ```
 
@@ -28,75 +28,55 @@ resource "truenas_replication" "example" {
 
 ### Required
 
-- `name` (Required) - Name for replication task.. Type: `string`
-- `direction` (Required) - Whether task will `PUSH` or `PULL` snapshots. Valid values: `PUSH`, `PULL`. Type: `string`
-- `transport` (Required) - Method of snapshots transfer.
-
-* `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve       great performance.
-* `SSH+NETCAT` uses unencrypted connection for data transfer. This can only be used in trusted networks       and requires a port (specified by range from `netcat_active_side_port_min` to `netcat_active_side_port_max`)       to be open on `netcat_active_side`.
-* `LOCAL` replicates to or from localhost. Valid values: `SSH`, `SSH+NETCAT`, `LOCAL`. Type: `string`
-- `source_datasets` (Required) - List of datasets to replicate snapshots from.. Type: `array`
-- `target_dataset` (Required) - Dataset to put snapshots into.. Type: `string`
-- `recursive` (Required) - Whether to recursively replicate child datasets.. Type: `boolean`
-- `auto` (Required) - Allow replication to run automatically on schedule or after bound periodic snapshot task.. Type: `boolean`
-- `retention_policy` (Required) - How to delete old snapshots on target side:
-
-* `SOURCE`: Delete snapshots that are absent on source side.
-* `CUSTOM`: Delete snapshots that are older than `lifetime_value` and `lifetime_unit`.
-* `NONE`: Do not delete any snapshots. Valid values: `SOURCE`, `CUSTOM`, `NONE`. Type: `string`
+- `auto` (Bool) - Allow replication to run automatically on schedule or after bound periodic snapshot task.
+- `direction` (String) - Whether task will `PUSH` or `PULL` snapshots. Valid values: `PUSH`, `PULL`
+- `name` (String) - Name for replication task.
+- `recursive` (Bool) - Whether to recursively replicate child datasets.
+- `retention_policy` (String) - How to delete old snapshots on target side:  * `SOURCE`: Delete snapshots that are absent on source side. * `CUSTOM`: Delete snapshots that are older than `lifetime_value` and `lifetime_unit`. * `NONE Valid values: `SOURCE`, `CUSTOM`, `NONE`
+- `source_datasets` (List) - List of datasets to replicate snapshots from.
+- `target_dataset` (String) - Dataset to put snapshots into.
+- `transport` (String) - Method of snapshots transfer.  * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve       great performance. * `SSH+NETCAT` uses unencrypted connect Valid values: `SSH`, `SSH+NETCAT`, `LOCAL`
 
 ### Optional
 
-- `ssh_credentials` (Optional) - Keychain Credential ID of type `SSH_CREDENTIALS`.. Type: `string`
-- `netcat_active_side` (Optional) - Which side actively establishes the netcat connection for `SSH+NETCAT` transport.
-
-* `LOCAL`: Local system initiates the connection
-* `REMOTE`: Remote system initiates the connection
-* `null`: Not applicable for other transport types. Type: `string`
-- `netcat_active_side_listen_address` (Optional) - IP address for the active side to listen on for `SSH+NETCAT` transport. `null` if not applicable.. Type: `string`
-- `netcat_active_side_port_min` (Optional) - Minimum port number in the range for netcat connections. `null` if not applicable.. Type: `string`
-- `netcat_active_side_port_max` (Optional) - Maximum port number in the range for netcat connections. `null` if not applicable.. Type: `string`
-- `netcat_passive_side_connect_address` (Optional) - IP address for the passive side to connect to for `SSH+NETCAT` transport. `null` if not applicable.. Type: `string`
-- `sudo` (Optional) - `SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be passwordless) to run `zfs`     command on the remote machine. Default: `False`. Type: `boolean`
-- `exclude` (Optional) - Array of dataset patterns to exclude from replication. Default: `[]`. Type: `array`
-- `properties` (Optional) - Send dataset properties along with snapshots. Default: `True`. Type: `boolean`
-- `properties_exclude` (Optional) - Array of dataset property names to exclude from replication. Default: `[]`. Type: `array`
-- `properties_override` (Optional) - Object mapping dataset property names to override values during replication. Default: `{}`. Type: `object`
-- `replicate` (Optional) - Whether to use full ZFS replication. Default: `False`. Type: `boolean`
-- `encryption` (Optional) - Whether to enable encryption for the replicated datasets. Default: `False`. Type: `boolean`
-- `encryption_inherit` (Optional) - Whether replicated datasets should inherit encryption from parent. `null` if encryption is disabled.. Type: `string`
-- `encryption_key` (Optional) - Encryption key for replicated datasets. `null` if not specified.. Type: `string`
-- `encryption_key_format` (Optional) - Format of the encryption key.
-
-* `HEX`: Hexadecimal-encoded key
-* `PASSPHRASE`: Text passphrase
-* `null`: Not applicable when encryption is disabled. Type: `string`
-- `encryption_key_location` (Optional) - Filesystem path where encryption key is stored. `null` if not using key file.. Type: `string`
-- `periodic_snapshot_tasks` (Optional) - List of periodic snapshot task IDs that are sources of snapshots for this replication task. Only push     replication tasks can be bound to periodic snapshot tasks. Default: `[]`. Type: `array`
-- `naming_schema` (Optional) - List of naming schemas for pull replication. Default: `[]`. Type: `array`
-- `also_include_naming_schema` (Optional) - List of naming schemas for push replication. Default: `[]`. Type: `array`
-- `name_regex` (Optional) - Replicate all snapshots which names match specified regular expression.. Type: `string`
-- `schedule` (Optional) - Schedule to run replication task. Only `auto` replication tasks without bound periodic snapshot tasks can have     a schedule.. Type: `string`
-- `restrict_schedule` (Optional) - Restricts when replication task with bound periodic snapshot tasks runs. For example, you can have periodic     snapshot tasks that run every 15 minutes, but only run replication task every hour.. Type: `string`
-- `only_matching_schedule` (Optional) - Will only replicate snapshots that match `schedule` or `restrict_schedule`. Default: `False`. Type: `boolean`
-- `allow_from_scratch` (Optional) - Will destroy all snapshots on target side and replicate everything from scratch if none of the snapshots on     target side matches source snapshots. Default: `False`. Type: `boolean`
-- `readonly` (Optional) - Controls destination datasets readonly property.
-
-* `SET`: Set all destination datasets to readonly=on after finishing the replication.
-* `REQUIRE`: Require all existing destination datasets to have readonly=on property.
-* `IGNORE`: Avoid this kind of behavior. Valid values: `SET`, `REQUIRE`, `IGNORE` Default: `SET`. Type: `string`
-- `hold_pending_snapshots` (Optional) - Prevent source snapshots from being deleted by retention of replication fails for some reason. Default: `False`. Type: `boolean`
-- `lifetime_value` (Optional) - Number of time units to retain snapshots for custom retention policy. Only applies when `retention_policy` is     CUSTOM.. Type: `string`
-- `lifetime_unit` (Optional) - Time unit for snapshot retention for custom retention policy. Only applies when `retention_policy` is CUSTOM.. Type: `string`
-- `lifetimes` (Optional) - Array of different retention schedules with their own cron schedules and lifetime settings. Default: `[]`. Type: `array`
-- `compression` (Optional) - Compresses SSH stream. Available only for SSH transport.. Type: `string`
-- `speed_limit` (Optional) - Limits speed of SSH stream. Available only for SSH transport.. Type: `string`
-- `large_block` (Optional) - Enable large block support for ZFS send streams. Default: `True`. Type: `boolean`
-- `embed` (Optional) - Enable embedded block support for ZFS send streams. Default: `False`. Type: `boolean`
-- `compressed` (Optional) - Enable compressed ZFS send streams. Default: `True`. Type: `boolean`
-- `retries` (Optional) - Number of retries before considering replication failed. Default: `5`. Type: `integer`
-- `logging_level` (Optional) - Log level for replication task execution. Controls verbosity of replication logs.. Type: `string`
-- `enabled` (Optional) - Whether this replication task is enabled. Default: `True`. Type: `boolean`
+- `allow_from_scratch` (Bool) - Will destroy all snapshots on target side and replicate everything from scratch if none of the snapshots on     target side matches source snapshots. Default: `False`
+- `also_include_naming_schema` (List) - List of naming schemas for push replication. Default: `[]`
+- `compressed` (Bool) - Enable compressed ZFS send streams. Default: `True`
+- `compression` (String) - Compresses SSH stream. Available only for SSH transport. Default: `None`
+- `embed` (Bool) - Enable embedded block support for ZFS send streams. Default: `False`
+- `enabled` (Bool) - Whether this replication task is enabled. Default: `True`
+- `encryption` (Bool) - Whether to enable encryption for the replicated datasets. Default: `False`
+- `encryption_inherit` (String) - Whether replicated datasets should inherit encryption from parent. `null` if encryption is disabled. Default: `None`
+- `encryption_key` (String) - Encryption key for replicated datasets. `null` if not specified. Default: `None`
+- `encryption_key_format` (String) - Format of the encryption key.  * `HEX`: Hexadecimal-encoded key * `PASSPHRASE`: Text passphrase * `null`: Not applicable when encryption is disabled Default: `None`
+- `encryption_key_location` (String) - Filesystem path where encryption key is stored. `null` if not using key file. Default: `None`
+- `exclude` (List) - Array of dataset patterns to exclude from replication. Default: `[]`
+- `hold_pending_snapshots` (Bool) - Prevent source snapshots from being deleted by retention of replication fails for some reason. Default: `False`
+- `large_block` (Bool) - Enable large block support for ZFS send streams. Default: `True`
+- `lifetime_unit` (String) - Time unit for snapshot retention for custom retention policy. Only applies when `retention_policy` is CUSTOM. Default: `None`
+- `lifetime_value` (Int64) - Number of time units to retain snapshots for custom retention policy. Only applies when `retention_policy` is     CUSTOM. Default: `None`
+- `lifetimes` (List) - Array of different retention schedules with their own cron schedules and lifetime settings. Default: `[]`
+- `logging_level` (String) - Log level for replication task execution. Controls verbosity of replication logs. Default: `None`
+- `name_regex` (String) - Replicate all snapshots which names match specified regular expression. Default: `None`
+- `naming_schema` (List) - List of naming schemas for pull replication. Default: `[]`
+- `netcat_active_side` (String) - Which side actively establishes the netcat connection for `SSH+NETCAT` transport.  * `LOCAL`: Local system initiates the connection * `REMOTE`: Remote system initiates the connection * `null`: Not app Default: `None`
+- `netcat_active_side_listen_address` (String) - IP address for the active side to listen on for `SSH+NETCAT` transport. `null` if not applicable. Default: `None`
+- `netcat_active_side_port_max` (Int64) - Maximum port number in the range for netcat connections. `null` if not applicable. Default: `None`
+- `netcat_active_side_port_min` (Int64) - Minimum port number in the range for netcat connections. `null` if not applicable. Default: `None`
+- `netcat_passive_side_connect_address` (String) - IP address for the passive side to connect to for `SSH+NETCAT` transport. `null` if not applicable. Default: `None`
+- `only_matching_schedule` (Bool) - Will only replicate snapshots that match `schedule` or `restrict_schedule`. Default: `False`
+- `periodic_snapshot_tasks` (List) - List of periodic snapshot task IDs that are sources of snapshots for this replication task. Only push     replication tasks can be bound to periodic snapshot tasks. Default: `[]`
+- `properties` (Bool) - Send dataset properties along with snapshots. Default: `True`
+- `properties_exclude` (List) - Array of dataset property names to exclude from replication. Default: `[]`
+- `properties_override` (String) - Object mapping dataset property names to override values during replication. Default: `{}`
+- `readonly` (String) - Controls destination datasets readonly property.  * `SET`: Set all destination datasets to readonly=on after finishing the replication. * `REQUIRE`: Require all existing destination datasets to have r Default: `SET` Valid values: `SET`, `REQUIRE`, `IGNORE`
+- `replicate` (Bool) - Whether to use full ZFS replication. Default: `False`
+- `restrict_schedule` (String) - Restricts when replication task with bound periodic snapshot tasks runs. For example, you can have periodic     snapshot tasks that run every 15 minutes, but only run replication task every hour. Default: `None`
+- `retries` (Int64) - Number of retries before considering replication failed. Default: `5`
+- `schedule` (String) - Schedule to run replication task. Only `auto` replication tasks without bound periodic snapshot tasks can have     a schedule. Default: `None`
+- `speed_limit` (Int64) - Limits speed of SSH stream. Available only for SSH transport. Default: `None`
+- `ssh_credentials` (Int64) - Keychain Credential ID of type `SSH_CREDENTIALS`. Default: `None`
+- `sudo` (Bool) - `SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be passwordless) to run `zfs`     command on the remote machine. Default: `False`
 
 ### Read-Only
 

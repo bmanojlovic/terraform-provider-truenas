@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,20 +30,24 @@ func (r *KerberosKeytabResource) Metadata(ctx context.Context, req resource.Meta
 	resp.TypeName = req.ProviderTypeName + "_kerberos_keytab"
 }
 
+func (r *KerberosKeytabResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *KerberosKeytabResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS kerberos_keytab resource",
+		MarkdownDescription: "Create a kerberos keytab. Uploaded keytab files will be merged with the system",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the ",
 			},
 			"file": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Base64 encoded kerberos keytab entries to append to the system keytab. ",
 			},
 		},
 	}
@@ -68,15 +73,20 @@ func (r *KerberosKeytabResource) Create(ctx context.Context, req resource.Create
 	}
 
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["file"] = data.File.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.File.IsNull() {
+		params["file"] = data.File.ValueString()
+	}
 
 	result, err := r.client.Call("kerberos.keytab.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create kerberos_keytab: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -93,18 +103,28 @@ func (r *KerberosKeytabResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.keytab.get_instance", resourceID)
+	result, err := r.client.Call("kerberos.keytab.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read kerberos_keytab: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["file"]; ok && v != nil {
+			data.File = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -115,31 +135,32 @@ func (r *KerberosKeytabResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state KerberosKeytabResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	params["file"] = data.File.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.File.IsNull() {
+		params["file"] = data.File.ValueString()
+	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("kerberos.keytab.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update kerberos_keytab: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.keytab.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -151,16 +172,15 @@ func (r *KerberosKeytabResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.keytab.delete", resourceID)
+	_, err = r.client.Call("kerberos.keytab.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete kerberos_keytab: %s", err))
 		return
 	}
 }

@@ -2,21 +2,20 @@
 page_title: "truenas_nvmet_namespace Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  NVMe-oF namespace configuration data for creation.
+  Create a NVMe target namespace in a subsystem (`subsys`).
 ---
 
 # truenas_nvmet_namespace (Resource)
 
-NVMe-oF namespace configuration data for creation.
+Create a NVMe target namespace in a subsystem (`subsys`).
 
 ## Example Usage
 
 ```terraform
 resource "truenas_nvmet_namespace" "example" {
-  device_type = "ZVOL"
-  device_path = "example-device_path"
+  device_path = "example-value"
+  device_type = "example-value"
   subsys_id = 1
-  enabled = true
 }
 ```
 
@@ -24,21 +23,15 @@ resource "truenas_nvmet_namespace" "example" {
 
 ### Required
 
-- `device_type` (Required) - Type of device (or file) used to implement the namespace.  Valid values: `ZVOL`, `FILE`. Type: `string`
-- `device_path` (Required) - Normalized path to the device or file for the namespace.. Type: `string`
-- `subsys_id` (Required) - ID of the NVMe-oF subsystem to contain this namespace.. Type: `integer`
+- `device_path` (String) - Normalized path to the device or file for the namespace.
+- `device_type` (String) - Type of device (or file) used to implement the namespace. Valid values: `ZVOL`, `FILE`
+- `subsys_id` (Int64) - ID of the NVMe-oF subsystem to contain this namespace.
 
 ### Optional
 
-- `nsid` (Optional) - Namespace ID (NSID).
-
-Each namespace within a subsystem has an associated NSID, unique within that subsystem.
-
-If not supplied during `namespace` creation then the next available NSID will be used.. Type: `string`
-- `filesize` (Optional) - When `device_type` is "FILE" then this will be the size of the file in bytes.. Type: `string`
-- `enabled` (Optional) - If `enabled` is `False` then the namespace will not be accessible.
-
-Some namespace configuration changes are blocked when that namespace is enabled. Default: `True`. Type: `boolean`
+- `enabled` (Bool) - If `enabled` is `False` then the namespace will not be accessible.  Some namespace configuration changes are blocked when that namespace is enabled. Default: `True`
+- `filesize` (Int64) - When `device_type` is "FILE" then this will be the size of the file in bytes. Default: `None`
+- `nsid` (Int64) - Namespace ID (NSID).  Each namespace within a subsystem has an associated NSID, unique within that subsystem.  If not supplied during `namespace` creation then the next available NSID will be used. Default: `None`
 
 ### Read-Only
 

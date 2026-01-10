@@ -2,12 +2,12 @@
 page_title: "truenas_nvmet_port_subsys Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Port-subsystem association configuration data for creation.
+  Create an association between a `port` and a subsystem (`subsys`).
 ---
 
 # truenas_nvmet_port_subsys (Resource)
 
-Port-subsystem association configuration data for creation.
+Create an association between a `port` and a subsystem (`subsys`).
 
 ## Example Usage
 
@@ -22,8 +22,8 @@ resource "truenas_nvmet_port_subsys" "example" {
 
 ### Required
 
-- `port_id` (Required) - ID of the NVMe-oF port to associate.. Type: `integer`
-- `subsys_id` (Required) - ID of the NVMe-oF subsystem to make accessible.. Type: `integer`
+- `port_id` (Int64) - ID of the NVMe-oF port to associate.
+- `subsys_id` (Int64) - ID of the NVMe-oF subsystem to make accessible.
 
 ### Optional
 

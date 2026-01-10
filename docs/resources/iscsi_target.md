@@ -2,21 +2,18 @@
 page_title: "truenas_iscsi_target Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  iSCSI target configuration data for creation.
+  Create an iSCSI Target.
 ---
 
 # truenas_iscsi_target (Resource)
 
-iSCSI target configuration data for creation.
+Create an iSCSI Target.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_iscsi_target" "example" {
-  name = "example-name"
-  mode = "ISCSI"
-  groups = []
-  auth_networks = []
+  name = "example-value"
 }
 ```
 
@@ -24,21 +21,15 @@ resource "truenas_iscsi_target" "example" {
 
 ### Required
 
-- `name` (Required) - Name of the iSCSI target (maximum 120 characters).. Type: `string`
+- `name` (String) - Name of the iSCSI target (maximum 120 characters).
 
 ### Optional
 
-- `alias` (Optional) - Optional alias name for the iSCSI target.. Type: `string`
-- `mode` (Optional) - Protocol mode for the target.
-
-* `ISCSI`: iSCSI protocol only
-* `FC`: Fibre Channel protocol only
-* `BOTH`: Both iSCSI and Fibre Channel protocols
-
-Fibre Channel may only be selected on TrueNAS Enterprise-licensed systems with a suitable Fibre Channel HBA. Valid values: `ISCSI`, `FC`, `BOTH` Default: `ISCSI`. Type: `string`
-- `groups` (Optional) - Array of portal-initiator group associations for this target. Default: `[]`. Type: `array`
-- `auth_networks` (Optional) - Array of network addresses allowed to access this target. Default: `[]`. Type: `array`
-- `iscsi_parameters` (Optional) - Optional iSCSI-specific parameters for this target.. Type: `string`
+- `alias` (String) - Optional alias name for the iSCSI target. Default: `None`
+- `auth_networks` (List) - Array of network addresses allowed to access this target. Default: `[]`
+- `groups` (List) - Array of portal-initiator group associations for this target. Default: `[]`
+- `iscsi_parameters` (String) - Optional iSCSI-specific parameters for this target. Default: `None`
+- `mode` (String) - Protocol mode for the target.  * `ISCSI`: iSCSI protocol only * `FC`: Fibre Channel protocol only * `BOTH`: Both iSCSI and Fibre Channel protocols  Fibre Channel may only be selected on TrueNAS Enterp Default: `ISCSI` Valid values: `ISCSI`, `FC`, `BOTH`
 
 ### Read-Only
 

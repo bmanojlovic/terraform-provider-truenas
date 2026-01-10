@@ -2,21 +2,20 @@
 page_title: "truenas_alertservice Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Alert service configuration data for the new service.
+  Create an Alert Service of specified `type`.
 ---
 
 # truenas_alertservice (Resource)
 
-Alert service configuration data for the new service.
+Create an Alert Service of specified `type`.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_alertservice" "example" {
-  name = "example-name"
-  attributes = "example-attributes"
-  level = "INFO"
-  enabled = true
+  attributes = "example-value"
+  level = "example-value"
+  name = "example-value"
 }
 ```
 
@@ -24,13 +23,13 @@ resource "truenas_alertservice" "example" {
 
 ### Required
 
-- `name` (Required) - Human-readable name for the alert service.. Type: `string`
-- `attributes` (Required) - Service-specific configuration attributes (credentials, endpoints, etc.).. Type: `string`
-- `level` (Required) - Minimum alert severity level that triggers notifications through this service. Valid values: `INFO`, `NOTICE`, `WARNING`. Type: `string`
+- `attributes` (String) - Service-specific configuration attributes (credentials, endpoints, etc.).
+- `level` (String) - Minimum alert severity level that triggers notifications through this service. Valid values: `INFO`, `NOTICE`, `WARNING`, `ERROR`, `CRITICAL`
+- `name` (String) - Human-readable name for the alert service.
 
 ### Optional
 
-- `enabled` (Optional) - Whether the alert service is active and will send notifications. Default: `True`. Type: `boolean`
+- `enabled` (Bool) - Whether the alert service is active and will send notifications. Default: `True`
 
 ### Read-Only
 

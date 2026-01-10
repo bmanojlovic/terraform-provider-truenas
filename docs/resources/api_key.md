@@ -2,19 +2,18 @@
 page_title: "truenas_api_key Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  API key configuration data for the new key.
+  Creates API Key.
 ---
 
 # truenas_api_key (Resource)
 
-API key configuration data for the new key.
+Creates API Key.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_api_key" "example" {
-  username = "example-username"
-  name = "nobody"
+  username = "example-value"
 }
 ```
 
@@ -22,12 +21,12 @@ resource "truenas_api_key" "example" {
 
 ### Required
 
-- `username` (Required) - username configuration. Type: `string`
+- `username` (String) - 
 
 ### Optional
 
-- `name` (Optional) - Human-readable name for the API key. Default: `nobody`. Type: `string`
-- `expires_at` (Optional) - Expiration timestamp for the API key or `null` for no expiration.. Type: `string`
+- `expires_at` (String) - Expiration timestamp for the API key or `null` for no expiration. Default: `None`
+- `name` (String) - Human-readable name for the API key. Default: `nobody`
 
 ### Read-Only
 

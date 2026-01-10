@@ -2,14 +2,18 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
+
+var _ provider.Provider = &TrueNASProvider{}
 
 type TrueNASProvider struct {
 	version string
@@ -18,14 +22,6 @@ type TrueNASProvider struct {
 type TrueNASProviderModel struct {
 	Host  types.String `tfsdk:"host"`
 	Token types.String `tfsdk:"token"`
-}
-
-func New(version string) func() provider.Provider {
-	return func() provider.Provider {
-		return &TrueNASProvider{
-			version: version,
-		}
-	}
 }
 
 func (p *TrueNASProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -37,12 +33,12 @@ func (p *TrueNASProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				MarkdownDescription: "TrueNAS host (e.g., 192.168.1.100)",
-				Required:            true,
+				MarkdownDescription: "TrueNAS host address",
+				Optional:            true,
 			},
 			"token": schema.StringAttribute{
 				MarkdownDescription: "TrueNAS API token",
-				Required:            true,
+				Optional:            true,
 				Sensitive:           true,
 			},
 		},
@@ -53,48 +49,69 @@ func (p *TrueNASProvider) Configure(ctx context.Context, req provider.ConfigureR
 	var data TrueNASProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	client, err := client.NewClient(data.Host.ValueString(), data.Token.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
+	host := os.Getenv("TRUENAS_HOST")
+	token := os.Getenv("TRUENAS_TOKEN")
+
+	if !data.Host.IsNull() {
+		host = data.Host.ValueString()
 	}
-	
-	if err := client.Connect(); err != nil {
-		resp.Diagnostics.AddError("Connection Error", err.Error())
+
+	if !data.Token.IsNull() {
+		token = data.Token.ValueString()
+	}
+
+	if host == "" {
+		resp.Diagnostics.AddError(
+			"Missing TrueNAS Host",
+			"The provider cannot create the TrueNAS client as there is a missing or empty value for the TrueNAS host. "+
+				"Set the host value in the configuration or use the TRUENAS_HOST environment variable.",
+		)
+	}
+
+	if token == "" {
+		resp.Diagnostics.AddError(
+			"Missing TrueNAS Token",
+			"The provider cannot create the TrueNAS client as there is a missing or empty value for the TrueNAS API token. "+
+				"Set the token value in the configuration or use the TRUENAS_TOKEN environment variable.",
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	c, err := client.NewClient(host, token)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Create TrueNAS Client",
+			"An unexpected error occurred when creating the TrueNAS client. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"TrueNAS Client Error: "+err.Error(),
+		)
+		return
+	}
+
+	resp.DataSourceData = c
+	resp.ResourceData = c
 }
 
 func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewAcmeDnsAuthenticatorResource,
+NewAcmeDnsAuthenticatorResource,
 		NewAlertserviceResource,
 		NewApiKeyResource,
 		NewAppResource,
-		NewAppRedeployActionResource,
-		NewAppRollbackActionResource,
-		NewAppRollbackVersionsActionResource,
-		NewAppUpgradeActionResource,
-		NewAppUpgradeSummaryActionResource,
 		NewAppRegistryResource,
 		NewCertificateResource,
 		NewCloudBackupResource,
-		NewCloudBackupRestoreActionResource,
-		NewCloudBackupSyncActionResource,
 		NewCloudsyncResource,
-		NewCloudsyncRestoreActionResource,
-		NewCloudsyncSyncActionResource,
-		NewCloudsyncSyncOnetimeActionResource,
 		NewCloudsyncCredentialsResource,
 		NewCronjobResource,
-		NewCronjobRunActionResource,
 		NewFcFcHostResource,
 		NewFcportResource,
 		NewFilesystemAcltemplateResource,
@@ -110,29 +127,18 @@ func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resou
 		NewJbofResource,
 		NewKerberosKeytabResource,
 		NewKerberosRealmResource,
-		NewKeychaincredentialResource,
 		NewNvmetHostResource,
 		NewNvmetHostSubsysResource,
 		NewNvmetNamespaceResource,
-		NewNvmetPortResource,
 		NewNvmetPortSubsysResource,
 		NewNvmetSubsysResource,
-		NewPoolDatasetResource,
+		NewPoolResource,
 		NewPoolScrubResource,
-		NewPoolScrubRunActionResource,
-		NewPoolScrubScrubActionResource,
-		NewPoolSnapshotResource,
-		NewPoolSnapshotRollbackActionResource,
 		NewPoolSnapshottaskResource,
-		NewPoolSnapshottaskRunActionResource,
 		NewPrivilegeResource,
 		NewReplicationResource,
-		NewReplicationRestoreActionResource,
-		NewReplicationRunActionResource,
-		NewReplicationRunOnetimeActionResource,
 		NewReportingExportersResource,
 		NewRsynctaskResource,
-		NewRsynctaskRunActionResource,
 		NewSharingNfsResource,
 		NewSharingSmbResource,
 		NewStaticrouteResource,
@@ -144,12 +150,34 @@ func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resou
 		NewVmResource,
 		NewVmDeviceResource,
 		NewVmwareResource,
-		NewServiceResource,
-		NewDiskResource,
-		NewFilesystemPutResource,
 	}
 }
 
 func (p *TrueNASProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewVmDataSource,
+		NewPoolDataSource,
+		NewPoolDatasetDataSource,
+		NewDiskDataSource,
+		NewUserDataSource,
+		NewGroupDataSource,
+		NewInterfaceDataSource,
+		NewServiceDataSource,
+		NewVmsDataSource,
+		NewPoolsDataSource,
+		NewPoolDatasetsDataSource,
+		NewDisksDataSource,
+		NewUsersDataSource,
+		NewGroupsDataSource,
+		NewInterfacesDataSource,
+		NewServicesDataSource,
+	}
+}
+
+func New(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &TrueNASProvider{
+			version: version,
+		}
+	}
 }

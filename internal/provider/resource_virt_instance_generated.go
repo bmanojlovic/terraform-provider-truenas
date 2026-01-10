@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"time"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -26,10 +28,10 @@ type VirtInstanceResourceModel struct {
 	RootDiskIoBus types.String `tfsdk:"root_disk_io_bus"`
 	Remote types.String `tfsdk:"remote"`
 	InstanceType types.String `tfsdk:"instance_type"`
-	Environment types.Object `tfsdk:"environment"`
-	Autostart types.Bool `tfsdk:"autostart"`
+	Environment types.String `tfsdk:"environment"`
+	Autostart types.String `tfsdk:"autostart"`
 	Cpu types.String `tfsdk:"cpu"`
-	Devices types.List `tfsdk:"devices"`
+	Devices types.String `tfsdk:"devices"`
 	Memory types.Int64 `tfsdk:"memory"`
 	PrivilegedMode types.Bool `tfsdk:"privileged_mode"`
 }
@@ -42,69 +44,85 @@ func (r *VirtInstanceResource) Metadata(ctx context.Context, req resource.Metada
 	resp.TypeName = req.ProviderTypeName + "_virt_instance"
 }
 
+func (r *VirtInstanceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS virt_instance resource",
+		MarkdownDescription: "Create a new virtualized instance.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
-			"start_on_create": schema.BoolAttribute{
-				Optional: true,
-				Description: "Start the resource immediately after creation (default: true if not specified)",
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: true)"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Name for the new virtual instance.",
 			},
 			"source_type": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Source type for instance creation.",
 			},
 			"storage_pool": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.gl",
 			},
 			"image": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Image identifier to use for creating the instance.",
 			},
 			"root_disk_size": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "This can be specified when creating VMs so the root device's size can be configured. Root device for",
 			},
 			"root_disk_io_bus": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "I/O bus type for the root disk (defaults to NVME for best performance).",
 			},
 			"remote": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Remote image source to use.",
 			},
 			"instance_type": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Type of instance to create.",
 			},
-			"autostart": schema.BoolAttribute{
+			"environment": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Environment variables to set inside the instance.",
+			},
+			"autostart": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Whether the instance should automatically start when the host boots.",
 			},
 			"cpu": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "CPU allocation specification or `null` for automatic allocation.",
 			},
-			"devices": schema.ListAttribute{
-				ElementType: types.StringType,
+			"devices": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Array of devices to attach to the instance.",
 			},
 			"memory": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Memory allocation in bytes or `null` for automatic allocation.",
 			},
 			"privileged_mode": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "This is only valid for containers and should only be set when container instance which is to be depl",
 			},
 		},
 	}
@@ -130,14 +148,18 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
 	if !data.SourceType.IsNull() {
 		params["source_type"] = data.SourceType.ValueString()
 	}
 	if !data.StoragePool.IsNull() {
 		params["storage_pool"] = data.StoragePool.ValueString()
 	}
-	params["image"] = data.Image.ValueString()
+	if !data.Image.IsNull() {
+		params["image"] = data.Image.ValueString()
+	}
 	if !data.RootDiskSize.IsNull() {
 		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
 	}
@@ -150,11 +172,17 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	if !data.InstanceType.IsNull() {
 		params["instance_type"] = data.InstanceType.ValueString()
 	}
+	if !data.Environment.IsNull() {
+		params["environment"] = data.Environment.ValueString()
+	}
 	if !data.Autostart.IsNull() {
-		params["autostart"] = data.Autostart.ValueBool()
+		params["autostart"] = data.Autostart.ValueString()
 	}
 	if !data.Cpu.IsNull() {
 		params["cpu"] = data.Cpu.ValueString()
+	}
+	if !data.Devices.IsNull() {
+		params["devices"] = data.Devices.ValueString()
 	}
 	if !data.Memory.IsNull() {
 		params["memory"] = data.Memory.ValueInt64()
@@ -163,12 +191,13 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
 
-	result, err := r.client.Call("virt.instance.create", params)
+	result, err := r.client.CallWithJob("virt.instance.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create virt_instance: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -181,7 +210,6 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		startOnCreate = data.StartOnCreate.ValueBool()
 	}
 	if startOnCreate {
-		// Convert string ID to integer for TrueNAS API
 		vmID, err := strconv.Atoi(data.ID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
@@ -202,18 +230,64 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("virt.instance.get_instance", resourceID)
+	result, err := r.client.Call("virt.instance.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read virt_instance: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["source_type"]; ok && v != nil {
+			data.SourceType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["storage_pool"]; ok && v != nil {
+			data.StoragePool = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["image"]; ok && v != nil {
+			data.Image = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["root_disk_size"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.RootDiskSize = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["root_disk_io_bus"]; ok && v != nil {
+			data.RootDiskIoBus = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["remote"]; ok && v != nil {
+			data.Remote = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["instance_type"]; ok && v != nil {
+			data.InstanceType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["environment"]; ok && v != nil {
+			data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["autostart"]; ok && v != nil {
+			data.Autostart = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["cpu"]; ok && v != nil {
+			data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["devices"]; ok && v != nil {
+			data.Devices = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["memory"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["privileged_mode"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.PrivilegedMode = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -224,22 +298,31 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state VirtInstanceResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
 	if !data.SourceType.IsNull() {
 		params["source_type"] = data.SourceType.ValueString()
 	}
 	if !data.StoragePool.IsNull() {
 		params["storage_pool"] = data.StoragePool.ValueString()
 	}
-	params["image"] = data.Image.ValueString()
+	if !data.Image.IsNull() {
+		params["image"] = data.Image.ValueString()
+	}
 	if !data.RootDiskSize.IsNull() {
 		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
 	}
@@ -252,11 +335,17 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 	if !data.InstanceType.IsNull() {
 		params["instance_type"] = data.InstanceType.ValueString()
 	}
+	if !data.Environment.IsNull() {
+		params["environment"] = data.Environment.ValueString()
+	}
 	if !data.Autostart.IsNull() {
-		params["autostart"] = data.Autostart.ValueBool()
+		params["autostart"] = data.Autostart.ValueString()
 	}
 	if !data.Cpu.IsNull() {
 		params["cpu"] = data.Cpu.ValueString()
+	}
+	if !data.Devices.IsNull() {
+		params["devices"] = data.Devices.ValueString()
 	}
 	if !data.Memory.IsNull() {
 		params["memory"] = data.Memory.ValueInt64()
@@ -265,20 +354,12 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.CallWithJob("virt.instance.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update virt_instance: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("virt.instance.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -290,16 +371,24 @@ func (r *VirtInstanceResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
+	// Stop VM before deletion if running
+	vmID, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
 		return
 	}
+	_, _ = r.client.Call("virt.instance.stop", vmID)  // Ignore errors - VM might already be stopped
+	time.Sleep(2 * time.Second)  // Wait for VM to stop
 
-	_, err = r.client.Call("virt.instance.delete", resourceID)
+	_, err = r.client.CallWithJob("virt.instance.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete virt_instance: %s", err))
 		return
 	}
 }

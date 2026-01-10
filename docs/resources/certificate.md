@@ -2,24 +2,19 @@
 page_title: "truenas_certificate Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  CertificateCreateArgs parameters.
+  Create a new Certificate
 ---
 
 # truenas_certificate (Resource)
 
-CertificateCreateArgs parameters.
+Create a new Certificate
 
 ## Example Usage
 
 ```terraform
 resource "truenas_certificate" "example" {
-  name = "example-name"
-  create_type = "CERTIFICATE_CREATE_IMPORTED"
-  add_to_trusted_store = false
-  key_type = "RSA"
-  ec_curve = "SECP256R1"
-  digest_algorithm = "SHA224"
-  renew_days = 10
+  create_type = "example-value"
+  name = "example-value"
 }
 ```
 
@@ -27,34 +22,34 @@ resource "truenas_certificate" "example" {
 
 ### Required
 
-- `name` (Required) - Certificate name.. Type: `string`
-- `create_type` (Required) - Type of certificate creation operation. Valid values: `CERTIFICATE_CREATE_IMPORTED`, `CERTIFICATE_CREATE_CSR`, `CERTIFICATE_CREATE_IMPORTED_CSR`. Type: `string`
+- `create_type` (String) - Type of certificate creation operation. Valid values: `CERTIFICATE_CREATE_IMPORTED`, `CERTIFICATE_CREATE_CSR`, `CERTIFICATE_CREATE_IMPORTED_CSR`, `CERTIFICATE_CREATE_ACME`
+- `name` (String) - Certificate name.
 
 ### Optional
 
-- `add_to_trusted_store` (Optional) - Whether to add this certificate to the trusted certificate store. Default: `False`. Type: `boolean`
-- `certificate` (Optional) - PEM-encoded certificate to import or `null`.. Type: `string`
-- `privatekey` (Optional) - PEM-encoded private key to import or `null`.. Type: `string`
-- `CSR` (Optional) - PEM-encoded certificate signing request to import or `null`.. Type: `string`
-- `key_length` (Optional) - RSA key length in bits or `null`.. Type: `string`
-- `key_type` (Optional) - Type of cryptographic key to generate. Valid values: `RSA`, `EC` Default: `RSA`. Type: `string`
-- `ec_curve` (Optional) - Elliptic curve to use for EC keys. Valid values: `SECP256R1`, `SECP384R1`, `SECP521R1` Default: `SECP384R1`. Type: `string`
-- `passphrase` (Optional) - Passphrase to protect the private key or `null`.. Type: `string`
-- `city` (Optional) - City or locality name for certificate subject or `null`.. Type: `string`
-- `common` (Optional) - Common name for certificate subject or `null`.. Type: `string`
-- `country` (Optional) - Country name for certificate subject or `null`.. Type: `string`
-- `email` (Optional) - Email address for certificate subject or `null`.. Type: `string`
-- `organization` (Optional) - Organization name for certificate subject or `null`.. Type: `string`
-- `organizational_unit` (Optional) - Organizational unit for certificate subject or `null`.. Type: `string`
-- `state` (Optional) - State or province name for certificate subject or `null`.. Type: `string`
-- `digest_algorithm` (Optional) - Hash algorithm for certificate signing. Valid values: `SHA224`, `SHA256`, `SHA384` Default: `SHA256`. Type: `string`
-- `san` (Optional) - Subject alternative names for the certificate.. Type: `array`
-- `cert_extensions` (Optional) - Certificate extensions configuration.. Type: `object`
-- `acme_directory_uri` (Optional) - ACME directory URI to be used for ACME certificate creation.. Type: `string`
-- `csr_id` (Optional) - CSR to be used for ACME certificate creation.. Type: `string`
-- `tos` (Optional) - Set this when creating an ACME certificate to accept terms of service of the ACME service.. Type: `string`
-- `dns_mapping` (Optional) - A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the CSR.. Type: `object`
-- `renew_days` (Optional) - Number of days before the certificate expiration date to attempt certificate renewal. If certificate renewal     fails, renewal will be reattempted every day until expiration. Default: `10`. Type: `integer`
+- `CSR` (String) - PEM-encoded certificate signing request to import or `null`. Default: `None`
+- `acme_directory_uri` (String) - ACME directory URI to be used for ACME certificate creation. Default: `None`
+- `add_to_trusted_store` (Bool) - Whether to add this certificate to the trusted certificate store. Default: `False`
+- `cert_extensions` (String) - Certificate extensions configuration.
+- `certificate` (String) - PEM-encoded certificate to import or `null`. Default: `None`
+- `city` (String) - City or locality name for certificate subject or `null`. Default: `None`
+- `common` (String) - Common name for certificate subject or `null`. Default: `None`
+- `country` (String) - Country name for certificate subject or `null`. Default: `None`
+- `csr_id` (Int64) - CSR to be used for ACME certificate creation. Default: `None`
+- `digest_algorithm` (String) - Hash algorithm for certificate signing. Default: `SHA256` Valid values: `SHA224`, `SHA256`, `SHA384`, `SHA512`
+- `dns_mapping` (String) - A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the CSR.
+- `ec_curve` (String) - Elliptic curve to use for EC keys. Default: `SECP384R1` Valid values: `SECP256R1`, `SECP384R1`, `SECP521R1`, `ed25519`
+- `email` (String) - Email address for certificate subject or `null`. Default: `None`
+- `key_length` (Int64) - RSA key length in bits or `null`. Default: `None`
+- `key_type` (String) - Type of cryptographic key to generate. Default: `RSA` Valid values: `RSA`, `EC`
+- `organization` (String) - Organization name for certificate subject or `null`. Default: `None`
+- `organizational_unit` (String) - Organizational unit for certificate subject or `null`. Default: `None`
+- `passphrase` (String) - Passphrase to protect the private key or `null`. Default: `None`
+- `privatekey` (String) - PEM-encoded private key to import or `null`. Default: `None`
+- `renew_days` (Int64) - Number of days before the certificate expiration date to attempt certificate renewal. If certificate renewal     fails, renewal will be reattempted every day until expiration. Default: `10`
+- `san` (List) - Subject alternative names for the certificate.
+- `state` (String) - State or province name for certificate subject or `null`. Default: `None`
+- `tos` (String) - Set this when creating an ACME certificate to accept terms of service of the ACME service. Default: `None`
 
 ### Read-Only
 

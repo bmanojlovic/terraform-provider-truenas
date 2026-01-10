@@ -2,19 +2,18 @@
 page_title: "truenas_fc_fc_host Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Fibre Channel host configuration data for the new host.
+  Creates FC host (pairing).
 ---
 
 # truenas_fc_fc_host (Resource)
 
-Fibre Channel host configuration data for the new host.
+Creates FC host (pairing).
 
 ## Example Usage
 
 ```terraform
 resource "truenas_fc_fc_host" "example" {
-  alias = "example-alias"
-  npiv = 0
+  alias = "example-value"
 }
 ```
 
@@ -22,13 +21,13 @@ resource "truenas_fc_fc_host" "example" {
 
 ### Required
 
-- `alias` (Required) - Human-readable alias for the Fibre Channel host.. Type: `string`
+- `alias` (String) - Human-readable alias for the Fibre Channel host.
 
 ### Optional
 
-- `wwpn` (Optional) - World Wide Port Name for port A or `null` if not configured.. Type: `string`
-- `wwpn_b` (Optional) - World Wide Port Name for port B or `null` if not configured.. Type: `string`
-- `npiv` (Optional) - Number of N_Port ID Virtualization (NPIV) virtual ports to create. Default: `0`. Type: `integer`
+- `npiv` (Int64) - Number of N_Port ID Virtualization (NPIV) virtual ports to create. Default: `0`
+- `wwpn` (String) - World Wide Port Name for port A or `null` if not configured. Default: `None`
+- `wwpn_b` (String) - World Wide Port Name for port B or `null` if not configured. Default: `None`
 
 ### Read-Only
 

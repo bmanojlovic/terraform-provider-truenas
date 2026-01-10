@@ -2,12 +2,12 @@
 page_title: "truenas_nvmet_host_subsys Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Host-subsystem association configuration data for creation.
+  Create an association between a `host` and a subsystem (`subsys`).
 ---
 
 # truenas_nvmet_host_subsys (Resource)
 
-Host-subsystem association configuration data for creation.
+Create an association between a `host` and a subsystem (`subsys`).
 
 ## Example Usage
 
@@ -22,8 +22,8 @@ resource "truenas_nvmet_host_subsys" "example" {
 
 ### Required
 
-- `host_id` (Required) - ID of the NVMe-oF host to authorize.. Type: `integer`
-- `subsys_id` (Required) - ID of the NVMe-oF subsystem to grant access to.. Type: `integer`
+- `host_id` (Int64) - ID of the NVMe-oF host to authorize.
+- `subsys_id` (Int64) - ID of the NVMe-oF subsystem to grant access to.
 
 ### Optional
 

@@ -2,19 +2,18 @@
 page_title: "truenas_iscsi_initiator Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Authorized initiator group configuration data for creation.
+  Create an iSCSI Initiator.
 ---
 
 # truenas_iscsi_initiator (Resource)
 
-Authorized initiator group configuration data for creation.
+Create an iSCSI Initiator.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_iscsi_initiator" "example" {
-  initiators = []
-  comment = ""
+  # Configure required attributes
 }
 ```
 
@@ -26,8 +25,8 @@ resource "truenas_iscsi_initiator" "example" {
 
 ### Optional
 
-- `initiators` (Optional) - Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators. Default: `[]`. Type: `array`
-- `comment` (Optional) - Optional comment describing the authorized initiator group. Default: ``. Type: `string`
+- `comment` (String) - Optional comment describing the authorized initiator group. Default: ``
+- `initiators` (List) - Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators. Default: `[]`
 
 ### Read-Only
 

@@ -2,21 +2,20 @@
 page_title: "truenas_filesystem_acltemplate Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  ACL template configuration data for the new template.
+  Create a new filesystem ACL template.
 ---
 
 # truenas_filesystem_acltemplate (Resource)
 
-ACL template configuration data for the new template.
+Create a new filesystem ACL template.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_filesystem_acltemplate" "example" {
-  name = "example-name"
-  acltype = "NFS4"
-  acl = "example-acl"
-  comment = ""
+  acl = "example-value"
+  acltype = "example-value"
+  name = "example-value"
 }
 ```
 
@@ -24,13 +23,13 @@ resource "truenas_filesystem_acltemplate" "example" {
 
 ### Required
 
-- `name` (Required) - Human-readable name for the ACL template.. Type: `string`
-- `acltype` (Required) - ACL type this template provides. Valid values: `NFS4`, `POSIX1E`. Type: `string`
-- `acl` (Required) - Array of Access Control Entries defined by this template.. Type: `string`
+- `acl` (String) - Array of Access Control Entries defined by this template.
+- `acltype` (String) - ACL type this template provides. Valid values: `NFS4`, `POSIX1E`
+- `name` (String) - Human-readable name for the ACL template.
 
 ### Optional
 
-- `comment` (Optional) - Optional descriptive comment about the template's purpose. Default: ``. Type: `string`
+- `comment` (String) - Optional descriptive comment about the template's purpose. Default: ``
 
 ### Read-Only
 

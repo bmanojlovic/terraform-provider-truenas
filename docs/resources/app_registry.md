@@ -2,21 +2,20 @@
 page_title: "truenas_app_registry Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Container registry configuration data for the new registry.
+  Create an app registry entry.
 ---
 
 # truenas_app_registry (Resource)
 
-Container registry configuration data for the new registry.
+Create an app registry entry.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_app_registry" "example" {
-  name = "example-name"
-  username = "example-username"
-  password = "example-password"
-  uri = "https://index.docker.io/v1/"
+  name = "example-value"
+  password = "example-value"
+  username = "example-value"
 }
 ```
 
@@ -24,14 +23,14 @@ resource "truenas_app_registry" "example" {
 
 ### Required
 
-- `name` (Required) - Human-readable name for the container registry.. Type: `string`
-- `username` (Required) - Username for registry authentication (masked for security).. Type: `string`
-- `password` (Required) - Password or access token for registry authentication (masked for security).. Type: `string`
+- `name` (String) - Human-readable name for the container registry.
+- `password` (String) - Password or access token for registry authentication (masked for security).
+- `username` (String) - Username for registry authentication (masked for security).
 
 ### Optional
 
-- `description` (Optional) - Optional description of the container registry or `null`.. Type: `string`
-- `uri` (Optional) - Container registry URI endpoint (defaults to Docker Hub). Default: `https://index.docker.io/v1/`. Type: `string`
+- `description` (String) - Optional description of the container registry or `null`. Default: `None`
+- `uri` (String) - Container registry URI endpoint (defaults to Docker Hub). Default: `https://index.docker.io/v1/`
 
 ### Read-Only
 

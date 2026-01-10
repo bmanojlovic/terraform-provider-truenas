@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,35 +34,42 @@ func (r *KerberosRealmResource) Metadata(ctx context.Context, req resource.Metad
 	resp.TypeName = req.ProviderTypeName + "_kerberos_realm"
 }
 
+func (r *KerberosRealmResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *KerberosRealmResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS kerberos_realm resource",
+		MarkdownDescription: "Create a new kerberos realm. This will be automatically populated during the",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"realm": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Kerberos realm name. This is external to TrueNAS and is case-sensitive.     The general convention f",
 			},
 			"primary_kdc": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "The master Kerberos domain controller for this realm. TrueNAS uses this as a fallback if it cannot g",
 			},
 			"kdc": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "List of kerberos domain controllers. If the list is empty then the kerberos     libraries will use D",
 			},
 			"admin_server": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "List of kerberos admin servers. If the list is empty then the kerberos     libraries will use DNS to",
 			},
 			"kpasswd_server": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "List of kerberos kpasswd servers. If the list is empty then DNS will be used     to look them up if ",
 			},
 		},
 	}
@@ -86,17 +95,35 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	params := map[string]interface{}{}
-	params["realm"] = data.Realm.ValueString()
+	if !data.Realm.IsNull() {
+		params["realm"] = data.Realm.ValueString()
+	}
 	if !data.PrimaryKdc.IsNull() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
+	}
+	if !data.Kdc.IsNull() {
+		var kdcList []string
+		data.Kdc.ElementsAs(ctx, &kdcList, false)
+		params["kdc"] = kdcList
+	}
+	if !data.AdminServer.IsNull() {
+		var admin_serverList []string
+		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
+		params["admin_server"] = admin_serverList
+	}
+	if !data.KpasswdServer.IsNull() {
+		var kpasswd_serverList []string
+		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
+		params["kpasswd_server"] = kpasswd_serverList
 	}
 
 	result, err := r.client.Call("kerberos.realm.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create kerberos_realm: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -113,18 +140,49 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.realm.get_instance", resourceID)
+	result, err := r.client.Call("kerberos.realm.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read kerberos_realm: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["realm"]; ok && v != nil {
+			data.Realm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["primary_kdc"]; ok && v != nil {
+			data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["kdc"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Kdc, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["admin_server"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.AdminServer, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["kpasswd_server"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.KpasswdServer, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -135,33 +193,47 @@ func (r *KerberosRealmResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state KerberosRealmResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["realm"] = data.Realm.ValueString()
+	if !data.Realm.IsNull() {
+		params["realm"] = data.Realm.ValueString()
+	}
 	if !data.PrimaryKdc.IsNull() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
+	if !data.Kdc.IsNull() {
+		var kdcList []string
+		data.Kdc.ElementsAs(ctx, &kdcList, false)
+		params["kdc"] = kdcList
+	}
+	if !data.AdminServer.IsNull() {
+		var admin_serverList []string
+		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
+		params["admin_server"] = admin_serverList
+	}
+	if !data.KpasswdServer.IsNull() {
+		var kpasswd_serverList []string
+		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
+		params["kpasswd_server"] = kpasswd_serverList
+	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("kerberos.realm.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update kerberos_realm: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.realm.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -173,16 +245,15 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("kerberos.realm.delete", resourceID)
+	_, err = r.client.Call("kerberos.realm.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete kerberos_realm: %s", err))
 		return
 	}
 }

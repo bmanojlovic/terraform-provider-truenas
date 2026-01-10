@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,7 +27,7 @@ type PoolSnapshottaskResourceModel struct {
 	Exclude types.List `tfsdk:"exclude"`
 	NamingSchema types.String `tfsdk:"naming_schema"`
 	AllowEmpty types.Bool `tfsdk:"allow_empty"`
-	Schedule types.Object `tfsdk:"schedule"`
+	Schedule types.String `tfsdk:"schedule"`
 }
 
 func NewPoolSnapshottaskResource() resource.Resource {
@@ -36,45 +38,60 @@ func (r *PoolSnapshottaskResource) Metadata(ctx context.Context, req resource.Me
 	resp.TypeName = req.ProviderTypeName + "_pool_snapshottask"
 }
 
+func (r *PoolSnapshottaskResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *PoolSnapshottaskResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS pool_snapshottask resource",
+		MarkdownDescription: "Create a Periodic Snapshot Task",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"dataset": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "The dataset to take snapshots of.",
 			},
 			"recursive": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to recursively snapshot child datasets.",
 			},
 			"lifetime_value": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Number of time units to retain snapshots. `lifetime_unit` gives the time unit.",
 			},
 			"lifetime_unit": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Unit of time for snapshot retention.",
 			},
 			"enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether this periodic snapshot task is enabled.",
 			},
 			"exclude": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Array of dataset patterns to exclude from recursive snapshots.",
 			},
 			"naming_schema": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Naming pattern for generated snapshots using strftime format.",
 			},
 			"allow_empty": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to take snapshots even if no data has changed.",
+			},
+			"schedule": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Cron schedule for when snapshots should be taken.",
 			},
 		},
 	}
@@ -100,7 +117,9 @@ func (r *PoolSnapshottaskResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	params := map[string]interface{}{}
-	params["dataset"] = data.Dataset.ValueString()
+	if !data.Dataset.IsNull() {
+		params["dataset"] = data.Dataset.ValueString()
+	}
 	if !data.Recursive.IsNull() {
 		params["recursive"] = data.Recursive.ValueBool()
 	}
@@ -113,19 +132,28 @@ func (r *PoolSnapshottaskResource) Create(ctx context.Context, req resource.Crea
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
+	if !data.Exclude.IsNull() {
+		var excludeList []string
+		data.Exclude.ElementsAs(ctx, &excludeList, false)
+		params["exclude"] = excludeList
+	}
 	if !data.NamingSchema.IsNull() {
 		params["naming_schema"] = data.NamingSchema.ValueString()
 	}
 	if !data.AllowEmpty.IsNull() {
 		params["allow_empty"] = data.AllowEmpty.ValueBool()
 	}
+	if !data.Schedule.IsNull() {
+		params["schedule"] = data.Schedule.ValueString()
+	}
 
 	result, err := r.client.Call("pool.snapshottask.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create pool_snapshottask: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -142,18 +170,53 @@ func (r *PoolSnapshottaskResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("pool.snapshottask.get_instance", resourceID)
+	result, err := r.client.Call("pool.snapshottask.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read pool_snapshottask: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["dataset"]; ok && v != nil {
+			data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["recursive"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Recursive = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["lifetime_value"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.LifetimeValue = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["lifetime_unit"]; ok && v != nil {
+			data.LifetimeUnit = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["exclude"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Exclude, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["naming_schema"]; ok && v != nil {
+			data.NamingSchema = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["allow_empty"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.AllowEmpty = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["schedule"]; ok && v != nil {
+			data.Schedule = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -164,15 +227,22 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state PoolSnapshottaskResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["dataset"] = data.Dataset.ValueString()
+	if !data.Dataset.IsNull() {
+		params["dataset"] = data.Dataset.ValueString()
+	}
 	if !data.Recursive.IsNull() {
 		params["recursive"] = data.Recursive.ValueBool()
 	}
@@ -185,27 +255,27 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
+	if !data.Exclude.IsNull() {
+		var excludeList []string
+		data.Exclude.ElementsAs(ctx, &excludeList, false)
+		params["exclude"] = excludeList
+	}
 	if !data.NamingSchema.IsNull() {
 		params["naming_schema"] = data.NamingSchema.ValueString()
 	}
 	if !data.AllowEmpty.IsNull() {
 		params["allow_empty"] = data.AllowEmpty.ValueBool()
 	}
+	if !data.Schedule.IsNull() {
+		params["schedule"] = data.Schedule.ValueString()
+	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("pool.snapshottask.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update pool_snapshottask: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("pool.snapshottask.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -217,16 +287,15 @@ func (r *PoolSnapshottaskResource) Delete(ctx context.Context, req resource.Dele
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("pool.snapshottask.delete", resourceID)
+	_, err = r.client.Call("pool.snapshottask.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete pool_snapshottask: %s", err))
 		return
 	}
 }

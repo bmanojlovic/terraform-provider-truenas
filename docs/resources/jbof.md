@@ -2,20 +2,20 @@
 page_title: "truenas_jbof Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  JBOF configuration data for creation.
+  Create a new JBOF.
 ---
 
 # truenas_jbof (Resource)
 
-JBOF configuration data for creation.
+Create a new JBOF.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_jbof" "example" {
-  mgmt_ip1 = "example-mgmt_ip1"
-  mgmt_username = "example-mgmt_username"
-  mgmt_password = "example-mgmt_password"
+  mgmt_ip1 = "example-value"
+  mgmt_password = "example-value"
+  mgmt_username = "example-value"
 }
 ```
 
@@ -23,14 +23,14 @@ resource "truenas_jbof" "example" {
 
 ### Required
 
-- `mgmt_ip1` (Required) - IP of first Redfish management interface.. Type: `string`
-- `mgmt_username` (Required) - Redfish administrative username.. Type: `string`
-- `mgmt_password` (Required) - Redfish administrative password.. Type: `string`
+- `mgmt_ip1` (String) - IP of first Redfish management interface.
+- `mgmt_password` (String) - Redfish administrative password.
+- `mgmt_username` (String) - Redfish administrative username.
 
 ### Optional
 
-- `description` (Optional) - Optional description of the JBOF.. Type: `string`
-- `mgmt_ip2` (Optional) - Optional IP of second Redfish management interface.. Type: `string`
+- `description` (String) - Optional description of the JBOF.
+- `mgmt_ip2` (String) - Optional IP of second Redfish management interface.
 
 ### Read-Only
 

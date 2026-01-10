@@ -2,18 +2,18 @@
 page_title: "truenas_fcport Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Fibre Channel port configuration data for the new port.
+  Creates mapping between a FC port and a target.
 ---
 
 # truenas_fcport (Resource)
 
-Fibre Channel port configuration data for the new port.
+Creates mapping between a FC port and a target.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_fcport" "example" {
-  port = "example-port"
+  port = "example-value"
   target_id = 1
 }
 ```
@@ -22,8 +22,8 @@ resource "truenas_fcport" "example" {
 
 ### Required
 
-- `port` (Required) - Alias name for the Fibre Channel port.. Type: `string`
-- `target_id` (Required) - ID of the target to associate with this FC port.. Type: `integer`
+- `port` (String) - Alias name for the Fibre Channel port.
+- `target_id` (Int64) - ID of the target to associate with this FC port.
 
 ### Optional
 

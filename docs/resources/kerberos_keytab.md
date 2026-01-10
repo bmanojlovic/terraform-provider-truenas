@@ -2,19 +2,19 @@
 page_title: "truenas_kerberos_keytab Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Kerberos keytab configuration data for creation.
+  Create a kerberos keytab. Uploaded keytab files will be merged with the system
 ---
 
 # truenas_kerberos_keytab (Resource)
 
-Kerberos keytab configuration data for creation.
+Create a kerberos keytab. Uploaded keytab files will be merged with the system
 
 ## Example Usage
 
 ```terraform
 resource "truenas_kerberos_keytab" "example" {
-  name = "example-name"
-  file = "example-file"
+  file = "example-value"
+  name = "example-value"
 }
 ```
 
@@ -22,8 +22,8 @@ resource "truenas_kerberos_keytab" "example" {
 
 ### Required
 
-- `name` (Required) - Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the keytab file. Some names are used for internal purposes such     as AD_MACHINE_ACCOUNT and IPA_MACHINE_ACCOUNT.. Type: `string`
-- `file` (Required) - Base64 encoded kerberos keytab entries to append to the system keytab. . Type: `string`
+- `file` (String) - Base64 encoded kerberos keytab entries to append to the system keytab.
+- `name` (String) - Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the keytab file. Some names are used for internal purposes such     as AD_MACHINE_ACCOUNT and IPA_MACHIN
 
 ### Optional
 

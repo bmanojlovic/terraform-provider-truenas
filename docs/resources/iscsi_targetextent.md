@@ -2,19 +2,19 @@
 page_title: "truenas_iscsi_targetextent Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Target-to-extent association configuration data for creation.
+  Create an Associated Target.
 ---
 
 # truenas_iscsi_targetextent (Resource)
 
-Target-to-extent association configuration data for creation.
+Create an Associated Target.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_iscsi_targetextent" "example" {
-  target = 1
   extent = 1
+  target = 1
 }
 ```
 
@@ -22,12 +22,12 @@ resource "truenas_iscsi_targetextent" "example" {
 
 ### Required
 
-- `target` (Required) - ID of the iSCSI target to associate with the extent.. Type: `integer`
-- `extent` (Required) - ID of the iSCSI extent to associate with the target.. Type: `integer`
+- `extent` (Int64) - ID of the iSCSI extent to associate with the target.
+- `target` (Int64) - ID of the iSCSI target to associate with the extent.
 
 ### Optional
 
-- `lunid` (Optional) - LUN ID to assign or `null` to auto-assign the next available LUN.. Type: `string`
+- `lunid` (Int64) - LUN ID to assign or `null` to auto-assign the next available LUN. Default: `None`
 
 ### Read-Only
 

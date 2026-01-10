@@ -88,7 +88,7 @@ func (r *FilesystemPutResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	data.ID = data.Path
+	data.ID = types.StringValue(data.Path.ValueString())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

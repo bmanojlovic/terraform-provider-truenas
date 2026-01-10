@@ -2,10 +2,11 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,28 +33,34 @@ func (r *AlertserviceResource) Metadata(ctx context.Context, req resource.Metada
 	resp.TypeName = req.ProviderTypeName + "_alertservice"
 }
 
+func (r *AlertserviceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *AlertserviceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS alertservice resource",
+		MarkdownDescription: "Create an Alert Service of specified `type`.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Human-readable name for the alert service.",
 			},
 			"attributes": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Service-specific configuration attributes (credentials, endpoints, etc.).",
 			},
 			"level": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Minimum alert severity level that triggers notifications through this service.",
 			},
 			"enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether the alert service is active and will send notifications.",
 			},
 		},
 	}
@@ -79,24 +86,31 @@ func (r *AlertserviceResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	var attributesMap map[string]interface{}
-	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
-		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
-		return
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
 	}
-	params["attributes"] = attributesMap
-	params["level"] = data.Level.ValueString()
+	if !data.Attributes.IsNull() {
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
+	}
+	if !data.Level.IsNull() {
+		params["level"] = data.Level.ValueString()
+	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
 
 	result, err := r.client.Call("alertservice.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create alertservice: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -113,18 +127,34 @@ func (r *AlertserviceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("alertservice.get_instance", resourceID)
+	result, err := r.client.Call("alertservice.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read alertservice: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["attributes"]; ok && v != nil {
+			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["level"]; ok && v != nil {
+			data.Level = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -135,40 +165,43 @@ func (r *AlertserviceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state AlertserviceResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	params := map[string]interface{}{}
-	params["name"] = data.Name.ValueString()
-	var attributesMap map[string]interface{}
-	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
-		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
-	params["attributes"] = attributesMap
-	params["level"] = data.Level.ValueString()
+
+	params := map[string]interface{}{}
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
+	if !data.Attributes.IsNull() {
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
+	}
+	if !data.Level.IsNull() {
+		params["level"] = data.Level.ValueString()
+	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("alertservice.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update alertservice: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("alertservice.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -180,16 +213,15 @@ func (r *AlertserviceResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("alertservice.delete", resourceID)
+	_, err = r.client.Call("alertservice.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete alertservice: %s", err))
 		return
 	}
 }

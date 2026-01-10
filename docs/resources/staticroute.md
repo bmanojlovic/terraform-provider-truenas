@@ -2,20 +2,19 @@
 page_title: "truenas_staticroute Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for the new static route.
+  Create a Static Route.
 ---
 
 # truenas_staticroute (Resource)
 
-Configuration for the new static route.
+Create a Static Route.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_staticroute" "example" {
-  destination = "example-destination"
-  gateway = "example-gateway"
-  description = ""
+  destination = "example-value"
+  gateway = "example-value"
 }
 ```
 
@@ -23,12 +22,12 @@ resource "truenas_staticroute" "example" {
 
 ### Required
 
-- `destination` (Required) - Destination network or host for this static route.. Type: `string`
-- `gateway` (Required) - Gateway IP address for this static route.. Type: `string`
+- `destination` (String) - Destination network or host for this static route.
+- `gateway` (String) - Gateway IP address for this static route.
 
 ### Optional
 
-- `description` (Optional) - Optional description for this static route. Default: ``. Type: `string`
+- `description` (String) - Optional description for this static route. Default: ``
 
 ### Read-Only
 

@@ -2,22 +2,19 @@
 page_title: "truenas_privilege Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for creating a new privilege.
+  Creates a privilege.
 ---
 
 # truenas_privilege (Resource)
 
-Configuration for creating a new privilege.
+Creates a privilege.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_privilege" "example" {
-  name = "example-name"
-  web_shell = false
-  local_groups = []
-  ds_groups = []
-  roles = []
+  name = "example-value"
+  web_shell = true
 }
 ```
 
@@ -25,14 +22,14 @@ resource "truenas_privilege" "example" {
 
 ### Required
 
-- `name` (Required) - Display name of the privilege.. Type: `string`
-- `web_shell` (Required) - Whether this privilege grants access to the web shell.. Type: `boolean`
+- `name` (String) - Display name of the privilege.
+- `web_shell` (Bool) - Whether this privilege grants access to the web shell.
 
 ### Optional
 
-- `local_groups` (Optional) - Array of local group IDs to assign to this privilege. Default: `[]`. Type: `array`
-- `ds_groups` (Optional) - Array of directory service group IDs or SIDs to assign to this privilege. Default: `[]`. Type: `array`
-- `roles` (Optional) - Array of role names included in this privilege. Default: `[]`. Type: `array`
+- `ds_groups` (List) - Array of directory service group IDs or SIDs to assign to this privilege. Default: `[]`
+- `local_groups` (List) - Array of local group IDs to assign to this privilege. Default: `[]`
+- `roles` (List) - Array of role names included in this privilege. Default: `[]`
 
 ### Read-Only
 

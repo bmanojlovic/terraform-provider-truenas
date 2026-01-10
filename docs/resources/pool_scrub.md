@@ -2,21 +2,18 @@
 page_title: "truenas_pool_scrub Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for the new scrub schedule.
+  Create a scrub task for a pool.
 ---
 
 # truenas_pool_scrub (Resource)
 
-Configuration for the new scrub schedule.
+Create a scrub task for a pool.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_pool_scrub" "example" {
   pool = 1
-  threshold = 35
-  description = ""
-  enabled = true
 }
 ```
 
@@ -24,14 +21,14 @@ resource "truenas_pool_scrub" "example" {
 
 ### Required
 
-- `pool` (Required) - ID of the pool to scrub.. Type: `integer`
+- `pool` (Int64) - ID of the pool to scrub.
 
 ### Optional
 
-- `threshold` (Optional) - Days before a scrub is due when a scrub should automatically start. Default: `35`. Type: `integer`
-- `description` (Optional) - Description or notes for this scrub schedule. Default: ``. Type: `string`
-- `schedule` (Optional) - Cron schedule for when scrubs should run.. Type: `object`
-- `enabled` (Optional) - Whether this scrub schedule is enabled. Default: `True`. Type: `boolean`
+- `description` (String) - Description or notes for this scrub schedule. Default: ``
+- `enabled` (Bool) - Whether this scrub schedule is enabled. Default: `True`
+- `schedule` (String) - Cron schedule for when scrubs should run.
+- `threshold` (Int64) - Days before a scrub is due when a scrub should automatically start. Default: `35`
 
 ### Read-Only
 

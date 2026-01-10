@@ -2,18 +2,18 @@
 page_title: "truenas_vm_device Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  VMDeviceCreateArgs parameters.
+  Create a new device for the VM of id `vm`.
 ---
 
 # truenas_vm_device (Resource)
 
-VMDeviceCreateArgs parameters.
+Create a new device for the VM of id `vm`.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_vm_device" "example" {
-  attributes = "example-attributes"
+  attributes = "example-value"
   vm = 1
 }
 ```
@@ -22,12 +22,12 @@ resource "truenas_vm_device" "example" {
 
 ### Required
 
-- `attributes` (Required) - Device-specific configuration attributes.. Type: `string`
-- `vm` (Required) - ID of the virtual machine this device belongs to.. Type: `integer`
+- `attributes` (String) - Device-specific configuration attributes.
+- `vm` (Int64) - ID of the virtual machine this device belongs to.
 
 ### Optional
 
-- `order` (Optional) - Boot order priority for this device. `null` for automatic assignment.. Type: `string`
+- `order` (Int64) - Boot order priority for this device. `null` for automatic assignment. Default: `None`
 
 ### Read-Only
 

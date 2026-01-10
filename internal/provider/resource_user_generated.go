@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -48,99 +50,122 @@ func (r *UserResource) Metadata(ctx context.Context, req resource.MetadataReques
 	resp.TypeName = req.ProviderTypeName + "_user"
 }
 
+func (r *UserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS user resource",
+		MarkdownDescription: "Create a new user.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"uid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "UNIX UID. If not provided, it is automatically filled with the next one available.",
 			},
 			"username": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "String used to uniquely identify the user on the server. In order to be portable across     systems,",
 			},
 			"home": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "The local file system path for the user account's home directory. Typically, this is required only i",
 			},
 			"shell": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Available choices can be retrieved with `user.shell_choices`.",
 			},
 			"full_name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Comment field to provide additional information about the user account. Typically, this is     the f",
 			},
 			"smb": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "The user account may be used to access SMB shares. If set to `true` then TrueNAS stores an NT hash o",
 			},
 			"userns_idmap": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Specifies the subuid mapping for this user. If DIRECT then the UID will be     directly mapped to al",
 			},
 			"group": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "The group entry `id` for the user's primary group. This is not the same as the Unix group `gid` valu",
 			},
 			"groups": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Array of additional groups to which the user belongs. NOTE: Groups are identified by their group ent",
 			},
 			"password_disabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "If set to `true` password authentication for the user account is disabled.  NOTE: Users with passwor",
 			},
 			"ssh_password_enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Allow the user to authenticate to the TrueNAS SSH server using a password.  WARNING: The established",
 			},
 			"sshpubkey": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "SSH public keys corresponding to private keys that authenticate this user to the TrueNAS SSH server.",
 			},
 			"locked": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "If set to `true` the account is locked. The account cannot be used to authenticate to the TrueNAS se",
 			},
 			"sudo_commands": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "An array of commands the user may execute with elevated privileges. User is prompted for password   ",
 			},
 			"sudo_commands_nopasswd": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "An array of commands the user may execute with elevated privileges. User is *not* prompted for passw",
 			},
 			"email": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and",
 			},
 			"group_create": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary g",
 			},
 			"home_create": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Create a new home directory for the user in the specified `home` path. ",
 			},
 			"home_mode": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Filesystem permission to set on the user's home directory. ",
 			},
 			"password": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "The password for the user account. This is required if `random_password` is not set. ",
 			},
 			"random_password": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Generate a random 20 character password for the user.",
 			},
 		},
 	}
@@ -169,14 +194,18 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if !data.Uid.IsNull() {
 		params["uid"] = data.Uid.ValueInt64()
 	}
-	params["username"] = data.Username.ValueString()
+	if !data.Username.IsNull() {
+		params["username"] = data.Username.ValueString()
+	}
 	if !data.Home.IsNull() {
 		params["home"] = data.Home.ValueString()
 	}
 	if !data.Shell.IsNull() {
 		params["shell"] = data.Shell.ValueString()
 	}
-	params["full_name"] = data.FullName.ValueString()
+	if !data.FullName.IsNull() {
+		params["full_name"] = data.FullName.ValueString()
+	}
 	if !data.Smb.IsNull() {
 		params["smb"] = data.Smb.ValueBool()
 	}
@@ -185,6 +214,11 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	if !data.Group.IsNull() {
 		params["group"] = data.Group.ValueInt64()
+	}
+	if !data.Groups.IsNull() {
+		var groupsList []string
+		data.Groups.ElementsAs(ctx, &groupsList, false)
+		params["groups"] = groupsList
 	}
 	if !data.PasswordDisabled.IsNull() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()
@@ -197,6 +231,16 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	if !data.Locked.IsNull() {
 		params["locked"] = data.Locked.ValueBool()
+	}
+	if !data.SudoCommands.IsNull() {
+		var sudo_commandsList []string
+		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
+		params["sudo_commands"] = sudo_commandsList
+	}
+	if !data.SudoCommandsNopasswd.IsNull() {
+		var sudo_commands_nopasswdList []string
+		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
+		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
 	if !data.Email.IsNull() {
 		params["email"] = data.Email.ValueString()
@@ -219,10 +263,11 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	result, err := r.client.Call("user.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create user: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -239,18 +284,97 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("user.get_instance", resourceID)
+	result, err := r.client.Call("user.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read user: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["uid"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Uid = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["username"]; ok && v != nil {
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["home"]; ok && v != nil {
+			data.Home = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["shell"]; ok && v != nil {
+			data.Shell = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["full_name"]; ok && v != nil {
+			data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["smb"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Smb = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["userns_idmap"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["group"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["groups"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Groups, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["password_disabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.PasswordDisabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["ssh_password_enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.SshPasswordEnabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["sshpubkey"]; ok && v != nil {
+			data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["locked"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Locked = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["sudo_commands"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.SudoCommands, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["sudo_commands_nopasswd"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["email"]; ok && v != nil {
+			data.Email = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["group_create"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.GroupCreate = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["home_create"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.HomeCreate = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["home_mode"]; ok && v != nil {
+			data.HomeMode = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["password"]; ok && v != nil {
+			data.Password = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["random_password"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.RandomPassword = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -261,10 +385,15 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state UserResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
@@ -272,14 +401,18 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if !data.Uid.IsNull() {
 		params["uid"] = data.Uid.ValueInt64()
 	}
-	params["username"] = data.Username.ValueString()
+	if !data.Username.IsNull() {
+		params["username"] = data.Username.ValueString()
+	}
 	if !data.Home.IsNull() {
 		params["home"] = data.Home.ValueString()
 	}
 	if !data.Shell.IsNull() {
 		params["shell"] = data.Shell.ValueString()
 	}
-	params["full_name"] = data.FullName.ValueString()
+	if !data.FullName.IsNull() {
+		params["full_name"] = data.FullName.ValueString()
+	}
 	if !data.Smb.IsNull() {
 		params["smb"] = data.Smb.ValueBool()
 	}
@@ -288,6 +421,11 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	if !data.Group.IsNull() {
 		params["group"] = data.Group.ValueInt64()
+	}
+	if !data.Groups.IsNull() {
+		var groupsList []string
+		data.Groups.ElementsAs(ctx, &groupsList, false)
+		params["groups"] = groupsList
 	}
 	if !data.PasswordDisabled.IsNull() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()
@@ -300,6 +438,16 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	if !data.Locked.IsNull() {
 		params["locked"] = data.Locked.ValueBool()
+	}
+	if !data.SudoCommands.IsNull() {
+		var sudo_commandsList []string
+		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
+		params["sudo_commands"] = sudo_commandsList
+	}
+	if !data.SudoCommandsNopasswd.IsNull() {
+		var sudo_commands_nopasswdList []string
+		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
+		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
 	if !data.Email.IsNull() {
 		params["email"] = data.Email.ValueString()
@@ -320,20 +468,12 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		params["random_password"] = data.RandomPassword.ValueBool()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("user.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update user: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("user.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -345,16 +485,15 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("user.delete", resourceID)
+	_, err = r.client.Call("user.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete user: %s", err))
 		return
 	}
 }

@@ -2,19 +2,19 @@
 page_title: "truenas_acme_dns_authenticator Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  DNSAuthenticatorCreateArgs parameters.
+  Create a DNS Authenticator
 ---
 
 # truenas_acme_dns_authenticator (Resource)
 
-DNSAuthenticatorCreateArgs parameters.
+Create a DNS Authenticator
 
 ## Example Usage
 
 ```terraform
 resource "truenas_acme_dns_authenticator" "example" {
-  attributes = "example-attributes"
-  name = "example-name"
+  attributes = "example-value"
+  name = "example-value"
 }
 ```
 
@@ -22,8 +22,8 @@ resource "truenas_acme_dns_authenticator" "example" {
 
 ### Required
 
-- `attributes` (Required) - Authentication credentials and configuration for the DNS provider.. Type: `string`
-- `name` (Required) - Human-readable name for the DNS authenticator.. Type: `string`
+- `attributes` (String) - Authentication credentials and configuration for the DNS provider.
+- `name` (String) - Human-readable name for the DNS authenticator.
 
 ### Optional
 

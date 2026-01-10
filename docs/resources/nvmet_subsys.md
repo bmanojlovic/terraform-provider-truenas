@@ -2,19 +2,18 @@
 page_title: "truenas_nvmet_subsys Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration data for creating a new NVMe-oF subsystem.
+  Create a NVMe target subsystem (`subsys`).
 ---
 
 # truenas_nvmet_subsys (Resource)
 
-Configuration data for creating a new NVMe-oF subsystem.
+Create a NVMe target subsystem (`subsys`).
 
 ## Example Usage
 
 ```terraform
 resource "truenas_nvmet_subsys" "example" {
-  name = "example-name"
-  allow_any_host = false
+  name = "example-value"
 }
 ```
 
@@ -22,22 +21,16 @@ resource "truenas_nvmet_subsys" "example" {
 
 ### Required
 
-- `name` (Required) - Human readable name for the subsystem.
-
-If `subnqn` is not provided on creation, then this name will be appended to the `basenqn` from     `nvmet.global.config` to generate a subnqn.. Type: `string`
+- `name` (String) - Human readable name for the subsystem.  If `subnqn` is not provided on creation, then this name will be appended to the `basenqn` from     `nvmet.global.config` to generate a subnqn.
 
 ### Optional
 
-- `subnqn` (Optional) - NVMe Qualified Name (NQN) for the subsystem.
-
-Must be a valid NQN format if provided.. Type: `string`
-- `allow_any_host` (Optional) - Any host can access the storage associated with this subsystem (i.e. no access control). Default: `False`. Type: `boolean`
-- `pi_enable` (Optional) - Enable Protection Information (PI) for data integrity checking.. Type: `string`
-- `qid_max` (Optional) - Maximum number of queue IDs allowed for this subsystem.. Type: `string`
-- `ieee_oui` (Optional) - IEEE Organizationally Unique Identifier for the subsystem.. Type: `string`
-- `ana` (Optional) - If set to either `True` or `False`, then *override* the global `ana` setting from `nvmet.global.config` for this     subsystem only.
-
-If `null`, then the global `ana` setting will take effect.. Type: `string`
+- `allow_any_host` (Bool) - Any host can access the storage associated with this subsystem (i.e. no access control). Default: `False`
+- `ana` (String) - If set to either `True` or `False`, then *override* the global `ana` setting from `nvmet.global.config` for this     subsystem only.  If `null`, then the global `ana` setting will take effect. Default: `None`
+- `ieee_oui` (String) - IEEE Organizationally Unique Identifier for the subsystem. Default: `None`
+- `pi_enable` (String) - Enable Protection Information (PI) for data integrity checking. Default: `None`
+- `qid_max` (Int64) - Maximum number of queue IDs allowed for this subsystem. Default: `None`
+- `subnqn` (String) - NVMe Qualified Name (NQN) for the subsystem.  Must be a valid NQN format if provided. Default: `None`
 
 ### Read-Only
 

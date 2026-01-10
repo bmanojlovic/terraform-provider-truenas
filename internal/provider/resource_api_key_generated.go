@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -30,24 +31,29 @@ func (r *ApiKeyResource) Metadata(ctx context.Context, req resource.MetadataRequ
 	resp.TypeName = req.ProviderTypeName + "_api_key"
 }
 
+func (r *ApiKeyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *ApiKeyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS api_key resource",
+		MarkdownDescription: "Creates API Key.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Human-readable name for the API key.",
 			},
 			"username": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "",
 			},
 			"expires_at": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Expiration timestamp for the API key or `null` for no expiration.",
 			},
 		},
 	}
@@ -76,17 +82,20 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	if !data.Name.IsNull() {
 		params["name"] = data.Name.ValueString()
 	}
-	params["username"] = data.Username.ValueString()
+	if !data.Username.IsNull() {
+		params["username"] = data.Username.ValueString()
+	}
 	if !data.ExpiresAt.IsNull() {
 		params["expires_at"] = data.ExpiresAt.ValueString()
 	}
 
 	result, err := r.client.Call("api_key.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create api_key: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -103,18 +112,31 @@ func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("api_key.get_instance", resourceID)
+	result, err := r.client.Call("api_key.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read api_key: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["username"]; ok && v != nil {
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["expires_at"]; ok && v != nil {
+			data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -125,10 +147,15 @@ func (r *ApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state ApiKeyResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
@@ -136,25 +163,19 @@ func (r *ApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if !data.Name.IsNull() {
 		params["name"] = data.Name.ValueString()
 	}
-	params["username"] = data.Username.ValueString()
+	if !data.Username.IsNull() {
+		params["username"] = data.Username.ValueString()
+	}
 	if !data.ExpiresAt.IsNull() {
 		params["expires_at"] = data.ExpiresAt.ValueString()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("api_key.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update api_key: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("api_key.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -166,16 +187,15 @@ func (r *ApiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("api_key.delete", resourceID)
+	_, err = r.client.Call("api_key.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete api_key: %s", err))
 		return
 	}
 }

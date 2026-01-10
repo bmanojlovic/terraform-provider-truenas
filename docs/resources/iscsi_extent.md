@@ -2,25 +2,18 @@
 page_title: "truenas_iscsi_extent Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  iSCSI extent configuration data for creation.
+  Create an iSCSI Extent.
 ---
 
 # truenas_iscsi_extent (Resource)
 
-iSCSI extent configuration data for creation.
+Create an iSCSI Extent.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_iscsi_extent" "example" {
-  name = "example-name"
-  type = "DISK"
-  filesize = "0"
-  blocksize = 512
-  pblocksize = false
-  comment = ""
-  insecure_tpc = true
-  xen = false
+  name = "example-value"
 }
 ```
 
@@ -28,25 +21,25 @@ resource "truenas_iscsi_extent" "example" {
 
 ### Required
 
-- `name` (Required) - Name of the iSCSI extent.. Type: `string`
+- `name` (String) - Name of the iSCSI extent.
 
 ### Optional
 
-- `type` (Optional) - Type of the extent storage backend. Valid values: `DISK`, `FILE` Default: `DISK`. Type: `string`
-- `disk` (Optional) - Disk device to use for the extent or `null` if using a file.. Type: `string`
-- `serial` (Optional) - Serial number for the extent or `null` to auto-generate.. Type: `string`
-- `path` (Optional) - File path for file-based extents or `null` if using a disk.. Type: `string`
-- `filesize` (Optional) - Size of the file-based extent in bytes. Default: `0`. Type: `string`
-- `blocksize` (Optional) - Block size for the extent in bytes. Valid values: `512`, `1024`, `2048` Default: `512`. Type: `integer`
-- `pblocksize` (Optional) - Whether to use physical block size reporting. Default: `False`. Type: `boolean`
-- `avail_threshold` (Optional) - Available space threshold percentage or `null` to disable.. Type: `string`
-- `comment` (Optional) - Optional comment describing the extent. Default: ``. Type: `string`
-- `insecure_tpc` (Optional) - Whether to enable insecure Third Party Copy (TPC) operations. Default: `True`. Type: `boolean`
-- `xen` (Optional) - Whether to enable Xen compatibility mode. Default: `False`. Type: `boolean`
-- `rpm` (Optional) - Reported RPM type for the extent. Valid values: `UNKNOWN`, `SSD`, `5400` Default: `SSD`. Type: `string`
-- `ro` (Optional) - Whether the extent is read-only. Default: `False`. Type: `boolean`
-- `enabled` (Optional) - Whether the extent is enabled and available for use. Default: `True`. Type: `boolean`
-- `product_id` (Optional) - Product ID string for the extent or `null` for default.. Type: `string`
+- `avail_threshold` (Int64) - Available space threshold percentage or `null` to disable. Default: `None`
+- `blocksize` (Int64) - Block size for the extent in bytes. Default: `512` Valid values: `512`, `1024`, `2048`, `4096`
+- `comment` (String) - Optional comment describing the extent. Default: ``
+- `disk` (String) - Disk device to use for the extent or `null` if using a file. Default: `None`
+- `enabled` (Bool) - Whether the extent is enabled and available for use. Default: `True`
+- `filesize` (Int64) - Size of the file-based extent in bytes. Default: `0`
+- `insecure_tpc` (Bool) - Whether to enable insecure Third Party Copy (TPC) operations. Default: `True`
+- `path` (String) - File path for file-based extents or `null` if using a disk. Default: `None`
+- `pblocksize` (Bool) - Whether to use physical block size reporting. Default: `False`
+- `product_id` (String) - Product ID string for the extent or `null` for default. Default: `None`
+- `ro` (Bool) - Whether the extent is read-only. Default: `False`
+- `rpm` (String) - Reported RPM type for the extent. Default: `SSD` Valid values: `UNKNOWN`, `SSD`, `5400`, `7200`, `10000`
+- `serial` (String) - Serial number for the extent or `null` to auto-generate. Default: `None`
+- `type` (String) - Type of the extent storage backend. Default: `DISK` Valid values: `DISK`, `FILE`
+- `xen` (Bool) - Whether to enable Xen compatibility mode. Default: `False`
 
 ### Read-Only
 

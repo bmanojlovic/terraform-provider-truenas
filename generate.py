@@ -1,362 +1,343 @@
 #!/usr/bin/env python3
-"""Generate Terraform provider code and documentation from TrueNAS OpenAPI spec."""
+"""
+Generate Terraform provider from TrueNAS native method specifications.
+Replaces OpenAPI-based generator with native core.get_methods approach.
+"""
 import json
 import sys
-import re
 from pathlib import Path
 
-# Template directory
-TEMPLATE_DIR = Path(__file__).parent / 'templates'
+# Load templates
+TEMPLATE_DIR = Path(__file__).parent / "templates"
+RESOURCE_TEMPLATE = (TEMPLATE_DIR / "resource.go.tmpl").read_text()
+RESOURCE_UPDATE_ONLY_TEMPLATE = (
+    TEMPLATE_DIR / "resource_update_only.go.tmpl"
+).read_text()
+RESOURCE_WITH_JSON_TEMPLATE = (TEMPLATE_DIR / "resource_with_json.go.tmpl").read_text()
+RESOURCE_VM_DEVICE_TEMPLATE = (TEMPLATE_DIR / "resource_vm_device.go.tmpl").read_text()
+RESOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / "resource_doc.md.tmpl").read_text()
+DATASOURCE_TEMPLATE = (TEMPLATE_DIR / "datasource.go.tmpl").read_text()
+DATASOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / "datasource_doc.md.tmpl").read_text()
+DATASOURCE_QUERY_TEMPLATE = (TEMPLATE_DIR / "datasource_query.go.tmpl").read_text()
+DATASOURCE_QUERY_DOC_TEMPLATE = (
+    TEMPLATE_DIR / "datasource_query_doc.md.tmpl"
+).read_text()
 
-# Load templates from files
-GO_RESOURCE_TEMPLATE = (TEMPLATE_DIR / 'resource.go.tmpl').read_text()
-GO_RESOURCE_WITH_JSON_TEMPLATE = (TEMPLATE_DIR / 'resource_with_json.go.tmpl').read_text()
-GO_RESOURCE_VM_DEVICE_TEMPLATE = (TEMPLATE_DIR / 'resource_vm_device.go.tmpl').read_text()
-GO_RESOURCE_UPDATE_ONLY_TEMPLATE = (TEMPLATE_DIR / 'resource_update_only.go.tmpl').read_text()
-ACTION_RESOURCE_TEMPLATE = (TEMPLATE_DIR / 'action_resource.go.tmpl').read_text()
-ACTION_FILE_UPLOAD_TEMPLATE = (TEMPLATE_DIR / 'action_file_upload.go.tmpl').read_text()
-RESOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / 'resource_doc.md.tmpl').read_text()
-DATASOURCE_DOC_TEMPLATE = (TEMPLATE_DIR / 'datasource_doc.md.tmpl').read_text()
-PROVIDER_DOC = (TEMPLATE_DIR / 'provider_doc.md.tmpl').read_text()
-
-# OpenAPI to Terraform type mapping
 TYPE_MAP = {
-    'string': 'String', 'integer': 'Int64', 'number': 'Float64',
-    'boolean': 'Bool', 'array': 'List', 'object': 'Object'
+    "string": "String",
+    "integer": "Int64",
+    "number": "Float64",
+    "boolean": "Bool",
+    "array": "List",
+    "object": "String",  # object as JSON string
 }
 
-SKIP_PATTERNS = [
-    '/auth/', '/system/', '/config/', '/debug/', '/test', '/validate',
-    '/available', '/choices', '/schemas', '/query', '/stats', '/status',
-    '/restart', '/reload', '/start', '/stop', '/sync', '/backup', '/restore',
-    'get_', 'list_', 'check_', 'download', 'export', 'import_', 
-    '_run', 'execute', 'verify', 'details', '_info', 'set_', 'attach_', 
-    'onetime', '_ticket'
-]
 
-# Action endpoints that look like resources but aren't
-SKIP_SUFFIXES = [
-    '/scrub', '/run', '/sync', '/abort', '/dismiss', '/activate', '/clone',
-    '/attach', '/detach', '/replace', '/upgrade', '/rollback', '/redeploy',
-    '/pull', '/push', '/send', '/receive', '/promote', '/demote'
-]
+def find_latest_spec():
+    specs = list(Path(".").glob("truenas-methods-*.json"))
+    if not specs:
+        print("ERROR: No spec file found. Run: make fetch-spec", file=sys.stderr)
+        sys.exit(1)
+    return sorted(specs)[-1]
 
 
-def get_schema(spec, schema_name):
-    """Get schema by name from spec."""
-    return spec.get('components', {}).get('schemas', {}).get(schema_name)
+def load_spec():
+    spec_file = find_latest_spec()
+    print(f"Using: {spec_file}", file=sys.stderr)
+    with open(spec_file) as f:
+        data = json.load(f)
+    return data.get("methods", {}), data.get("_metadata", {})
 
 
-def get_create_schema_name(path_spec):
-    """Extract schema name from POST operation."""
-    schema = path_spec.get('post', {}).get('requestBody', {}).get('content', {}).get('application/json', {}).get('schema', {})
-    return schema.get('$ref', '').split('/')[-1] or None
+def get_tf_type(prop_schema):
+    """Convert JSON schema to Terraform type."""
+    if isinstance(prop_schema, list):
+        prop_schema = prop_schema[0] if prop_schema else {}
+    if not isinstance(prop_schema, dict):
+        return "String"
+
+    # Handle anyOf/oneOf - check for integer type
+    if "anyOf" in prop_schema:
+        for variant in prop_schema["anyOf"]:
+            if variant.get("type") == "integer":
+                return "Int64"
+        return "String"
+
+    json_type = prop_schema.get("type")
+    if "oneOf" in prop_schema or "discriminator" in prop_schema:
+        return "String"  # Complex objects as JSON strings
+    return TYPE_MAP.get(json_type, "String")
 
 
-def extract_resource_name(path):
-    """Extract resource name from API path."""
-    name = path.strip('/').replace('/', '_')
-    return re.sub(r'_(get_instance|id)$', '', name)
+def generate_schema_attrs(properties, required, has_start=False):
+    """Generate schema attributes for template."""
+    attrs = []
 
+    # For datasources, id is always String (user input)
+    # For resources, id is Computed and matches schema type
+    if not has_start and not required:  # datasource mode
+        attrs.append(
+            '\t\t\t"id": schema.StringAttribute{Required: true, Description: "Resource ID"},'
+        )
+    elif "id" not in properties:
+        attrs.append(
+            '\t\t\t"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},'
+        )
 
-def find_crud_resources(spec):
-    """Find true CRUD resources - have POST on base and DELETE on /id/{id_}."""
-    resources = set()
-    for path in spec['paths']:
-        if path.endswith('/id/{id_}'):
-            base = path.replace('/id/{id_}', '')
-            if 'delete' in spec['paths'][path] and 'post' in spec['paths'].get(base, {}):
-                resources.add(base)
-    return resources
+    if has_start:
+        attrs.append(
+            '\t\t\t"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: true)"},'
+        )
 
-
-def find_update_only_resources(spec):
-    """Find update-only resources - have GET and PUT on /id/{id_} but no POST/DELETE."""
-    resources = set()
-    for path in spec['paths']:
-        if path.endswith('/id/{id_}'):
-            base = path.replace('/id/{id_}', '')
-            path_methods = spec['paths'][path]
-            base_methods = spec['paths'].get(base, {})
-            # Has PUT but no DELETE, and base has GET but no POST
-            if 'put' in path_methods and 'delete' not in path_methods:
-                if 'get' in base_methods and 'post' not in base_methods:
-                    resources.add(base)
-    return resources
-
-
-def find_operational_actions(spec, resource_path):
-    """Find operational actions (sync, scrub, run, upgrade, etc.) for a resource."""
-    operational_verbs = ['sync', 'scrub', 'run', 'upgrade', 'rollback', 'redeploy', 'restore', 'backup']
-    actions = {}
-    
-    for path in spec['paths']:
-        if path.startswith(resource_path + '/') and 'post' in spec['paths'][path]:
-            action = path.replace(resource_path + '/', '').split('/')[0]
-            # Handle /resource/id/{id_}/action pattern
-            if action == 'id' and len(path.split('/')) > 3:
-                action = path.split('/')[-1]
-            
-            if any(verb in action for verb in operational_verbs):
-                # Get schema for action
-                post_spec = spec['paths'][path].get('post', {})
-                schema_ref = post_spec.get('requestBody', {}).get('content', {}).get('application/json', {}).get('schema', {}).get('$ref', '')
-                schema_name = schema_ref.split('/')[-1] if schema_ref else None
-                actions[action] = {'path': path, 'schema': schema_name}
-    
-    return actions
-
-
-def find_lifecycle_actions(spec, resource_path):
-    """Find lifecycle actions (start/stop/restart) for a resource."""
-    actions = []
-    # Check both /resource/action and /resource/id/{id_}/action patterns
-    for path in spec['paths']:
-        if path.startswith(resource_path + '/'):
-            action = path.replace(resource_path + '/', '').split('/')[0]
-            # Handle /resource/id/{id_}/action pattern
-            if action == 'id' and len(path.split('/')) > 3:
-                action = path.split('/')[-1]
-            if action in ['start', 'stop', 'restart'] and 'post' in spec['paths'][path]:
-                actions.append(action)
-    return actions
-
-
-def is_crud_endpoint(path, methods, crud_resources):
-    """Check if endpoint is a true CRUD resource."""
-    return path in crud_resources
-
-
-def get_example_value(prop_name, prop_spec):
-    """Get example value from schema: enum > default > type-based."""
-    prop_type = prop_spec.get('type', 'string')
-    
-    if prop_spec.get('enum'):
-        val = prop_spec['enum'][0]
-        return f'"{val}"' if isinstance(val, str) else str(val)
-    
-    if 'default' in prop_spec and prop_spec['default'] is not None:
-        val = prop_spec['default']
-        if isinstance(val, str):
-            return f'"{val}"'
-        if isinstance(val, bool):
-            return str(val).lower()
-        return str(val)
-    
-    return {
-        'string': f'"example-{prop_name}"',
-        'integer': '1',
-        'boolean': 'false',
-        'array': '[]',
-        'object': '{}'
-    }.get(prop_type, '"example-value"')
-
-
-def generate_action_resource(base_resource_name, action_name, action_info, spec):
-    """Generate Go code for an action resource."""
-    action_path = action_info['path']
-    schema_name = action_info['schema']
-    
-    # Get schema if available
-    properties = {}
-    if schema_name:
-        schema = get_schema(spec, schema_name)
-        if schema:
-            properties = schema.get('properties', {})
-    
-    # Build fields and params
-    fields = ['\tID types.String `tfsdk:"id"`']
-    schema_attrs = ['\t\t\t"id": schema.StringAttribute{\n\t\t\t\tComputed: true,\n\t\t\t},']
-    action_params = []
-    
-    # Add resource_id field to reference the base resource
-    fields.append(f'\tResourceID types.String `tfsdk:"resource_id"`')
-    schema_attrs.append('\t\t\t"resource_id": schema.StringAttribute{\n\t\t\t\tRequired: true,\n\t\t\t\tDescription: "ID of the resource to perform action on",\n\t\t\t},')
-    
-    # Add fields from action schema
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id']:
+    for name, prop in properties.items():
+        # Skip id if already added, or if datasource mode (id handled separately)
+        if name == "id":
+            if (
+                not has_start and not required
+            ):  # datasource - skip, already added as String
+                continue
+            # For resources, add as Computed with actual type
+            tf_type = get_tf_type(prop)
+            attrs.append(
+                f'\t\t\t"id": schema.{tf_type}Attribute{{Computed: true, Description: "Resource ID"}},'
+            )
             continue
-        
         # Skip reserved names
-        if prop_name == 'provider':
+        if name in ["provider"]:
             continue
-        
-        # Normalize names to lowercase with underscores
-        normalized_name = prop_name.lower().replace('-', '_')
-        
-        go_name = ''.join(w.capitalize() for w in normalized_name.split('_'))
-        prop_type = prop_spec.get('type', 'string')
-        go_type = TYPE_MAP.get(prop_type, 'String')
-        
-        fields.append(f'\t{go_name} types.{go_type} `tfsdk:"{normalized_name}"`')
-        
-        # Generate schema attribute with proper types
-        if go_type == 'List':
-            schema_attrs.append(f'\t\t\t"{normalized_name}": schema.ListAttribute{{\n\t\t\t\tElementType: types.StringType,\n\t\t\t\tOptional: true,\n\t\t\t}},')
-        elif go_type == 'Object':
-            # Skip complex objects
-            continue
-        else:
-            schema_attrs.append(f'\t\t\t"{normalized_name}": schema.{go_type}Attribute{{\n\t\t\t\tOptional: true,\n\t\t\t}},')
-        
-        if go_type in ['String', 'Int64', 'Bool']:
-            method = {'String': 'ValueString', 'Int64': 'ValueInt64', 'Bool': 'ValueBool'}[go_type]
-            action_params.append(f'\t\tif !data.{go_name}.IsNull() {{\n\t\t\tparams["{prop_name}"] = data.{go_name}.{method}()\n\t\t}}')
-    
-    resource_name = f'{base_resource_name.title().replace("_", "")}{action_name.title().replace("_", "")}Action'
-    api_call = action_path.strip('/')
-    
-    # Format action_params with params declaration if needed
-    if action_params:
-        params_code = '\tparams := map[string]interface{}{}\n' + chr(10).join(action_params)
-    else:
-        params_code = '\t// No additional parameters'
-    
-    return ACTION_RESOURCE_TEMPLATE.format(
-        resource_name=resource_name,
-        base_name=base_resource_name,
-        action_name=action_name,
-        api_call=api_call,
-        fields=chr(10).join(fields),
-        schema_attrs=chr(10).join(schema_attrs),
-        action_params=params_code
-    )
+        if isinstance(prop, list):
+            prop = prop[0] if prop else {}
+
+        tf_type = get_tf_type(prop)
+        is_req = name in required
+        desc = (
+            prop.get("description", "")[:100].replace('"', '\\"').replace("\n", " ")
+            if isinstance(prop, dict)
+            else ""
+        )
+
+        # Fix invalid attribute names
+        attr_name = name.lower() if name != "CSR" else "csr"
+
+        attrs.append(f'\t\t\t"{attr_name}": schema.{tf_type}Attribute{{')
+
+        # For datasources (no required list), all attributes except id are Computed
+        if not has_start and not required:  # datasource mode
+            attrs.append(f"\t\t\t\tComputed: true,")
+        else:  # resource mode
+            attrs.append(f"\t\t\t\tRequired: {str(is_req).lower()},")
+            attrs.append(f"\t\t\t\tOptional: {str(not is_req).lower()},")
+
+        if tf_type == "List":
+            attrs.append(f"\t\t\t\tElementType: types.StringType,")
+        attrs.append(f'\t\t\t\tDescription: "{desc}",')
+        attrs.append("\t\t\t},")
+
+    return "\n".join(attrs)
 
 
-def generate_resource(name, path, schema, spec, update_only=False):
-    """Generate Go resource code."""
-    properties = schema.get('properties', {})
-    required_fields = schema.get('required', [])
-    
-    # Check for lifecycle actions
-    lifecycle_actions = find_lifecycle_actions(spec, path)
-    has_start = 'start' in lifecycle_actions
-    
-    fields, schema_attrs, create_params = ['\tID types.String `tfsdk:"id"`'], [], []
-    schema_attrs.append('\t\t\t"id": schema.StringAttribute{\n\t\t\t\tComputed: true,\n\t\t\t},')
-    
-    # Add start_on_create field if resource has start action
+def generate_fields(properties, has_start=False):
+    """Generate struct fields for template."""
+    fields = []
+
+    # For datasources, ID is always String (user input)
+    # For resources, ID matches schema type or String if not in properties
+    is_datasource = not has_start and "id" in properties
+    if is_datasource:
+        fields.append('\tID types.String `tfsdk:"id"`')
+    elif "id" not in properties:
+        fields.append('\tID types.String `tfsdk:"id"`')
+
     if has_start:
         fields.append('\tStartOnCreate types.Bool `tfsdk:"start_on_create"`')
-        schema_attrs.append('\t\t\t"start_on_create": schema.BoolAttribute{\n\t\t\t\tOptional: true,\n\t\t\t\tDescription: "Start the resource immediately after creation (default: true if not specified)",\n\t\t\t},')
-    
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id']:
+
+    for name, prop in properties.items():
+        # Skip reserved names and fix invalid names
+        if name in ["provider"]:
             continue
-        
+        field_name = name.title().replace("_", "")
+        if name == "CSR":
+            field_name = "Csr"
+        elif name == "id":
+            if is_datasource:
+                continue  # Already added as String
+            field_name = "ID"
+        tf_type = get_tf_type(prop)
+        fields.append(f'\t{field_name} types.{tf_type} `tfsdk:"{name.lower()}"`')
+    return "\n".join(fields)
+
+
+def generate_create_params(properties):
+    """Generate parameter building code for Create method."""
+    lines = []
+    for prop_name, prop_schema in properties.items():
         # Skip reserved names
-        if prop_name == 'provider':
+        if prop_name in ["provider"]:
             continue
-        
-        # Normalize names to lowercase with underscores
-        normalized_name = prop_name.lower().replace('-', '_')
-        
-        go_name = ''.join(w.capitalize() for w in normalized_name.split('_'))
-        
-        # Detect type - handle anyOf/oneOf
-        prop_type = prop_spec.get('type')
-        if not prop_type:
-            # Check for anyOf/oneOf patterns
-            any_of = prop_spec.get('anyOf', [])
-            one_of = prop_spec.get('oneOf', [])
-            types_list = any_of or one_of
-            if types_list:
-                # Get first non-null type
-                for t in types_list:
-                    if t.get('type') and t.get('type') != 'null':
-                        prop_type = t.get('type')
-                        break
-        
-        # Special case: vm_device attributes with discriminator should be String (JSON)
-        if prop_name == 'attributes' and 'discriminator' in prop_spec:
-            prop_type = 'string'
-        
-        if not prop_type:
-            prop_type = 'string'  # default fallback
-            
-        go_type = TYPE_MAP.get(prop_type, 'String')
-        required = prop_name in required_fields
-        
-        fields.append(f'\t{go_name} types.{go_type} `tfsdk:"{normalized_name}"`')
-        
-        # Generate schema attribute with proper types
-        if go_type == 'List':
-            # Lists need ElementType
-            schema_attrs.append(f'\t\t\t"{normalized_name}": schema.ListAttribute{{\n\t\t\t\tElementType: types.StringType,\n\t\t\t\tRequired: {str(required).lower()},\n\t\t\t\tOptional: {str(not required).lower()},\n\t\t\t}},')
-        elif go_type == 'Object':
-            # Skip complex objects for now - they need AttributeTypes map
-            continue
+        field_name = prop_name.title().replace("_", "")
+        if prop_name == "CSR":
+            field_name = "Csr"
+        tf_type = get_tf_type(prop_schema)
+
+        lines.append(f"\tif !data.{field_name}.IsNull() {{")
+
+        if tf_type == "Bool":
+            lines.append(f'\t\tparams["{prop_name}"] = data.{field_name}.ValueBool()')
+        elif tf_type == "Int64":
+            lines.append(f'\t\tparams["{prop_name}"] = data.{field_name}.ValueInt64()')
+        elif tf_type == "Float64":
+            lines.append(
+                f'\t\tparams["{prop_name}"] = data.{field_name}.ValueFloat64()'
+            )
+        elif tf_type == "List":
+            lines.append(f"\t\tvar {prop_name}List []string")
+            lines.append(
+                f"\t\tdata.{field_name}.ElementsAs(ctx, &{prop_name}List, false)"
+            )
+            lines.append(f'\t\tparams["{prop_name}"] = {prop_name}List')
         else:
-            schema_attrs.append(f'\t\t\t"{normalized_name}": schema.{go_type}Attribute{{\n\t\t\t\tRequired: {str(required).lower()},\n\t\t\t\tOptional: {str(not required).lower()},\n\t\t\t}},')
-        
-        # Build params conditionally
-        if go_type in ['String', 'Int64', 'Bool']:
-            method = {'String': 'ValueString', 'Int64': 'ValueInt64', 'Bool': 'ValueBool'}[go_type]
-            
-            # Special case: attributes field with discriminator needs JSON parsing
-            if prop_name == 'attributes' and 'discriminator' in prop_spec:
-                if required:
-                    create_params.append(f'\tvar {prop_name}Map map[string]interface{{}}\n\tif err := json.Unmarshal([]byte(data.{go_name}.{method}()), &{prop_name}Map); err != nil {{\n\t\tresp.Diagnostics.AddError("JSON Parse Error", err.Error())\n\t\treturn\n\t}}\n\tparams["{prop_name}"] = {prop_name}Map')
-                else:
-                    create_params.append(f'\tif !data.{go_name}.IsNull() {{\n\t\tvar {prop_name}Map map[string]interface{{}}\n\t\tif err := json.Unmarshal([]byte(data.{go_name}.{method}()), &{prop_name}Map); err != nil {{\n\t\t\tresp.Diagnostics.AddError("JSON Parse Error", err.Error())\n\t\t\treturn\n\t\t}}\n\t\tparams["{prop_name}"] = {prop_name}Map\n\t}}')
-            elif required:
-                create_params.append(f'\tparams["{prop_name}"] = data.{go_name}.{method}()')
+            # Check if this is a complex object that needs JSON parsing
+            if isinstance(prop_schema, dict) and (
+                "oneOf" in prop_schema or "discriminator" in prop_schema
+            ):
+                lines.append(f"\t\tvar {prop_name}Obj map[string]interface{{}}")
+                lines.append(
+                    f"\t\tif err := json.Unmarshal([]byte(data.{field_name}.ValueString()), &{prop_name}Obj); err != nil {{"
+                )
+                lines.append(
+                    f'\t\t\tresp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse {prop_name}: %s", err))'
+                )
+                lines.append(f"\t\t\treturn")
+                lines.append(f"\t\t}}")
+                lines.append(f'\t\tparams["{prop_name}"] = {prop_name}Obj')
             else:
-                # Optional fields - only include if not null
-                create_params.append(f'\tif !data.{go_name}.IsNull() {{\n\t\tparams["{prop_name}"] = data.{go_name}.{method}()\n\t}}')
-    
-    resource_name = name.replace('/', '_').replace('-', '_').title().replace('_', '')
-    api_name = path.strip('/').replace('/', '.')
-    
-    # Check if we need json import
-    needs_json = any('json.Unmarshal' in p for p in create_params)
-    
-    # Generate read mapping for update-only resources
-    read_mapping = []
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id', 'provider']:
+                lines.append(
+                    f'\t\tparams["{prop_name}"] = data.{field_name}.ValueString()'
+                )
+
+        lines.append("\t}")
+    return "\n".join(lines)
+
+
+def generate_read_mapping(properties, skip_id_for_datasource=False):
+    """Generate code to map API response to Terraform state."""
+    lines = []
+    for prop_name, prop_schema in properties.items():
+        # Skip reserved names
+        if prop_name in ["provider"]:
             continue
-        
-        normalized_name = prop_name.lower().replace('-', '_')
-        go_name = ''.join(w.capitalize() for w in normalized_name.split('_'))
-        
-        # Detect type
-        prop_type = prop_spec.get('type')
-        if not prop_type:
-            any_of = prop_spec.get('anyOf', [])
-            one_of = prop_spec.get('oneOf', [])
-            types_list = any_of or one_of
-            if types_list:
-                for t in types_list:
-                    if t.get('type') and t.get('type') != 'null':
-                        prop_type = t.get('type')
-                        break
-        if not prop_type:
-            prop_type = 'string'
-        
-        go_type = TYPE_MAP.get(prop_type, 'String')
-        
-        if go_type == 'String':
-            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tdata.{go_name} = types.StringValue(fmt.Sprintf("%v", val))\n\t\t}}')
-        elif go_type == 'Int64':
-            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif intVal, ok := val.(float64); ok {{\n\t\t\t\tdata.{go_name} = types.Int64Value(int64(intVal))\n\t\t\t}}\n\t\t}}')
-        elif go_type == 'Bool':
-            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif boolVal, ok := val.(bool); ok {{\n\t\t\t\tdata.{go_name} = types.BoolValue(boolVal)\n\t\t\t}}\n\t\t}}')
-        elif go_type == 'Float64':
-            read_mapping.append(f'\t\tif val, ok := resultMap["{prop_name}"]; ok && val != nil {{\n\t\t\tif floatVal, ok := val.(float64); ok {{\n\t\t\t\tdata.{go_name} = types.Float64Value(floatVal)\n\t\t\t}}\n\t\t}}')
-    
-    # Generate lifecycle action code
-    lifecycle_code = ''
+        # Skip id for datasources (already set as String from input)
+        if prop_name == "id" and skip_id_for_datasource:
+            continue
+        field_name = prop_name.title().replace("_", "")
+        if prop_name == "CSR":
+            field_name = "Csr"
+        elif prop_name == "id":
+            field_name = "ID"
+        tf_type = get_tf_type(prop_schema)
+
+        lines.append(f'\t\tif v, ok := resultMap["{prop_name}"]; ok && v != nil {{')
+
+        if tf_type == "Bool":
+            lines.append(
+                f"\t\t\tif bv, ok := v.(bool); ok {{ data.{field_name} = types.BoolValue(bv) }}"
+            )
+        elif tf_type == "Int64":
+            lines.append(
+                f"\t\t\tif fv, ok := v.(float64); ok {{ data.{field_name} = types.Int64Value(int64(fv)) }}"
+            )
+        elif tf_type == "Float64":
+            lines.append(
+                f"\t\t\tif fv, ok := v.(float64); ok {{ data.{field_name} = types.Float64Value(fv) }}"
+            )
+        elif tf_type == "List":
+            lines.append(f"\t\t\tif arr, ok := v.([]interface{{}}); ok {{")
+            lines.append(f"\t\t\t\tstrVals := make([]attr.Value, len(arr))")
+            lines.append(
+                f'\t\t\t\tfor i, item := range arr {{ strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }}'
+            )
+            lines.append(
+                f"\t\t\t\tdata.{field_name}, _ = types.ListValue(types.StringType, strVals)"
+            )
+            lines.append(f"\t\t\t}}")
+        else:
+            lines.append(
+                f'\t\t\tdata.{field_name} = types.StringValue(fmt.Sprintf("%v", v))'
+            )
+
+        lines.append("\t\t}")
+    return "\n".join(lines)
+
+
+def has_complex_objects(properties):
+    """Check if any property needs JSON parsing."""
+    for prop_name, prop_schema in properties.items():
+        # Skip reserved names
+        if prop_name in ["provider"]:
+            continue
+        if isinstance(prop_schema, dict) and (
+            "oneOf" in prop_schema or "discriminator" in prop_schema
+        ):
+            return True
+    return False
+
+
+def generate_resource(base_name, methods_dict):
+    """Generate resource file from method specs."""
+    create_method = f"{base_name}.create"
+    update_method = f"{base_name}.update"
+    delete_method = f"{base_name}.delete"
+    read_method = f"{base_name}.get_instance"
+
+    # Check for lifecycle actions
+    has_start = f"{base_name}.start" in methods_dict
+    has_stop = f"{base_name}.stop" in methods_dict
+
+    # Check if methods are jobs
+    create_spec = methods_dict.get(create_method, {})
+    update_spec = methods_dict.get(update_method, {})
+    delete_spec = methods_dict.get(delete_method, {})
+
+    create_is_job = create_spec.get("job", False)
+    update_is_job = update_spec.get("job", False)
+    delete_is_job = delete_spec.get("job", False)
+
+    # Get schema from create or update
+    method_spec = create_spec or update_spec
+    if not method_spec:
+        return None
+
+    accepts = method_spec.get("accepts", [])
+    if not accepts:
+        return None
+
+    schema = accepts[0] if isinstance(accepts, list) else accepts
+    properties = schema.get("properties", {})
+    required = schema.get("required", [])
+
+    if not properties:
+        return None
+
+    # Generate code
+    resource_name = base_name.replace(".", "_").title().replace("_", "")
+    tf_name = base_name.replace(".", "_")
+    api_name = base_name
+
+    # Choose Call or CallWithJob based on job flag
+    create_call = "CallWithJob" if create_is_job else "Call"
+    update_call = "CallWithJob" if update_is_job else "Call"
+    delete_call = "CallWithJob" if delete_is_job else "Call"
+
+    # Generate lifecycle code if has start action
+    lifecycle_code = ""
     if has_start:
-        lifecycle_code = f'''
+        lifecycle_code = f"""
 \t// Handle lifecycle action - start on create if requested
 \tstartOnCreate := true  // default when not specified
 \tif !data.StartOnCreate.IsNull() {{
 \t\tstartOnCreate = data.StartOnCreate.ValueBool()
 \t}}
 \tif startOnCreate {{
-\t\t// Convert string ID to integer for TrueNAS API
 \t\tvmID, err := strconv.Atoi(data.ID.ValueString())
 \t\tif err != nil {{
 \t\t\tresp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
@@ -366,314 +347,634 @@ def generate_resource(name, path, schema, spec, update_only=False):
 \t\tif err != nil {{
 \t\t\tresp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
 \t\t}}
-\t}}'''
-    
-    if update_only:
-        return GO_RESOURCE_UPDATE_ONLY_TEMPLATE.format(
-            ResourceType=resource_name,
-            ResourceName=name.replace('/', '_').replace('-', '_'),
-            APIPath=api_name,
-            Fields=chr(10).join(fields),
-            SchemaAttributes=chr(10).join(schema_attrs),
-            CreateParams=chr(10).join(create_params),
-            UpdateParams=chr(10).join(create_params),
-            ReadMapping=chr(10).join(read_mapping) if read_mapping else '\t\t// No fields to map'
+\t}}"""
+
+    # Check if any List fields exist
+    has_list = any(get_tf_type(p) == "List" for p in properties.values())
+    # Check if any complex objects need JSON parsing
+    has_json = has_complex_objects(properties)
+
+    extra_imports = ""
+    if has_list:
+        extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/attr"'
+    if has_json:
+        extra_imports += '\n\t"encoding/json"'
+    if has_stop:
+        extra_imports += '\n\t"time"'
+
+    # Get description from method spec
+    description = method_spec.get("description", f"TrueNAS {tf_name} resource")
+    if description:
+        description = description.split("\n")[0][:200].replace('"', '\\"')
+
+    # Generate pre-delete code if has stop action
+    predelete_code = ""
+    if has_stop:
+        predelete_code = f"""
+\t// Stop VM before deletion if running
+\tvmID, err := strconv.Atoi(data.ID.ValueString())
+\tif err != nil {{
+\t\tresp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+\t\treturn
+\t}}
+\t_, _ = r.client.Call("{api_name}.stop", vmID)  // Ignore errors - VM might already be stopped
+\ttime.Sleep(2 * time.Second)  // Wait for VM to stop
+"""
+
+    # Use special template for vm.device
+    if api_name == "vm.device":
+        code = RESOURCE_VM_DEVICE_TEMPLATE.format(
+            resource_name=resource_name,
+            name=tf_name,
+            api_name=api_name,
+            fields=generate_fields(properties, has_start),
+            schema_attrs=generate_schema_attrs(properties, required, has_start),
+            create_params=generate_create_params(properties),
+            read_mapping=generate_read_mapping(properties),
+            lifecycle_code=lifecycle_code,
         )
     else:
-        # Special template for filesystem.put (file upload)
-        if api_name == 'filesystem.put':
-            template = ACTION_FILE_UPLOAD_TEMPLATE
-        # Special template for vm_device (needs VM stop before delete)
-        elif api_name == 'vm.device':
-            template = GO_RESOURCE_VM_DEVICE_TEMPLATE
-        else:
-            template = GO_RESOURCE_WITH_JSON_TEMPLATE if needs_json else GO_RESOURCE_TEMPLATE
-        
-        return template.format(
+        code = RESOURCE_TEMPLATE.format(
             resource_name=resource_name,
-            name=name.replace('/', '_').replace('-', '_'),
+            name=tf_name,
             api_name=api_name,
-            fields=chr(10).join(fields),
-            schema_attrs=chr(10).join(schema_attrs),
-            create_params=chr(10).join(create_params),
-            lifecycle_code=lifecycle_code
+            description=description,
+            fields=generate_fields(properties, has_start),
+            schema_attrs=generate_schema_attrs(properties, required, has_start),
+            create_params=generate_create_params(properties),
+            update_params=generate_create_params(properties),
+            read_mapping=generate_read_mapping(properties),
+            lifecycle_code=lifecycle_code,
+            predelete_code=predelete_code,
+            create_call=create_call,
+            update_call=update_call,
+            delete_call=delete_call,
+            extra_imports=extra_imports,
         )
 
+    return code
 
-def generate_resource_docs(name, schema, spec, path):
-    """Generate Terraform resource documentation."""
-    properties = schema.get('properties', {})
-    required_fields = schema.get('required', [])
-    description = schema.get('description', f'Manages TrueNAS {name} resources')
-    resource_type = name.replace('/', '_').replace('-', '_')
-    
+
+def generate_attr_types(properties):
+    """Generate AttrTypes map for ListValueFrom"""
+    lines = []
+    for name, prop in sorted(properties.items()):
+        if name in ["provider"]:
+            continue
+        tf_type = get_tf_type(prop)
+        # Skip List types - too complex for query datasources
+        if tf_type == "List":
+            continue
+        # ID is always String in datasources
+        if name == "id":
+            tf_type = "String"
+        attr_name = name.lower() if name != "CSR" else "csr"
+
+        if tf_type == "String":
+            lines.append(f'\t\t\t"{attr_name}": types.StringType,')
+        elif tf_type == "Int64":
+            lines.append(f'\t\t\t"{attr_name}": types.Int64Type,')
+        elif tf_type == "Bool":
+            lines.append(f'\t\t\t"{attr_name}": types.BoolType,')
+        elif tf_type == "Float64":
+            lines.append(f'\t\t\t"{attr_name}": types.Float64Type,')
+    return "\n".join(lines)
+
+
+def generate_query_datasource(base_name, methods_dict):
+    """Generate query data source for listing multiple resources."""
+    query_method = f"{base_name}.query"
+
+    query_spec = methods_dict.get(query_method, {})
+    if not query_spec:
+        return None
+
+    # Get return schema
+    returns = query_spec.get("returns", [])
+    if not returns:
+        return None
+
+    # Query returns array of items - handle anyOf wrapper
+    schema = returns[0] if isinstance(returns, list) else returns
+
+    # Handle anyOf - look for array type
+    if "anyOf" in schema:
+        for variant in schema["anyOf"]:
+            if isinstance(variant, dict) and variant.get("type") == "array":
+                schema = variant
+                break
+
+    if schema.get("type") != "array":
+        return None
+
+    items_schema = schema.get("items", {})
+    if isinstance(items_schema, list):
+        items_schema = items_schema[0] if items_schema else {}
+
+    properties = items_schema.get("properties", {})
+    if not properties:
+        return None
+
+    # Filter out List types - too complex for query datasources
+    filtered_properties = {
+        k: v for k, v in properties.items() if get_tf_type(v) != "List"
+    }
+    if not filtered_properties:
+        return None
+
+    # Generate code
+    resource_name = base_name.replace(".", "_").title().replace("_", "") + "s"  # Plural
+    tf_name = base_name.replace(".", "_") + "s"  # Plural
+    api_name = base_name
+    description = query_spec.get("description") or f"Query {tf_name} resources"
+    description = description.split("\n")[0][:200].replace('"', '\\"')
+
+    # Generate read mapping for items
+    read_mapping_lines = []
+    for prop_name, prop_schema in filtered_properties.items():
+        if prop_name in ["provider"]:
+            continue
+        field_name = prop_name.title().replace("_", "")
+        if prop_name == "CSR":
+            field_name = "Csr"
+        elif prop_name == "id":
+            field_name = "ID"
+        tf_type = get_tf_type(prop_schema)
+
+        read_mapping_lines.append(
+            f'\t\tif v, ok := resultMap["{prop_name}"]; ok && v != nil {{'
+        )
+        if tf_type == "Bool":
+            read_mapping_lines.append(
+                f"\t\t\tif bv, ok := v.(bool); ok {{ itemModel.{field_name} = types.BoolValue(bv) }}"
+            )
+        elif (
+            tf_type == "Int64" and prop_name != "id"
+        ):  # ID is always String in datasources
+            read_mapping_lines.append(
+                f"\t\t\tif fv, ok := v.(float64); ok {{ itemModel.{field_name} = types.Int64Value(int64(fv)) }}"
+            )
+        elif tf_type == "Float64":
+            read_mapping_lines.append(
+                f"\t\t\tif fv, ok := v.(float64); ok {{ itemModel.{field_name} = types.Float64Value(fv) }}"
+            )
+        elif tf_type == "List":
+            read_mapping_lines.append(f"\t\t\t// Skip complex list types for now")
+        else:
+            read_mapping_lines.append(
+                f'\t\t\titemModel.{field_name} = types.StringValue(fmt.Sprintf("%v", v))'
+            )
+        read_mapping_lines.append("\t\t}")
+
+    code = DATASOURCE_QUERY_TEMPLATE.format(
+        resource_name=resource_name,
+        name=tf_name,
+        api_name=api_name,
+        description=description,
+        fields=generate_fields(filtered_properties, False),
+        schema_attrs=generate_schema_attrs(filtered_properties, [], False),
+        read_mapping="\n".join(read_mapping_lines),
+        attr_types=generate_attr_types(filtered_properties),
+    )
+
+    return code
+
+
+def generate_datasource(base_name, methods_dict):
+    """Generate data source file from method specs."""
+    get_method = f"{base_name}.get_instance"
+
+    get_spec = methods_dict.get(get_method, {})
+    if not get_spec:
+        return None
+
+    # Get return schema
+    returns = get_spec.get("returns", [])
+    if not returns:
+        return None
+
+    schema = returns[0] if isinstance(returns, list) else returns
+    properties = schema.get("properties", {})
+
+    if not properties:
+        return None
+
+    # Check if any List fields exist
+    has_list = any(get_tf_type(p) == "List" for p in properties.values())
+
+    extra_imports = ""
+    if has_list:
+        extra_imports = '\n\t"github.com/hashicorp/terraform-plugin-framework/attr"'
+
+    # Determine ID type and parameter format from schema
+    id_type = get_tf_type(properties.get("id", {"type": "string"}))
+    if id_type == "Int64":
+        # ID in schema is Int64, but datasource input is String - convert
+        id_param = (
+            "func() int { id, _ := strconv.Atoi(data.ID.ValueString()); return id }()"
+        )
+        extra_imports += '\n\t"strconv"'
+    else:
+        id_param = "data.ID.ValueString()"
+
+    # Generate code
+    resource_name = base_name.replace(".", "_").title().replace("_", "")
+    tf_name = base_name.replace(".", "_")
+    api_name = base_name
+    description = get_spec.get("description") or f"Retrieves TrueNAS {tf_name} data"
+    description = description.split("\n")[0][:200].replace('"', '\\"')
+
+    code = DATASOURCE_TEMPLATE.format(
+        resource_name=resource_name,
+        name=tf_name,
+        api_name=api_name,
+        description=description,
+        fields=generate_fields(properties, False),
+        schema_attrs=generate_schema_attrs(properties, [], False),
+        read_mapping=generate_read_mapping(properties, skip_id_for_datasource=True),
+        extra_imports=extra_imports,
+        id_param=id_param,
+    )
+
+    return code
+
+
+def generate_datasource_docs(base_name, properties, description):
+    """Generate data source documentation"""
+    tf_name = base_name.replace(".", "_")
+
+    # Build attributes list
+    attrs = []
+    for name, prop in sorted(properties.items()):
+        if name in ["id"]:
+            continue
+        tf_type = get_tf_type(prop)
+        desc = prop.get("description", "") if isinstance(prop, dict) else ""
+        desc = desc.replace("\n", " ").strip()[:200]
+        attrs.append(f"- `{name}` ({tf_type}) - {desc}")
+
+    doc = DATASOURCE_DOC_TEMPLATE.format(
+        resource_type=tf_name,
+        description=description,
+        name=tf_name,
+        attrs=chr(10).join(attrs) if attrs else "- None",
+    )
+
+    docs_dir = Path("docs/data-sources")
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / f"{tf_name}.md").write_text(doc)
+
+
+def generate_query_datasource_docs(base_name, properties, description):
+    """Generate query data source documentation"""
+    tf_name = base_name.replace(".", "_") + "s"  # Plural
+
+    # Build attributes list
+    attrs = []
+    for name, prop in sorted(properties.items()):
+        if name in ["id"]:
+            continue
+        tf_type = get_tf_type(prop)
+        desc = prop.get("description", "") if isinstance(prop, dict) else ""
+        desc = desc.replace("\n", " ").strip()[:200]
+        attrs.append(f"- `{name}` ({tf_type}) - {desc}")
+
+    doc = DATASOURCE_QUERY_DOC_TEMPLATE.format(
+        resource_type=tf_name,
+        description=description,
+        name=base_name.replace(".", "_"),
+        attrs=chr(10).join(attrs) if attrs else "- None",
+    )
+
+    docs_dir = Path("docs/data-sources")
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / f"{tf_name}.md").write_text(doc)
+
+
+def generate_resource_docs(base_name, properties, required, description, methods_dict):
+    """Generate Terraform documentation markdown"""
+    tf_name = base_name.replace(".", "_")
+
     # Check for lifecycle actions
-    lifecycle_actions = find_lifecycle_actions(spec, path)
-    has_start = 'start' in lifecycle_actions
-    
-    # Build example lines
+    has_start = f"{base_name}.start" in methods_dict
+
+    # Build example with required fields
     example_lines = []
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id'] or prop_name not in required_fields:
-            continue
-        example_lines.append(f'  {prop_name} = {get_example_value(prop_name, prop_spec)}')
-    
-    # Add start_on_create to example if resource has start action
+    for name in sorted(required):
+        if name in properties and name not in ["uuid", "id"]:
+            prop = properties[name]
+            tf_type = get_tf_type(prop)
+            if tf_type == "String":
+                example_lines.append(f'  {name} = "example-value"')
+            elif tf_type == "Int64":
+                example_lines.append(f"  {name} = 1")
+            elif tf_type == "Bool":
+                example_lines.append(f"  {name} = true")
+            elif tf_type == "Float64":
+                example_lines.append(f"  {name} = 1.0")
+            elif tf_type == "List":
+                example_lines.append(f'  {name} = ["item1"]')
+
+    # Add start_on_create if has start action
     if has_start and len(example_lines) < 8:
-        example_lines.append('  start_on_create = true')
-    
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id'] or prop_name in required_fields or len(example_lines) >= 8:
-            continue
-        if prop_spec.get('enum') or (prop_spec.get('default') is not None):
-            example_lines.append(f'  {prop_name} = {get_example_value(prop_name, prop_spec)}')
-    
-    # Build args
-    args = []
-    
-    # Add start_on_create if resource has start action
+        example_lines.append("  start_on_create = true")
+
+    # Build schema documentation
+    required_args = []
+    optional_args = []
+
+    # Add start_on_create if has start action
     if has_start:
-        args.append('- `start_on_create` (Optional) - Start the resource immediately after creation. Default behavior: starts if not specified. Type: `boolean`')
-    
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id']:
+        optional_args.append(
+            "- `start_on_create` (Bool) - Start the resource immediately after creation. Default: `true`"
+        )
+
+    for name, prop in sorted(properties.items()):
+        if name in ["provider", "uuid", "id"]:
             continue
-        prop_desc = prop_spec.get('description', f'{prop_name} configuration')
-        prop_type = prop_spec.get('type', 'string')
-        required = '(Required)' if prop_name in required_fields else '(Optional)'
-        
-        if prop_spec.get('enum'):
-            prop_desc += f' Valid values: {", ".join(f"`{v}`" for v in prop_spec["enum"][:3])}'
-        if prop_spec.get('default') is not None:
-            prop_desc += f' Default: `{prop_spec["default"]}`'
-        
-        args.append(f'- `{prop_name}` {required} - {prop_desc}. Type: `{prop_type}`')
-    
-    required_args = [a for a in args if '(Required)' in a]
-    optional_args = [a for a in args if '(Optional)' in a]
-    
-    return RESOURCE_DOC_TEMPLATE.format(
-        resource_type=resource_type,
+        tf_type = get_tf_type(prop)
+        desc = prop.get("description", "") if isinstance(prop, dict) else ""
+        desc = desc.replace("\n", " ").strip()[:200]
+
+        arg_line = f"- `{name}` ({tf_type}) - {desc}"
+
+        if name in required:
+            required_args.append(arg_line)
+        else:
+            optional_args.append(arg_line)
+
+    doc = RESOURCE_DOC_TEMPLATE.format(
+        resource_type=tf_name,
         description=description,
-        example_block=chr(10).join(example_lines) or '  # Configuration here',
-        required_args=chr(10).join(required_args) or '- None',
-        optional_args=chr(10).join(optional_args) or '- None'
+        example_block=(
+            chr(10).join(example_lines)
+            if example_lines
+            else "  # Configure required attributes"
+        ),
+        required_args=chr(10).join(required_args) if required_args else "- None",
+        optional_args=chr(10).join(optional_args) if optional_args else "- None",
     )
 
+    docs_dir = Path("docs/resources")
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / f"{tf_name}.md").write_text(doc)
 
-def generate_action_resource_docs(base_resource_name, action_name, action_info, spec):
-    """Generate documentation for an action resource."""
-    schema_name = action_info['schema']
-    description = f'Executes {action_name} action on {base_resource_name} resource'
-    
-    # Get schema properties if available
-    properties = {}
-    if schema_name:
-        schema = get_schema(spec, schema_name)
-        if schema:
-            properties = schema.get('properties', {})
-            description = schema.get('description', description)
-    
-    # Build args
-    args = ['- `resource_id` (Required) - ID of the resource to perform action on. Type: `string`']
-    for prop_name, prop_spec in properties.items():
-        if prop_name in ['uuid', 'id']:
+
+def generate_resource_docs(base_name, properties, required, description, methods_dict):
+    """Generate Terraform documentation markdown"""
+    tf_name = base_name.replace(".", "_")
+    has_start = f"{base_name}.start" in methods_dict
+
+    # Build example with required fields
+    example_lines = []
+    for name in sorted(required):
+        if name in properties and name not in ["uuid", "id"]:
+            prop = properties[name]
+            tf_type = get_tf_type(prop)
+            if tf_type == "String":
+                example_lines.append(f'  {name} = "example-value"')
+            elif tf_type == "Int64":
+                example_lines.append(f"  {name} = 1")
+            elif tf_type == "Bool":
+                example_lines.append(f"  {name} = true")
+            elif tf_type == "Float64":
+                example_lines.append(f"  {name} = 1.0")
+            elif tf_type == "List":
+                example_lines.append(f'  {name} = ["item1"]')
+
+    if has_start and len(example_lines) < 8:
+        example_lines.append("  start_on_create = true")
+
+    # Build schema documentation
+    required_args = []
+    optional_args = []
+
+    if has_start:
+        optional_args.append(
+            "- `start_on_create` (Bool) - Start the resource immediately after creation. Default: `true`"
+        )
+
+    for name, prop in sorted(properties.items()):
+        if name in ["provider", "uuid", "id"]:
             continue
-        prop_desc = prop_spec.get('description', f'{prop_name} parameter')
-        prop_type = prop_spec.get('type', 'string')
-        args.append(f'- `{prop_name}` (Optional) - {prop_desc}. Type: `{prop_type}`')
-    
-    resource_type = f'{base_resource_name}_{action_name}_action'
-    
-    return f'''---
-page_title: "truenas_{resource_type} Resource - terraform-provider-truenas"
-subcategory: "Actions"
-description: |-
-  {description}
----
+        tf_type = get_tf_type(prop)
+        desc = prop.get("description", "") if isinstance(prop, dict) else ""
+        desc = desc.replace("\n", " ").strip()[:200]
 
-# truenas_{resource_type} (Resource)
+        # Add default value if present
+        if isinstance(prop, dict) and "default" in prop:
+            desc += f" Default: `{prop['default']}`"
 
-{description}
+        # Add enum values if present
+        if isinstance(prop, dict) and "enum" in prop:
+            enum_vals = ", ".join(f"`{v}`" for v in prop["enum"][:5])
+            desc += f" Valid values: {enum_vals}"
 
-This is an action resource that executes an operation when created or updated. It cannot be undone on destroy.
+        arg_line = f"- `{name}` ({tf_type}) - {desc}"
 
-## Example Usage
+        if name in required:
+            required_args.append(arg_line)
+        else:
+            optional_args.append(arg_line)
 
-```terraform
-resource "truenas_{base_resource_name}" "example" {{
-  # ... resource configuration
-}}
-
-resource "truenas_{resource_type}" "example" {{
-  resource_id = truenas_{base_resource_name}.example.id
-}}
-```
-
-## Schema
-
-### Required
-
-- `resource_id` (String) ID of the {base_resource_name} resource to perform action on
-
-### Optional
-
-{chr(10).join(args[1:]) or '- None'}
-
-### Read-Only
-
-- `id` (String) Action execution ID (timestamp-based)
-
-## Notes
-
-- This resource executes the {action_name} action when created
-- Updates will re-execute the action
-- Deletion removes from state but cannot undo the action
-- Use with caution as actions are immediate and irreversible
-'''
-
-
-def generate_datasource_docs(name, schema):
-    """Generate Terraform data source documentation."""
-    properties = schema.get('properties', {})
-    description = schema.get('description', f'Retrieves TrueNAS {name} data')
-    resource_type = name.replace('/', '_').replace('-', '_')
-    
-    attrs = [f'- `{p}` ({s.get("type", "string")}) - {s.get("description", f"{p} value")}' 
-             for p, s in properties.items()]
-    
-    return DATASOURCE_DOC_TEMPLATE.format(
-        resource_type=resource_type,
+    doc = RESOURCE_DOC_TEMPLATE.format(
+        resource_type=tf_name,
         description=description,
-        name=name,
-        attrs=chr(10).join(attrs) or '- None'
+        example_block=(
+            chr(10).join(example_lines)
+            if example_lines
+            else "  # Configure required attributes"
+        ),
+        required_args=chr(10).join(required_args) if required_args else "- None",
+        optional_args=chr(10).join(optional_args) if optional_args else "- None",
     )
+
+    docs_dir = Path("docs/resources")
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / f"{tf_name}.md").write_text(doc)
+
+
+def generate_provider(resources, datasources):
+    """Generate provider.go from template"""
+    with open("templates/provider.go.tmpl", "r") as f:
+        template = f.read()
+
+    # Build resource list
+    resource_funcs = [
+        f"New{r.replace('.', '_').title().replace('_', '')}Resource" for r in resources
+    ]
+    resource_list = ",\n\t\t".join(resource_funcs)
+
+    # Build datasource list
+    datasource_funcs = [
+        f"New{d.replace('.', '_').title().replace('_', '')}DataSource"
+        for d in datasources
+    ]
+    datasource_list = ",\n\t\t".join(datasource_funcs)
+    if datasource_list:
+        datasource_list += ","  # Add trailing comma
+
+    # Replace template variables
+    code = template.replace("{{resource_list}}", resource_list)
+    code = code.replace("{{datasource_list}}", datasource_list)
+
+    with open("internal/provider/provider.go", "w") as f:
+        f.write(code)
+
+    print("✅ Generated provider.go", file=sys.stderr)
 
 
 def main():
-    spec_file = Path('truenas-openapi.json')
-    if not spec_file.exists():
-        print("truenas-openapi.json not found")
-        sys.exit(1)
-    
-    spec = json.loads(spec_file.read_text())
-    
-    # Create directories
-    for d in ['docs', 'docs/resources', 'docs/data-sources']:
-        Path(d).mkdir(exist_ok=True)
-    
-    Path('docs/index.md').write_text(PROVIDER_DOC)
-    
-    # Find true CRUD resources and update-only resources
-    crud_resources = find_crud_resources(spec)
-    update_only_resources = find_update_only_resources(spec)
-    
-    resources, datasources = [], []
-    
-    for path, path_spec in spec['paths'].items():
-        schema_name = get_create_schema_name(path_spec)
-        if not schema_name:
+    print("=" * 60, file=sys.stderr)
+    print("TrueNAS Provider Generator (Native Spec)", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
+
+    methods, metadata = load_spec()
+    print(f"Version: {metadata.get('truenas_version')}", file=sys.stderr)
+    print(f"Methods: {len(methods)}", file=sys.stderr)
+
+    # Find resources
+    resources = {}
+    for method_name in methods.keys():
+        if method_name.endswith(".create"):
+            base = method_name[:-7]
+            resources[base] = methods
+
+    print(f"Resources: {len(resources)}", file=sys.stderr)
+
+    # Generate
+    output_dir = Path("internal/provider")
+    count = 0
+    generated_resources = []
+
+    # Skip resources with complex array handling for now
+    skip_resources = {
+        "keychaincredential",
+        "nvmet.port",
+        "pool.dataset",
+        "pool.snapshot",
+    }  # anyOf schemas only
+
+    for base_name in resources.keys():
+        if base_name in skip_resources:
             continue
-        
-        schema = get_schema(spec, schema_name)
-        if not schema:
+        code = generate_resource(base_name, methods)
+        if code:
+            filename = f"resource_{base_name.replace('.', '_')}_generated.go"
+            (output_dir / filename).write_text(code)
+            generated_resources.append(base_name)
+            count += 1
+
+            # Generate documentation
+            create_spec = methods.get(f"{base_name}.create", {})
+            accepts = create_spec.get("accepts", [])
+            if accepts:
+                schema = accepts[0] if isinstance(accepts, list) else accepts
+                properties = schema.get("properties", {})
+                required = schema.get("required", [])
+                description = (
+                    create_spec.get("description")
+                    or f"Manages TrueNAS {base_name} resources"
+                )
+                description = description.split("\n")[0][:200]
+                generate_resource_docs(
+                    base_name, properties, required, description, methods
+                )
+
+    print(f"\n✅ Generated {count} resources", file=sys.stderr)
+
+    # Generate data sources
+    datasource_candidates = [
+        "vm",
+        "pool",
+        "pool.dataset",
+        "disk",
+        "user",
+        "group",
+        "interface",
+        "service",
+    ]
+    datasource_dir = Path("internal/provider")
+    ds_count = 0
+    generated_datasources = []
+
+    for base_name in datasource_candidates:
+        if f"{base_name}.get_instance" not in methods:
             continue
-        
-        resource_name = extract_resource_name(path)
-        
-        # Data sources from get_instance
-        if path.endswith('/get_instance'):
-            print(f"Generating data source for {path} -> {resource_name}")
-            doc = generate_datasource_docs(resource_name, schema)
-            Path(f'docs/data-sources/{resource_name.lower()}.md').write_text(doc)
-            datasources.append(resource_name)
+        code = generate_datasource(base_name, methods)
+        if code:
+            filename = f"datasource_{base_name.replace('.', '_')}_generated.go"
+            (datasource_dir / filename).write_text(code)
+            generated_datasources.append(base_name)
+            ds_count += 1
+
+            # Generate documentation
+            get_spec = methods.get(f"{base_name}.get_instance", {})
+            returns = get_spec.get("returns", [])
+            if returns:
+                schema = returns[0] if isinstance(returns, list) else returns
+                properties = schema.get("properties", {})
+                description = (
+                    get_spec.get("description") or f"Retrieves TrueNAS {base_name} data"
+                )
+                description = description.split("\n")[0][:200]
+                generate_datasource_docs(base_name, properties, description)
+
+    print(f"✅ Generated {ds_count} data sources", file=sys.stderr)
+
+    # Generate query data sources
+    query_candidates = [
+        "vm",
+        "pool",
+        "pool.dataset",
+        "disk",
+        "user",
+        "group",
+        "interface",
+        "service",
+    ]
+    query_dir = Path("internal/provider")
+    query_count = 0
+    generated_query_datasources = []
+
+    for base_name in query_candidates:
+        if f"{base_name}.query" not in methods:
             continue
-        
-        # Resources from CRUD endpoints
-        if is_crud_endpoint(path, path_spec.keys(), crud_resources):
-            print(f"Generating resource for {path} -> {resource_name}")
-            
-            code = generate_resource(resource_name, path, schema, spec)
-            Path(f'internal/provider/resource_{resource_name.lower()}_generated.go').write_text(code)
-            
-            doc = generate_resource_docs(resource_name, schema, spec, path)
-            Path(f'docs/resources/{resource_name.lower()}.md').write_text(doc)
-            
-            resources.append(resource_name)
-            
-            # Generate action resources for this CRUD resource
-            operational_actions = find_operational_actions(spec, path)
-            for action_name, action_info in operational_actions.items():
-                print(f"  Generating action resource: {resource_name}_{action_name}")
-                action_code = generate_action_resource(resource_name, action_name, action_info, spec)
-                Path(f'internal/provider/action_{resource_name.lower()}_{action_name.lower()}_generated.go').write_text(action_code)
-                
-                action_doc = generate_action_resource_docs(resource_name, action_name, action_info, spec)
-                Path(f'docs/resources/{resource_name.lower()}_{action_name.lower()}_action.md').write_text(action_doc)
-                
-                resources.append(f'{resource_name}_{action_name}_action')
-    
-    # Generate update-only resources (like service)
-    for update_path in update_only_resources:
-        resource_name = extract_resource_name(update_path)
-        print(f"Generating update-only resource for {update_path} -> {resource_name}")
-        
-        # Get schema from PUT operation on /id/{id_}
-        id_path = f"{update_path}/id/{{id_}}"
-        put_spec = spec['paths'][id_path].get('put', {})
-        schema_ref = put_spec.get('requestBody', {}).get('content', {}).get('application/json', {}).get('schema', {}).get('$ref', '')
-        schema_name = schema_ref.split('/')[-1] if schema_ref else None
-        
-        if schema_name:
-            schema = get_schema(spec, schema_name)
-            if schema:
-                code = generate_resource(resource_name, update_path, schema, spec, update_only=True)
-                Path(f'internal/provider/resource_{resource_name.lower()}_generated.go').write_text(code)
-                
-                doc = generate_resource_docs(resource_name, schema, spec, update_path)
-                Path(f'docs/resources/{resource_name.lower()}.md').write_text(doc)
-                
-                resources.append(resource_name)
-    
-    # Add manually created resources
-    resources.append('filesystem_put')
-    
-    # Output summary
-    print(f"\nGenerated {len(resources)} resources (including action resources)")
-    print(f"Generated {len(datasources)} data sources")
-    
-    # Auto-update provider.go with resource registrations
-    provider_file = Path('internal/provider/provider.go')
-    provider_content = provider_file.read_text()
-    
-    # Convert resource names to function names (handle _action suffix specially)
-    def to_func_name(r):
-        if r.endswith('_action'):
-            # Remove _action, convert to title case, add Action suffix
-            base = r[:-7]  # Remove '_action'
-            return 'New' + ''.join(w.capitalize() for w in base.split('_')) + 'ActionResource,'
-        else:
-            return 'New' + ''.join(w.capitalize() for w in r.split('_')) + 'Resource,'
-    
-    funcs = '\n'.join(f'\t\t{to_func_name(r)}' for r in resources)
-    new_resources_block = f'''func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resource {{
-\treturn []func() resource.Resource{{
-{funcs}
-\t}}
-}}'''
-    
-    # Replace Resources method
-    import re
-    pattern = r'func \(p \*TrueNASProvider\) Resources\(ctx context\.Context\) \[\]func\(\) resource\.Resource \{[^}]+\}[^}]+\}'
-    if re.search(pattern, provider_content):
-        provider_content = re.sub(pattern, new_resources_block, provider_content)
-        provider_file.write_text(provider_content)
-        print(f"\n✓ Updated provider.go with {len(resources)} resource registrations")
-    else:
-        print(f"\n⚠ Could not auto-update provider.go - please add manually:")
-        print(new_resources_block)
+        code = generate_query_datasource(base_name, methods)
+        if code:
+            filename = f"datasource_{base_name.replace('.', '_')}s_generated.go"
+            (query_dir / filename).write_text(code)
+            generated_query_datasources.append(base_name + "s")
+            query_count += 1
+
+            # Generate documentation
+            query_spec = methods.get(f"{base_name}.query", {})
+            returns = query_spec.get("returns", [])
+            if returns:
+                schema = returns[0] if isinstance(returns, list) else returns
+                items_schema = schema.get("items", {})
+                if isinstance(items_schema, list):
+                    items_schema = items_schema[0] if items_schema else {}
+                properties = items_schema.get("properties", {})
+                # Filter out List types
+                filtered_properties = {
+                    k: v for k, v in properties.items() if get_tf_type(v) != "List"
+                }
+                description = (
+                    query_spec.get("description") or f"Query {base_name} resources"
+                )
+                description = description.split("\n")[0][:200]
+                generate_query_datasource_docs(
+                    base_name, filtered_properties, description
+                )
+
+    print(f"✅ Generated {query_count} query data sources", file=sys.stderr)
+
+    # Generate provider.go with only successfully generated resources
+    generate_provider(
+        generated_resources, generated_datasources + generated_query_datasources
+    )
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -17,13 +17,15 @@ import (
 )
 
 type Client struct {
-	host       string
-	token      string
-	conn       *websocket.Conn
-	httpClient *http.Client
-	mu         sync.Mutex
-	requests   map[string]chan DDPResponse
-	nextID     int
+	host         string
+	token        string
+	conn         *websocket.Conn
+	httpClient   *http.Client
+	mu           sync.Mutex
+	reconnectMu  sync.Mutex
+	requests     map[string]chan DDPResponse
+	nextID       int
+	connected    bool
 }
 
 type DDPMessage struct {
@@ -73,7 +75,19 @@ func (c *Client) Connect() error {
 		return fmt.Errorf("websocket dial failed: %v", err)
 	}
 	
+	c.mu.Lock()
+	// Close old connection if exists
+	if c.conn != nil {
+		_ = c.conn.Close()
+	}
+	// Clear pending requests
+	for id, ch := range c.requests {
+		close(ch)
+		delete(c.requests, id)
+	}
 	c.conn = conn
+	c.connected = true
+	c.mu.Unlock()
 	
 	// Start message handler
 	go c.handleMessages()
@@ -85,21 +99,53 @@ func (c *Client) Connect() error {
 		Support: []string{"1"},
 	}
 	
-	if err := c.conn.WriteJSON(connectMsg); err != nil {
+	if err := conn.WriteJSON(connectMsg); err != nil {
+		c.mu.Lock()
+		c.connected = false
+		c.mu.Unlock()
 		return fmt.Errorf("failed to send connect: %v", err)
 	}
 	
 	// Wait for connected response
 	time.Sleep(200 * time.Millisecond)
 	
-	// Authenticate
-	authResp, err := c.call("auth.login_with_api_key", []interface{}{c.token})
-	if err != nil {
-		return fmt.Errorf("authentication failed: %v", err)
+	// Authenticate - use direct call without ensureConnected
+	c.mu.Lock()
+	c.nextID++
+	id := fmt.Sprintf("req%d", c.nextID)
+	respChan := make(chan DDPResponse, 1)
+	c.requests[id] = respChan
+	c.mu.Unlock()
+	
+	authMsg := DDPMessage{
+		Msg:    "method",
+		Method: "auth.login_with_api_key",
+		Params: []interface{}{c.token},
+		ID:     id,
 	}
 	
-	if result, ok := authResp.Result.(bool); !ok || !result {
-		return fmt.Errorf("authentication failed: %v", authResp.Error)
+	if err := conn.WriteJSON(authMsg); err != nil {
+		c.mu.Lock()
+		delete(c.requests, id)
+		c.connected = false
+		c.mu.Unlock()
+		return fmt.Errorf("failed to send auth: %v", err)
+	}
+	
+	select {
+	case authResp := <-respChan:
+		if result, ok := authResp.Result.(bool); !ok || !result {
+			c.mu.Lock()
+			c.connected = false
+			c.mu.Unlock()
+			return fmt.Errorf("authentication failed: %v", authResp.Error)
+		}
+	case <-time.After(30 * time.Second):
+		c.mu.Lock()
+		delete(c.requests, id)
+		c.connected = false
+		c.mu.Unlock()
+		return fmt.Errorf("authentication timeout")
 	}
 	
 	log.Println("WebSocket DDP connection established and authenticated")
@@ -111,6 +157,9 @@ func (c *Client) handleMessages() {
 		var response DDPResponse
 		if err := c.conn.ReadJSON(&response); err != nil {
 			log.Printf("WebSocket read error: %v", err)
+			c.mu.Lock()
+			c.connected = false
+			c.mu.Unlock()
 			return
 		}
 		
@@ -125,7 +174,37 @@ func (c *Client) handleMessages() {
 	}
 }
 
+func (c *Client) ensureConnected() error {
+	c.mu.Lock()
+	connected := c.connected && c.conn != nil
+	c.mu.Unlock()
+	
+	if connected {
+		return nil
+	}
+	
+	// Serialize reconnection attempts
+	c.reconnectMu.Lock()
+	defer c.reconnectMu.Unlock()
+	
+	// Check again after acquiring lock - another goroutine may have reconnected
+	c.mu.Lock()
+	connected = c.connected && c.conn != nil
+	c.mu.Unlock()
+	
+	if connected {
+		return nil
+	}
+	
+	log.Println("Connection lost, reconnecting...")
+	return c.Connect()
+}
+
 func (c *Client) call(method string, params interface{}) (*DDPResponse, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
+	
 	c.mu.Lock()
 	c.nextID++
 	id := fmt.Sprintf("req%d", c.nextID)
@@ -161,7 +240,7 @@ func (c *Client) Call(method string, params interface{}) (interface{}, error) {
 	// For DDP protocol, params should be wrapped in array unless already an array
 	var ddpParams interface{}
 	switch method {
-	case "vm.update", "vm.stop":
+	case "vm.update", "vm.stop", "vm.device.update", "pool.dataset.delete":
 		// These expect [id, data] format - params should already be correct
 		ddpParams = params
 	case "vm.delete", "vm.get_instance":
@@ -191,6 +270,38 @@ func (c *Client) Call(method string, params interface{}) (interface{}, error) {
 	}
 	
 	return response.Result, nil
+}
+
+// CallWithJob calls a method that returns a job ID and waits for completion
+func (c *Client) CallWithJob(method string, params interface{}) (interface{}, error) {
+	result, err := c.Call(method, params)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Result should be a job ID (integer)
+	var jobID int
+	switch v := result.(type) {
+	case float64:
+		jobID = int(v)
+	case int:
+		jobID = v
+	default:
+		// Not a job, return result directly
+		return result, nil
+	}
+	
+	// Wait for job completion
+	jobResult, err := c.call("core.job_wait", []interface{}{jobID})
+	if err != nil {
+		return nil, fmt.Errorf("job wait failed: %v", err)
+	}
+	
+	if jobResult.Error != nil {
+		return nil, fmt.Errorf("job %d failed: %v", jobID, jobResult.Error)
+	}
+	
+	return jobResult.Result, nil
 }
 
 // UploadFile performs a multipart file upload to the specified endpoint

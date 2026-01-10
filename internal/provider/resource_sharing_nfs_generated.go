@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -40,68 +42,83 @@ func (r *SharingNfsResource) Metadata(ctx context.Context, req resource.Metadata
 	resp.TypeName = req.ProviderTypeName + "_sharing_nfs"
 }
 
+func (r *SharingNfsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *SharingNfsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS sharing_nfs resource",
+		MarkdownDescription: "Create a NFS Share.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"path": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Local path to be exported. ",
 			},
 			"aliases": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "IGNORED for now. ",
 			},
 			"comment": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "User comment associated with share. ",
 			},
 			"networks": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "List of authorized networks that are allowed to access the share having format     \"network/mask\" CI",
 			},
 			"hosts": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "List of IP's/hostnames which are allowed to access the share. No quotes or spaces are allowed. Each ",
 			},
 			"ro": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Export the share as read only. ",
 			},
 			"maproot_user": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Map root user client to a specified user. ",
 			},
 			"maproot_group": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Map root group client to a specified group. ",
 			},
 			"mapall_user": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Map all client users to a specified user. ",
 			},
 			"mapall_group": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Map all client groups to a specified group. ",
 			},
 			"security": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Specify the security schema. ",
 			},
 			"enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Enable or disable the share. ",
 			},
 			"expose_snapshots": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Enterprise feature to enable access to the ZFS snapshot directory for the export. Export path must b",
 			},
 		},
 	}
@@ -127,9 +144,26 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	params := map[string]interface{}{}
-	params["path"] = data.Path.ValueString()
+	if !data.Path.IsNull() {
+		params["path"] = data.Path.ValueString()
+	}
+	if !data.Aliases.IsNull() {
+		var aliasesList []string
+		data.Aliases.ElementsAs(ctx, &aliasesList, false)
+		params["aliases"] = aliasesList
+	}
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()
+	}
+	if !data.Networks.IsNull() {
+		var networksList []string
+		data.Networks.ElementsAs(ctx, &networksList, false)
+		params["networks"] = networksList
+	}
+	if !data.Hosts.IsNull() {
+		var hostsList []string
+		data.Hosts.ElementsAs(ctx, &hostsList, false)
+		params["hosts"] = hostsList
 	}
 	if !data.Ro.IsNull() {
 		params["ro"] = data.Ro.ValueBool()
@@ -146,6 +180,11 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 	if !data.MapallGroup.IsNull() {
 		params["mapall_group"] = data.MapallGroup.ValueString()
 	}
+	if !data.Security.IsNull() {
+		var securityList []string
+		data.Security.ElementsAs(ctx, &securityList, false)
+		params["security"] = securityList
+	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
@@ -155,10 +194,11 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 
 	result, err := r.client.Call("sharing.nfs.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create sharing_nfs: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -175,18 +215,77 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("sharing.nfs.get_instance", resourceID)
+	result, err := r.client.Call("sharing.nfs.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read sharing_nfs: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["path"]; ok && v != nil {
+			data.Path = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["aliases"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Aliases, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["comment"]; ok && v != nil {
+			data.Comment = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["networks"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Networks, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["hosts"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Hosts, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["ro"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Ro = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["maproot_user"]; ok && v != nil {
+			data.MaprootUser = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["maproot_group"]; ok && v != nil {
+			data.MaprootGroup = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["mapall_user"]; ok && v != nil {
+			data.MapallUser = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["mapall_group"]; ok && v != nil {
+			data.MapallGroup = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["security"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Security, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["expose_snapshots"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.ExposeSnapshots = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -197,17 +296,39 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state SharingNfsResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	params["path"] = data.Path.ValueString()
+	if !data.Path.IsNull() {
+		params["path"] = data.Path.ValueString()
+	}
+	if !data.Aliases.IsNull() {
+		var aliasesList []string
+		data.Aliases.ElementsAs(ctx, &aliasesList, false)
+		params["aliases"] = aliasesList
+	}
 	if !data.Comment.IsNull() {
 		params["comment"] = data.Comment.ValueString()
+	}
+	if !data.Networks.IsNull() {
+		var networksList []string
+		data.Networks.ElementsAs(ctx, &networksList, false)
+		params["networks"] = networksList
+	}
+	if !data.Hosts.IsNull() {
+		var hostsList []string
+		data.Hosts.ElementsAs(ctx, &hostsList, false)
+		params["hosts"] = hostsList
 	}
 	if !data.Ro.IsNull() {
 		params["ro"] = data.Ro.ValueBool()
@@ -224,6 +345,11 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 	if !data.MapallGroup.IsNull() {
 		params["mapall_group"] = data.MapallGroup.ValueString()
 	}
+	if !data.Security.IsNull() {
+		var securityList []string
+		data.Security.ElementsAs(ctx, &securityList, false)
+		params["security"] = securityList
+	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
@@ -231,20 +357,12 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 		params["expose_snapshots"] = data.ExposeSnapshots.ValueBool()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("sharing.nfs.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update sharing_nfs: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("sharing.nfs.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -256,16 +374,15 @@ func (r *SharingNfsResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("sharing.nfs.delete", resourceID)
+	_, err = r.client.Call("sharing.nfs.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete sharing_nfs: %s", err))
 		return
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,6 +26,10 @@ func New{resource_name}Resource() resource.Resource {{
 
 func (r *{resource_name}Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {{
 	resp.TypeName = req.ProviderTypeName + "_{base_name}_{action_name}_action"
+}}
+
+func (r *{resource_name}Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {{
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }}
 
 func (r *{resource_name}Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {{

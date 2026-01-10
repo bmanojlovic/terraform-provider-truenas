@@ -2,19 +2,18 @@
 page_title: "truenas_iscsi_portal Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  iSCSI portal configuration data for creation.
+  Create a new iSCSI Portal.
 ---
 
 # truenas_iscsi_portal (Resource)
 
-iSCSI portal configuration data for creation.
+Create a new iSCSI Portal.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_iscsi_portal" "example" {
-  listen = []
-  comment = ""
+  listen = ["item1"]
 }
 ```
 
@@ -22,11 +21,11 @@ resource "truenas_iscsi_portal" "example" {
 
 ### Required
 
-- `listen` (Required) - Array of IP addresses for the portal to listen on.. Type: `array`
+- `listen` (List) - Array of IP addresses for the portal to listen on.
 
 ### Optional
 
-- `comment` (Optional) - Optional comment describing the portal. Default: ``. Type: `string`
+- `comment` (String) - Optional comment describing the portal. Default: ``
 
 ### Read-Only
 

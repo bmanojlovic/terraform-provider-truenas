@@ -2,12 +2,12 @@
 page_title: "truenas_service Data Source - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Retrieves TrueNAS service data
+  Returns instance matching `id`. If `id` is not found, Validation error is raised.
 ---
 
 # truenas_service (Data Source)
 
-Retrieves TrueNAS service data
+Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
 ## Example Usage
 
@@ -25,5 +25,7 @@ data "truenas_service" "example" {
 
 ### Read-Only
 
-- `id` (string) - id value
-- `options` (string) - options value
+- `enable` (Bool) - Whether the service is enabled to start on boot.
+- `pids` (List) - Array of process IDs associated with this service.
+- `service` (String) - Name of the system service.
+- `state` (String) - Current state of the service (e.g., 'RUNNING', 'STOPPED').

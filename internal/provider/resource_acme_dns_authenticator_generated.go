@@ -2,10 +2,11 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -30,20 +31,24 @@ func (r *AcmeDnsAuthenticatorResource) Metadata(ctx context.Context, req resourc
 	resp.TypeName = req.ProviderTypeName + "_acme_dns_authenticator"
 }
 
+func (r *AcmeDnsAuthenticatorResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *AcmeDnsAuthenticatorResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS acme_dns_authenticator resource",
+		MarkdownDescription: "Create a DNS Authenticator",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"attributes": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Authentication credentials and configuration for the DNS provider.",
 			},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Human-readable name for the DNS authenticator.",
 			},
 		},
 	}
@@ -69,20 +74,25 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 	}
 
 	params := map[string]interface{}{}
-	var attributesMap map[string]interface{}
-	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
-		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
-		return
+	if !data.Attributes.IsNull() {
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
-	params["attributes"] = attributesMap
-	params["name"] = data.Name.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
+	}
 
 	result, err := r.client.Call("acme.dns.authenticator.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create acme_dns_authenticator: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -99,18 +109,28 @@ func (r *AcmeDnsAuthenticatorResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("acme.dns.authenticator.get_instance", resourceID)
+	result, err := r.client.Call("acme.dns.authenticator.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read acme_dns_authenticator: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["attributes"]; ok && v != nil {
+			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok && v != nil {
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -121,36 +141,37 @@ func (r *AcmeDnsAuthenticatorResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state AcmeDnsAuthenticatorResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+
 	params := map[string]interface{}{}
-	var attributesMap map[string]interface{}
-	if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesMap); err != nil {
-		resp.Diagnostics.AddError("JSON Parse Error", err.Error())
-		return
+	if !data.Attributes.IsNull() {
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
-	params["attributes"] = attributesMap
-	params["name"] = data.Name.ValueString()
-
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
-		return
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
 	}
 
-	_, err = r.client.Call("acme.dns.authenticator.update", []interface{}{resourceID, params})
+	_, err = r.client.Call("acme.dns.authenticator.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update acme_dns_authenticator: %s", err))
 		return
 	}
-	
-	// Preserve the ID in the new state
+
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -162,16 +183,15 @@ func (r *AcmeDnsAuthenticatorResource) Delete(ctx context.Context, req resource.
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("acme.dns.authenticator.delete", resourceID)
+	_, err = r.client.Call("acme.dns.authenticator.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete acme_dns_authenticator: %s", err))
 		return
 	}
 }

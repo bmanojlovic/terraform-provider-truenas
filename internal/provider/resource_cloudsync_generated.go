@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,8 +22,8 @@ type CloudsyncResourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Path types.String `tfsdk:"path"`
 	Credentials types.Int64 `tfsdk:"credentials"`
-	Attributes types.Object `tfsdk:"attributes"`
-	Schedule types.Object `tfsdk:"schedule"`
+	Attributes types.String `tfsdk:"attributes"`
+	Schedule types.String `tfsdk:"schedule"`
 	PreScript types.String `tfsdk:"pre_script"`
 	PostScript types.String `tfsdk:"post_script"`
 	Snapshot types.Bool `tfsdk:"snapshot"`
@@ -49,95 +51,127 @@ func (r *CloudsyncResource) Metadata(ctx context.Context, req resource.MetadataR
 	resp.TypeName = req.ProviderTypeName + "_cloudsync"
 }
 
+func (r *CloudsyncResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (r *CloudsyncResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "TrueNAS cloudsync resource",
+		MarkdownDescription: "Creates a new cloud_sync entry.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"description": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "The name of the task to display in the UI.",
 			},
 			"path": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "The local path to back up beginning with `/mnt` or `/dev/zvol`.",
 			},
 			"credentials": schema.Int64Attribute{
 				Required: true,
 				Optional: false,
+				Description: "ID of the cloud credential.",
+			},
+			"attributes": schema.StringAttribute{
+				Required: true,
+				Optional: false,
+				Description: "Additional information for each backup, e.g. bucket name.",
+			},
+			"schedule": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Cron schedule dictating when the task should run.",
 			},
 			"pre_script": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "A Bash script to run immediately before every backup.",
 			},
 			"post_script": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "A Bash script to run immediately after every backup if it succeeds.",
 			},
 			"snapshot": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to create a temporary snapshot of the dataset before every backup.",
 			},
 			"include": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Paths to pass to `restic backup --include`.",
 			},
 			"exclude": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Paths to pass to `restic backup --exclude`.",
 			},
 			"args": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "(Slated for removal).",
 			},
 			"enabled": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Can enable/disable the task.",
 			},
 			"bwlimit": schema.ListAttribute{
-				ElementType: types.StringType,
 				Required: false,
 				Optional: true,
+				ElementType: types.StringType,
+				Description: "Schedule of bandwidth limits.",
 			},
 			"transfers": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
+				Description: "Maximum number of parallel file transfers. `null` for default.",
 			},
 			"direction": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "Direction of the cloud sync operation.  * `PUSH`: Upload local files to cloud storage * `PULL`: Down",
 			},
 			"transfer_mode": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+				Description: "How files are transferred between local and cloud storage.  * `SYNC`: Synchronize directories (add n",
 			},
 			"encryption": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to encrypt files before uploading to cloud storage.",
 			},
 			"filename_encryption": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to encrypt filenames in addition to file contents.",
 			},
 			"encryption_password": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Password for client-side encryption. Empty string if encryption is disabled.",
 			},
 			"encryption_salt": schema.StringAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Salt value for encryption key derivation. Empty string if encryption is disabled.",
 			},
 			"create_empty_src_dirs": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to create empty directories in the destination that exist in the source.",
 			},
 			"follow_symlinks": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
+				Description: "Whether to follow symbolic links and sync the files they point to.",
 			},
 		},
 	}
@@ -166,8 +200,18 @@ func (r *CloudsyncResource) Create(ctx context.Context, req resource.CreateReque
 	if !data.Description.IsNull() {
 		params["description"] = data.Description.ValueString()
 	}
-	params["path"] = data.Path.ValueString()
-	params["credentials"] = data.Credentials.ValueInt64()
+	if !data.Path.IsNull() {
+		params["path"] = data.Path.ValueString()
+	}
+	if !data.Credentials.IsNull() {
+		params["credentials"] = data.Credentials.ValueInt64()
+	}
+	if !data.Attributes.IsNull() {
+		params["attributes"] = data.Attributes.ValueString()
+	}
+	if !data.Schedule.IsNull() {
+		params["schedule"] = data.Schedule.ValueString()
+	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
 	}
@@ -177,17 +221,36 @@ func (r *CloudsyncResource) Create(ctx context.Context, req resource.CreateReque
 	if !data.Snapshot.IsNull() {
 		params["snapshot"] = data.Snapshot.ValueBool()
 	}
+	if !data.Include.IsNull() {
+		var includeList []string
+		data.Include.ElementsAs(ctx, &includeList, false)
+		params["include"] = includeList
+	}
+	if !data.Exclude.IsNull() {
+		var excludeList []string
+		data.Exclude.ElementsAs(ctx, &excludeList, false)
+		params["exclude"] = excludeList
+	}
 	if !data.Args.IsNull() {
 		params["args"] = data.Args.ValueString()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
+	if !data.Bwlimit.IsNull() {
+		var bwlimitList []string
+		data.Bwlimit.ElementsAs(ctx, &bwlimitList, false)
+		params["bwlimit"] = bwlimitList
+	}
 	if !data.Transfers.IsNull() {
 		params["transfers"] = data.Transfers.ValueInt64()
 	}
-	params["direction"] = data.Direction.ValueString()
-	params["transfer_mode"] = data.TransferMode.ValueString()
+	if !data.Direction.IsNull() {
+		params["direction"] = data.Direction.ValueString()
+	}
+	if !data.TransferMode.IsNull() {
+		params["transfer_mode"] = data.TransferMode.ValueString()
+	}
 	if !data.Encryption.IsNull() {
 		params["encryption"] = data.Encryption.ValueBool()
 	}
@@ -209,10 +272,11 @@ func (r *CloudsyncResource) Create(ctx context.Context, req resource.CreateReque
 
 	result, err := r.client.Call("cloudsync.create", params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Create Error", fmt.Sprintf("Unable to create cloudsync: %s", err))
 		return
 	}
 
+	// Extract ID from result
 	if resultMap, ok := result.(map[string]interface{}); ok {
 		if id, exists := resultMap["id"]; exists {
 			data.ID = types.StringValue(fmt.Sprintf("%v", id))
@@ -229,18 +293,100 @@ func (r *CloudsyncResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("cloudsync.get_instance", resourceID)
+	result, err := r.client.Call("cloudsync.get_instance", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to read cloudsync: %s", err))
 		return
 	}
+
+	// Map result back to state
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		if v, ok := resultMap["description"]; ok && v != nil {
+			data.Description = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["path"]; ok && v != nil {
+			data.Path = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["credentials"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Credentials = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["attributes"]; ok && v != nil {
+			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["schedule"]; ok && v != nil {
+			data.Schedule = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["pre_script"]; ok && v != nil {
+			data.PreScript = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["post_script"]; ok && v != nil {
+			data.PostScript = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["snapshot"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Snapshot = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["include"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Include, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["exclude"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Exclude, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["args"]; ok && v != nil {
+			data.Args = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["enabled"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["bwlimit"]; ok && v != nil {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Bwlimit, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+		if v, ok := resultMap["transfers"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.Transfers = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["direction"]; ok && v != nil {
+			data.Direction = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["transfer_mode"]; ok && v != nil {
+			data.TransferMode = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["encryption"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.Encryption = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["filename_encryption"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.FilenameEncryption = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["encryption_password"]; ok && v != nil {
+			data.EncryptionPassword = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["encryption_salt"]; ok && v != nil {
+			data.EncryptionSalt = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["create_empty_src_dirs"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.CreateEmptySrcDirs = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["follow_symlinks"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.FollowSymlinks = types.BoolValue(bv) }
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -251,10 +397,15 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	// Get ID from current state (not plan)
 	var state CloudsyncResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
@@ -262,8 +413,18 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 	if !data.Description.IsNull() {
 		params["description"] = data.Description.ValueString()
 	}
-	params["path"] = data.Path.ValueString()
-	params["credentials"] = data.Credentials.ValueInt64()
+	if !data.Path.IsNull() {
+		params["path"] = data.Path.ValueString()
+	}
+	if !data.Credentials.IsNull() {
+		params["credentials"] = data.Credentials.ValueInt64()
+	}
+	if !data.Attributes.IsNull() {
+		params["attributes"] = data.Attributes.ValueString()
+	}
+	if !data.Schedule.IsNull() {
+		params["schedule"] = data.Schedule.ValueString()
+	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
 	}
@@ -273,17 +434,36 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 	if !data.Snapshot.IsNull() {
 		params["snapshot"] = data.Snapshot.ValueBool()
 	}
+	if !data.Include.IsNull() {
+		var includeList []string
+		data.Include.ElementsAs(ctx, &includeList, false)
+		params["include"] = includeList
+	}
+	if !data.Exclude.IsNull() {
+		var excludeList []string
+		data.Exclude.ElementsAs(ctx, &excludeList, false)
+		params["exclude"] = excludeList
+	}
 	if !data.Args.IsNull() {
 		params["args"] = data.Args.ValueString()
 	}
 	if !data.Enabled.IsNull() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
+	if !data.Bwlimit.IsNull() {
+		var bwlimitList []string
+		data.Bwlimit.ElementsAs(ctx, &bwlimitList, false)
+		params["bwlimit"] = bwlimitList
+	}
 	if !data.Transfers.IsNull() {
 		params["transfers"] = data.Transfers.ValueInt64()
 	}
-	params["direction"] = data.Direction.ValueString()
-	params["transfer_mode"] = data.TransferMode.ValueString()
+	if !data.Direction.IsNull() {
+		params["direction"] = data.Direction.ValueString()
+	}
+	if !data.TransferMode.IsNull() {
+		params["transfer_mode"] = data.TransferMode.ValueString()
+	}
 	if !data.Encryption.IsNull() {
 		params["encryption"] = data.Encryption.ValueBool()
 	}
@@ -303,20 +483,12 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 		params["follow_symlinks"] = data.FollowSymlinks.ValueBool()
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(state.ID.ValueString())
+	_, err = r.client.Call("cloudsync.update", []interface{}{id, params})
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Update Error", fmt.Sprintf("Unable to update cloudsync: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("cloudsync.update", []interface{}{resourceID, params})
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	
-	// Preserve the ID in the new state
 	data.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -328,16 +500,15 @@ func (r *CloudsyncResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	// Convert string ID to integer for TrueNAS API
-	resourceID, err := strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("ID Conversion Error", fmt.Sprintf("Failed to convert ID to integer: %s", err.Error()))
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
 
-	_, err = r.client.Call("cloudsync.delete", resourceID)
+	_, err = r.client.Call("cloudsync.delete", id)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete cloudsync: %s", err))
 		return
 	}
 }

@@ -2,24 +2,18 @@
 page_title: "truenas_system_ntpserver Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for creating a new NTP server.
+  Add an NTP Server.
 ---
 
 # truenas_system_ntpserver (Resource)
 
-Configuration for creating a new NTP server.
+Add an NTP Server.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_system_ntpserver" "example" {
-  address = "example-address"
-  burst = false
-  iburst = true
-  prefer = false
-  minpoll = 6
-  maxpoll = 10
-  force = false
+  address = "example-value"
 }
 ```
 
@@ -27,16 +21,16 @@ resource "truenas_system_ntpserver" "example" {
 
 ### Required
 
-- `address` (Required) - Hostname or IP address of the NTP server.. Type: `string`
+- `address` (String) - Hostname or IP address of the NTP server.
 
 ### Optional
 
-- `burst` (Optional) - Send a burst of packets when the server is reachable. Default: `False`. Type: `boolean`
-- `iburst` (Optional) - Send a burst of packets when the server is unreachable. Default: `True`. Type: `boolean`
-- `prefer` (Optional) - Mark this server as preferred for time synchronization. Default: `False`. Type: `boolean`
-- `minpoll` (Optional) - Minimum polling interval (log2 seconds). Default: `6`. Type: `integer`
-- `maxpoll` (Optional) - Maximum polling interval (log2 seconds). Default: `10`. Type: `integer`
-- `force` (Optional) - Force creation even if the server is unreachable. Default: `False`. Type: `boolean`
+- `burst` (Bool) - Send a burst of packets when the server is reachable. Default: `False`
+- `force` (Bool) - Force creation even if the server is unreachable. Default: `False`
+- `iburst` (Bool) - Send a burst of packets when the server is unreachable. Default: `True`
+- `maxpoll` (Int64) - Maximum polling interval (log2 seconds). Default: `10`
+- `minpoll` (Int64) - Minimum polling interval (log2 seconds). Default: `6`
+- `prefer` (Bool) - Mark this server as preferred for time synchronization. Default: `False`
 
 ### Read-Only
 

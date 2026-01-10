@@ -2,25 +2,18 @@
 page_title: "truenas_pool_snapshottask Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Configuration for the new periodic snapshot task.
+  Create a Periodic Snapshot Task
 ---
 
 # truenas_pool_snapshottask (Resource)
 
-Configuration for the new periodic snapshot task.
+Create a Periodic Snapshot Task
 
 ## Example Usage
 
 ```terraform
 resource "truenas_pool_snapshottask" "example" {
-  dataset = "example-dataset"
-  recursive = false
-  lifetime_value = 2
-  lifetime_unit = "HOUR"
-  enabled = true
-  exclude = []
-  naming_schema = "auto-%Y-%m-%d_%H-%M"
-  allow_empty = true
+  dataset = "example-value"
 }
 ```
 
@@ -28,18 +21,18 @@ resource "truenas_pool_snapshottask" "example" {
 
 ### Required
 
-- `dataset` (Required) - The dataset to take snapshots of.. Type: `string`
+- `dataset` (String) - The dataset to take snapshots of.
 
 ### Optional
 
-- `recursive` (Optional) - Whether to recursively snapshot child datasets. Default: `False`. Type: `boolean`
-- `lifetime_value` (Optional) - Number of time units to retain snapshots. `lifetime_unit` gives the time unit. Default: `2`. Type: `integer`
-- `lifetime_unit` (Optional) - Unit of time for snapshot retention. Valid values: `HOUR`, `DAY`, `WEEK` Default: `WEEK`. Type: `string`
-- `enabled` (Optional) - Whether this periodic snapshot task is enabled. Default: `True`. Type: `boolean`
-- `exclude` (Optional) - Array of dataset patterns to exclude from recursive snapshots. Default: `[]`. Type: `array`
-- `naming_schema` (Optional) - Naming pattern for generated snapshots using strftime format. Default: `auto-%Y-%m-%d_%H-%M`. Type: `string`
-- `allow_empty` (Optional) - Whether to take snapshots even if no data has changed. Default: `True`. Type: `boolean`
-- `schedule` (Optional) - Cron schedule for when snapshots should be taken.. Type: `object`
+- `allow_empty` (Bool) - Whether to take snapshots even if no data has changed. Default: `True`
+- `enabled` (Bool) - Whether this periodic snapshot task is enabled. Default: `True`
+- `exclude` (List) - Array of dataset patterns to exclude from recursive snapshots. Default: `[]`
+- `lifetime_unit` (String) - Unit of time for snapshot retention. Default: `WEEK` Valid values: `HOUR`, `DAY`, `WEEK`, `MONTH`, `YEAR`
+- `lifetime_value` (Int64) - Number of time units to retain snapshots. `lifetime_unit` gives the time unit. Default: `2`
+- `naming_schema` (String) - Naming pattern for generated snapshots using strftime format. Default: `auto-%Y-%m-%d_%H-%M`
+- `recursive` (Bool) - Whether to recursively snapshot child datasets. Default: `False`
+- `schedule` (String) - Cron schedule for when snapshots should be taken.
 
 ### Read-Only
 

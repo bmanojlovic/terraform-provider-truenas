@@ -2,19 +2,19 @@
 page_title: "truenas_cloudsync_credentials Resource - terraform-provider-truenas"
 subcategory: ""
 description: |-
-  Cloud credential configuration data for the new credential.
+  Create Cloud Sync Credentials.
 ---
 
 # truenas_cloudsync_credentials (Resource)
 
-Cloud credential configuration data for the new credential.
+Create Cloud Sync Credentials.
 
 ## Example Usage
 
 ```terraform
 resource "truenas_cloudsync_credentials" "example" {
-  name = "example-name"
-  provider = "example-provider"
+  name = "example-value"
+  provider = "example-value"
 }
 ```
 
@@ -22,8 +22,7 @@ resource "truenas_cloudsync_credentials" "example" {
 
 ### Required
 
-- `name` (Required) - Human-readable name for the cloud credential.. Type: `string`
-- `provider` (Required) - Cloud provider configuration including type and authentication details.. Type: `string`
+- `name` (String) - Human-readable name for the cloud credential.
 
 ### Optional
 

@@ -1,0 +1,36 @@
+---
+page_title: "truenas_{resource_type} Data Source - terraform-provider-truenas"
+subcategory: ""
+description: |-
+  {description}
+---
+
+# truenas_{resource_type} (Data Source)
+
+{description}
+
+## Example Usage
+
+```terraform
+# Get all {name}
+data "truenas_{resource_type}" "all" {{}}
+
+# Access items
+output "{name}_count" {{
+  value = length(data.truenas_{resource_type}.all.items)
+}}
+
+output "{name}_names" {{
+  value = [for item in data.truenas_{resource_type}.all.items : item.name]
+}}
+```
+
+## Schema
+
+### Read-Only
+
+- `items` (List of Object) - List of {name} resources
+
+Items have the following attributes:
+
+{attrs}
