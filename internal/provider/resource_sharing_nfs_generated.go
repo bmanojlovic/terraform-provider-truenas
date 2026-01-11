@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -215,11 +214,13 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("sharing.nfs.get_instance", id)
 	if err != nil {
@@ -302,11 +303,13 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Path.IsNull() {
@@ -374,11 +377,13 @@ func (r *SharingNfsResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("sharing.nfs.delete", id)
 	if err != nil {

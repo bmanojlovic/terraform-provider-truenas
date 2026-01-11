@@ -9,6 +9,7 @@ description: |-
 
 Create a DNS Authenticator
 
+
 ## Example Usage
 
 ```terraform

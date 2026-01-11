@@ -9,6 +9,7 @@ description: |-
 
 Create a Static Route.
 
+
 ## Example Usage
 
 ```terraform

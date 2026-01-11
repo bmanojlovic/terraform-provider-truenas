@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -238,7 +238,12 @@ func (r *RsynctaskResource) Create(ctx context.Context, req resource.CreateReque
 		params["desc"] = data.Desc.ValueString()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.Recursive.IsNull() {
 		params["recursive"] = data.Recursive.ValueBool()
@@ -305,11 +310,13 @@ func (r *RsynctaskResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("rsynctask.get_instance", id)
 	if err != nil {
@@ -413,11 +420,13 @@ func (r *RsynctaskResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Path.IsNull() {
@@ -451,7 +460,12 @@ func (r *RsynctaskResource) Update(ctx context.Context, req resource.UpdateReque
 		params["desc"] = data.Desc.ValueString()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.Recursive.IsNull() {
 		params["recursive"] = data.Recursive.ValueBool()
@@ -512,11 +526,13 @@ func (r *RsynctaskResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("rsynctask.delete", id)
 	if err != nil {

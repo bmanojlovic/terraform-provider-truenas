@@ -240,7 +240,7 @@ func (c *Client) Call(method string, params interface{}) (interface{}, error) {
 	// For DDP protocol, params should be wrapped in array unless already an array
 	var ddpParams interface{}
 	switch method {
-	case "vm.update", "vm.stop", "vm.device.update", "pool.dataset.delete":
+	case "vm.update", "vm.stop", "vm.device.update", "pool.dataset.delete", "pool.dataset.update":
 		// These expect [id, data] format - params should already be correct
 		ddpParams = params
 	case "vm.delete", "vm.get_instance":

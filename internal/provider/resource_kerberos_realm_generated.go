@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -140,11 +139,13 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("kerberos.realm.get_instance", id)
 	if err != nil {
@@ -199,11 +200,13 @@ func (r *KerberosRealmResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Realm.IsNull() {
@@ -245,11 +248,13 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("kerberos.realm.delete", id)
 	if err != nil {

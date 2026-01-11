@@ -9,6 +9,7 @@ description: |-
 
 Create a NVMe target namespace in a subsystem (`subsys`).
 
+
 ## Example Usage
 
 ```terraform

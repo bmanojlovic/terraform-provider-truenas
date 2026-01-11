@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -47,11 +48,13 @@ func (r *TunableResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required: false,
 				Optional: true,
 				Description: "* `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"var": schema.StringAttribute{
 				Required: true,
 				Optional: false,
 				Description: "Name or identifier of the system parameter to tune.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"value": schema.StringAttribute{
 				Required: true,
@@ -139,11 +142,13 @@ func (r *TunableResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("tunable.get_instance", id)
 	if err != nil {
@@ -189,19 +194,15 @@ func (r *TunableResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
-	if !data.Type.IsNull() {
-		params["type"] = data.Type.ValueString()
-	}
-	if !data.Var.IsNull() {
-		params["var"] = data.Var.ValueString()
-	}
 	if !data.Value.IsNull() {
 		params["value"] = data.Value.ValueString()
 	}
@@ -232,11 +233,13 @@ func (r *TunableResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.CallWithJob("tunable.delete", id)
 	if err != nil {

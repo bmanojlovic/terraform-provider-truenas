@@ -9,6 +9,7 @@ description: |-
 
 Create a new ZFS Pool.
 
+
 ## Example Usage
 
 ```terraform
@@ -28,7 +29,7 @@ resource "truenas_pool" "example" {
 ### Optional
 
 - `allow_duplicate_serials` (Bool) - Whether to allow disks with duplicate serial numbers in the pool. Default: `False`
-- `checksum` (String) - Checksum algorithm to use for data integrity verification. Default: `None` Valid values: `ON`, `OFF`, `FLETCHER2`, `FLETCHER4`, `SHA256`
+- `checksum` (String) - Checksum algorithm to use for data integrity verification. Default: `None` Valid values: `ON`, `OFF`, `FLETCHER2`, `FLETCHER4`, `SHA256`, `SHA512`, `SKEIN`, `EDONR`, `BLAKE3`, `None`
 - `dedup_table_quota` (String) - How to manage the deduplication table quota allocation. Default: `AUTO` Valid values: `AUTO`, `CUSTOM`, `None`
 - `dedup_table_quota_value` (Int64) - Custom quota value in bytes when `dedup_table_quota` is set to CUSTOM. Default: `None`
 - `deduplication` (String) - Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar     signatures, byte-to-byte comparison is performed to ensure that the blcoks are identical. This  Default: `None` Valid values: `ON`, `VERIFY`, `OFF`, `None`

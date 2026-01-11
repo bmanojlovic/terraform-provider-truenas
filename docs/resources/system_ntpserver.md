@@ -9,6 +9,7 @@ description: |-
 
 Add an NTP Server.
 
+
 ## Example Usage
 
 ```terraform

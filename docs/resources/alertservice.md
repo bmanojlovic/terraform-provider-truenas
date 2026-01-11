@@ -9,6 +9,7 @@ description: |-
 
 Create an Alert Service of specified `type`.
 
+
 ## Example Usage
 
 ```terraform
@@ -24,7 +25,7 @@ resource "truenas_alertservice" "example" {
 ### Required
 
 - `attributes` (String) - Service-specific configuration attributes (credentials, endpoints, etc.).
-- `level` (String) - Minimum alert severity level that triggers notifications through this service. Valid values: `INFO`, `NOTICE`, `WARNING`, `ERROR`, `CRITICAL`
+- `level` (String) - Minimum alert severity level that triggers notifications through this service. Valid values: `INFO`, `NOTICE`, `WARNING`, `ERROR`, `CRITICAL`, `ALERT`, `EMERGENCY`
 - `name` (String) - Human-readable name for the alert service.
 
 ### Optional

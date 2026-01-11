@@ -9,6 +9,7 @@ description: |-
 
 Create a scrub task for a pool.
 
+
 ## Example Usage
 
 ```terraform

@@ -9,6 +9,7 @@ description: |-
 
 Create an app with `app_name` using `catalog_app` with `train` and `version`.
 
+
 ## Example Usage
 
 ```terraform

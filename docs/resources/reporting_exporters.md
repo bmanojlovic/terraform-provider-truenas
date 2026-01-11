@@ -9,6 +9,7 @@ description: |-
 
 Create a specific reporting exporter configuration containing required details for exporting reporting metrics.
 
+
 ## Example Usage
 
 ```terraform

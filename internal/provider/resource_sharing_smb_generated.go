@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -146,7 +146,12 @@ func (r *SharingSmbResource) Create(ctx context.Context, req resource.CreateRequ
 		params["access_based_share_enumeration"] = data.AccessBasedShareEnumeration.ValueBool()
 	}
 	if !data.Audit.IsNull() {
-		params["audit"] = data.Audit.ValueString()
+		var auditObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Audit.ValueString()), &auditObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse audit: %s", err))
+			return
+		}
+		params["audit"] = auditObj
 	}
 	if !data.Options.IsNull() {
 		params["options"] = data.Options.ValueString()
@@ -175,11 +180,13 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("sharing.smb.get_instance", id)
 	if err != nil {
@@ -237,11 +244,13 @@ func (r *SharingSmbResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Purpose.IsNull() {
@@ -269,7 +278,12 @@ func (r *SharingSmbResource) Update(ctx context.Context, req resource.UpdateRequ
 		params["access_based_share_enumeration"] = data.AccessBasedShareEnumeration.ValueBool()
 	}
 	if !data.Audit.IsNull() {
-		params["audit"] = data.Audit.ValueString()
+		var auditObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Audit.ValueString()), &auditObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse audit: %s", err))
+			return
+		}
+		params["audit"] = auditObj
 	}
 	if !data.Options.IsNull() {
 		params["options"] = data.Options.ValueString()
@@ -292,11 +306,13 @@ func (r *SharingSmbResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("sharing.smb.delete", id)
 	if err != nil {

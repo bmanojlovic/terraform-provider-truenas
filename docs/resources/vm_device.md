@@ -9,6 +9,7 @@ description: |-
 
 Create a new device for the VM of id `vm`.
 
+
 ## Example Usage
 
 ```terraform

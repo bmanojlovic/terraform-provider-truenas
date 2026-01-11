@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -127,11 +126,13 @@ func (r *AlertserviceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("alertservice.get_instance", id)
 	if err != nil {
@@ -171,11 +172,13 @@ func (r *AlertserviceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Name.IsNull() {
@@ -213,11 +216,13 @@ func (r *AlertserviceResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("alertservice.delete", id)
 	if err != nil {

@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -137,6 +139,7 @@ func (r *CloudBackupResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: false,
 				Optional: true,
 				Description: "Preserve absolute paths in each backup (cannot be set when `snapshot=True`).",
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"cache_path": schema.StringAttribute{
 				Required: false,
@@ -182,10 +185,20 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
 	if !data.Attributes.IsNull() {
-		params["attributes"] = data.Attributes.ValueString()
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
@@ -254,11 +267,13 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("cloud_backup.get_instance", id)
 	if err != nil {
@@ -348,11 +363,13 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Description.IsNull() {
@@ -365,10 +382,20 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
 	if !data.Attributes.IsNull() {
-		params["attributes"] = data.Attributes.ValueString()
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
@@ -404,9 +431,6 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.TransferSetting.IsNull() {
 		params["transfer_setting"] = data.TransferSetting.ValueString()
 	}
-	if !data.AbsolutePaths.IsNull() {
-		params["absolute_paths"] = data.AbsolutePaths.ValueBool()
-	}
 	if !data.CachePath.IsNull() {
 		params["cache_path"] = data.CachePath.ValueString()
 	}
@@ -431,11 +455,13 @@ func (r *CloudBackupResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("cloud_backup.delete", id)
 	if err != nil {

@@ -9,6 +9,7 @@ description: |-
 
 Create an iSCSI Extent.
 
+
 ## Example Usage
 
 ```terraform
@@ -36,7 +37,7 @@ resource "truenas_iscsi_extent" "example" {
 - `pblocksize` (Bool) - Whether to use physical block size reporting. Default: `False`
 - `product_id` (String) - Product ID string for the extent or `null` for default. Default: `None`
 - `ro` (Bool) - Whether the extent is read-only. Default: `False`
-- `rpm` (String) - Reported RPM type for the extent. Default: `SSD` Valid values: `UNKNOWN`, `SSD`, `5400`, `7200`, `10000`
+- `rpm` (String) - Reported RPM type for the extent. Default: `SSD` Valid values: `UNKNOWN`, `SSD`, `5400`, `7200`, `10000`, `15000`
 - `serial` (String) - Serial number for the extent or `null` to auto-generate. Default: `None`
 - `type` (String) - Type of the extent storage backend. Default: `DISK` Valid values: `DISK`, `FILE`
 - `xen` (Bool) - Whether to enable Xen compatibility mode. Default: `False`

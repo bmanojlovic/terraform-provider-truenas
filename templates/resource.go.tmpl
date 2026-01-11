@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strconv"
 {extra_imports}
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -86,11 +85,9 @@ func (r *{resource_name}Resource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {{
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}}
+	var id interface{{}}
+	var err error
+{id_read_code}
 
 	result, err := r.client.Call("{api_name}.get_instance", id)
 	if err != nil {{
@@ -119,11 +116,9 @@ func (r *{resource_name}Resource) Update(ctx context.Context, req resource.Updat
 		return
 	}}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {{
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}}
+	var id interface{{}}
+	var err error
+{id_update_code}
 
 	params := map[string]interface{{}}{{}}
 {update_params}
@@ -145,11 +140,9 @@ func (r *{resource_name}Resource) Delete(ctx context.Context, req resource.Delet
 		return
 	}}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {{
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}}
+	var id interface{{}}
+	var err error
+{id_delete_code}
 {predelete_code}
 	_, err = r.client.{delete_call}("{api_name}.delete", id)
 	if err != nil {{

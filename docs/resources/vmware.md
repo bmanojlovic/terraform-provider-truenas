@@ -9,6 +9,7 @@ description: |-
 
 Create VMWare snapshot.
 
+
 ## Example Usage
 
 ```terraform

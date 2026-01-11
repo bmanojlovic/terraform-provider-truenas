@@ -69,8 +69,12 @@ def get_tf_type(prop_schema):
     return TYPE_MAP.get(json_type, "String")
 
 
-def generate_schema_attrs(properties, required, has_start=False):
+def generate_schema_attrs(
+    properties, required, has_start=False, create_only_fields=None
+):
     """Generate schema attributes for template."""
+    if create_only_fields is None:
+        create_only_fields = set()
     attrs = []
 
     # For datasources, id is always String (user input)
@@ -131,6 +135,22 @@ def generate_schema_attrs(properties, required, has_start=False):
         if tf_type == "List":
             attrs.append(f"\t\t\t\tElementType: types.StringType,")
         attrs.append(f'\t\t\t\tDescription: "{desc}",')
+
+        # Add RequiresReplace for create-only fields (except 'name' which may support rename)
+        if name in create_only_fields and name != "name":
+            if tf_type == "String":
+                attrs.append(
+                    f"\t\t\t\tPlanModifiers: []planmodifier.String{{stringplanmodifier.RequiresReplace()}},"
+                )
+            elif tf_type == "Int64":
+                attrs.append(
+                    f"\t\t\t\tPlanModifiers: []planmodifier.Int64{{int64planmodifier.RequiresReplace()}},"
+                )
+            elif tf_type == "Bool":
+                attrs.append(
+                    f"\t\t\t\tPlanModifiers: []planmodifier.Bool{{boolplanmodifier.RequiresReplace()}},"
+                )
+
         attrs.append("\t\t\t},")
 
     return "\n".join(attrs)
@@ -171,8 +191,8 @@ def generate_create_params(properties):
     """Generate parameter building code for Create method."""
     lines = []
     for prop_name, prop_schema in properties.items():
-        # Skip reserved names
-        if prop_name in ["provider"]:
+        # Skip reserved names and id (id is not sent in create/update params)
+        if prop_name in ["provider", "id"]:
             continue
         field_name = prop_name.title().replace("_", "")
         if prop_name == "CSR":
@@ -198,7 +218,9 @@ def generate_create_params(properties):
         else:
             # Check if this is a complex object that needs JSON parsing
             if isinstance(prop_schema, dict) and (
-                "oneOf" in prop_schema or "discriminator" in prop_schema
+                "oneOf" in prop_schema
+                or "discriminator" in prop_schema
+                or prop_schema.get("type") == "object"
             ):
                 lines.append(f"\t\tvar {prop_name}Obj map[string]interface{{}}")
                 lines.append(
@@ -276,7 +298,9 @@ def has_complex_objects(properties):
         if prop_name in ["provider"]:
             continue
         if isinstance(prop_schema, dict) and (
-            "oneOf" in prop_schema or "discriminator" in prop_schema
+            "oneOf" in prop_schema
+            or "discriminator" in prop_schema
+            or prop_schema.get("type") == "object"
         ):
             return True
     return False
@@ -302,6 +326,15 @@ def generate_resource(base_name, methods_dict):
     update_is_job = update_spec.get("job", False)
     delete_is_job = delete_spec.get("job", False)
 
+    # Detect ID type from update or delete method (first parameter)
+    id_is_string = False
+    for spec in [update_spec, delete_spec]:
+        if spec and spec.get("accepts"):
+            first_param = spec["accepts"][0]
+            if first_param.get("type") == "string":
+                id_is_string = True
+                break
+
     # Get schema from create or update
     method_spec = create_spec or update_spec
     if not method_spec:
@@ -312,11 +345,48 @@ def generate_resource(base_name, methods_dict):
         return None
 
     schema = accepts[0] if isinstance(accepts, list) else accepts
-    properties = schema.get("properties", {})
-    required = schema.get("required", [])
+
+    # Handle anyOf schemas by merging all variants
+    if "anyOf" in schema:
+        merged_props = {}
+        for variant in schema["anyOf"]:
+            merged_props.update(variant.get("properties", {}))
+        properties = merged_props
+        # Only mark fields as required if they're required in ALL variants
+        all_required = [set(variant.get("required", [])) for variant in schema["anyOf"]]
+        required = list(set.intersection(*all_required)) if all_required else []
+    else:
+        properties = schema.get("properties", {})
+        required = schema.get("required", [])
 
     if not properties:
         return None
+
+    # Get update schema and merge with create (union approach - standard Terraform pattern)
+    update_properties = {}
+    create_only_fields = set()
+    if update_spec and update_spec.get("accepts") and len(update_spec["accepts"]) >= 2:
+        # Update has [id, data] format - get data schema (second parameter)
+        update_schema = update_spec["accepts"][1]
+        if "anyOf" in update_schema:
+            for variant in update_schema["anyOf"]:
+                update_properties.update(variant.get("properties", {}))
+        elif update_schema.get("properties"):
+            update_properties = update_schema["properties"]
+
+        # Remove 'id' from update_properties - it's the resource identifier, not a field
+        update_properties = {k: v for k, v in update_properties.items() if k != "id"}
+
+        # Identify create-only fields (in create but not in update) - these need ForceNew
+        create_only_fields = set(properties.keys()) - set(update_properties.keys())
+
+        # Merge: union of create and update properties
+        all_properties = {**properties, **update_properties}
+        properties = all_properties
+    else:
+        # No update method or schema
+        create_only_fields = set(properties.keys())
+        update_properties = {}
 
     # Generate code
     resource_name = base_name.replace(".", "_").title().replace("_", "")
@@ -327,6 +397,28 @@ def generate_resource(base_name, methods_dict):
     create_call = "CallWithJob" if create_is_job else "Call"
     update_call = "CallWithJob" if update_is_job else "Call"
     delete_call = "CallWithJob" if delete_is_job else "Call"
+
+    # Generate ID handling code based on type
+    if id_is_string:
+        id_read_code = "\tid = data.ID.ValueString()"
+        id_update_code = "\tid = state.ID.ValueString()"
+        id_delete_code = "\tid = data.ID.ValueString()"
+    else:
+        id_read_code = """	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}}"""
+        id_update_code = """	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}}"""
+        id_delete_code = """	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}}"""
 
     # Generate lifecycle code if has start action
     lifecycle_code = ""
@@ -349,18 +441,42 @@ def generate_resource(base_name, methods_dict):
 \t\t}}
 \t}}"""
 
+    # Determine if strconv import is needed (for int IDs or lifecycle code)
+    extra_imports = '\t"strconv"' if (not id_is_string or has_start) else ""
+
     # Check if any List fields exist
     has_list = any(get_tf_type(p) == "List" for p in properties.values())
     # Check if any complex objects need JSON parsing
     has_json = has_complex_objects(properties)
 
-    extra_imports = ""
+    # Check which plan modifiers are needed for create-only fields
+    needs_string_planmod = False
+    needs_int64_planmod = False
+    needs_bool_planmod = False
+    for field in create_only_fields:
+        if field != "name" and field in properties:
+            tf_type = get_tf_type(properties[field])
+            if tf_type == "String":
+                needs_string_planmod = True
+            elif tf_type == "Int64":
+                needs_int64_planmod = True
+            elif tf_type == "Bool":
+                needs_bool_planmod = True
+
     if has_list:
         extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/attr"'
     if has_json:
         extra_imports += '\n\t"encoding/json"'
     if has_stop:
         extra_imports += '\n\t"time"'
+    if needs_string_planmod or needs_int64_planmod or needs_bool_planmod:
+        extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"'
+    if needs_string_planmod:
+        extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"'
+    if needs_int64_planmod:
+        extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"'
+    if needs_bool_planmod:
+        extra_imports += '\n\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"'
 
     # Get description from method spec
     description = method_spec.get("description", f"TrueNAS {tf_name} resource")
@@ -388,7 +504,9 @@ def generate_resource(base_name, methods_dict):
             name=tf_name,
             api_name=api_name,
             fields=generate_fields(properties, has_start),
-            schema_attrs=generate_schema_attrs(properties, required, has_start),
+            schema_attrs=generate_schema_attrs(
+                properties, required, has_start, create_only_fields
+            ),
             create_params=generate_create_params(properties),
             read_mapping=generate_read_mapping(properties),
             lifecycle_code=lifecycle_code,
@@ -400,16 +518,23 @@ def generate_resource(base_name, methods_dict):
             api_name=api_name,
             description=description,
             fields=generate_fields(properties, has_start),
-            schema_attrs=generate_schema_attrs(properties, required, has_start),
+            schema_attrs=generate_schema_attrs(
+                properties, required, has_start, create_only_fields
+            ),
             create_params=generate_create_params(properties),
-            update_params=generate_create_params(properties),
+            update_params=generate_create_params(
+                update_properties if update_properties else properties
+            ),
             read_mapping=generate_read_mapping(properties),
             lifecycle_code=lifecycle_code,
             predelete_code=predelete_code,
+            id_read_code=id_read_code,
+            id_update_code=id_update_code,
+            id_delete_code=id_delete_code,
+            extra_imports=extra_imports,
             create_call=create_call,
             update_call=update_call,
             delete_call=delete_call,
-            extra_imports=extra_imports,
         )
 
     return code
@@ -651,79 +776,49 @@ def generate_query_datasource_docs(base_name, properties, description):
     (docs_dir / f"{tf_name}.md").write_text(doc)
 
 
-def generate_resource_docs(base_name, properties, required, description, methods_dict):
-    """Generate Terraform documentation markdown"""
-    tf_name = base_name.replace(".", "_")
-
-    # Check for lifecycle actions
-    has_start = f"{base_name}.start" in methods_dict
-
-    # Build example with required fields
-    example_lines = []
-    for name in sorted(required):
-        if name in properties and name not in ["uuid", "id"]:
-            prop = properties[name]
-            tf_type = get_tf_type(prop)
-            if tf_type == "String":
-                example_lines.append(f'  {name} = "example-value"')
-            elif tf_type == "Int64":
-                example_lines.append(f"  {name} = 1")
-            elif tf_type == "Bool":
-                example_lines.append(f"  {name} = true")
-            elif tf_type == "Float64":
-                example_lines.append(f"  {name} = 1.0")
-            elif tf_type == "List":
-                example_lines.append(f'  {name} = ["item1"]')
-
-    # Add start_on_create if has start action
-    if has_start and len(example_lines) < 8:
-        example_lines.append("  start_on_create = true")
-
-    # Build schema documentation
-    required_args = []
-    optional_args = []
-
-    # Add start_on_create if has start action
-    if has_start:
-        optional_args.append(
-            "- `start_on_create` (Bool) - Start the resource immediately after creation. Default: `true`"
-        )
-
-    for name, prop in sorted(properties.items()):
-        if name in ["provider", "uuid", "id"]:
-            continue
-        tf_type = get_tf_type(prop)
-        desc = prop.get("description", "") if isinstance(prop, dict) else ""
-        desc = desc.replace("\n", " ").strip()[:200]
-
-        arg_line = f"- `{name}` ({tf_type}) - {desc}"
-
-        if name in required:
-            required_args.append(arg_line)
-        else:
-            optional_args.append(arg_line)
-
-    doc = RESOURCE_DOC_TEMPLATE.format(
-        resource_type=tf_name,
-        description=description,
-        example_block=(
-            chr(10).join(example_lines)
-            if example_lines
-            else "  # Configure required attributes"
-        ),
-        required_args=chr(10).join(required_args) if required_args else "- None",
-        optional_args=chr(10).join(optional_args) if optional_args else "- None",
-    )
-
-    docs_dir = Path("docs/resources")
-    docs_dir.mkdir(parents=True, exist_ok=True)
-    (docs_dir / f"{tf_name}.md").write_text(doc)
-
-
-def generate_resource_docs(base_name, properties, required, description, methods_dict):
+def generate_resource_docs(
+    base_name, properties, required, description, methods_dict, anyof_variants=None
+):
     """Generate Terraform documentation markdown"""
     tf_name = base_name.replace(".", "_")
     has_start = f"{base_name}.start" in methods_dict
+
+    # Detect discriminator field for anyOf schemas
+    discriminator_field = None
+    variant_info = {}
+    discriminator_all_values = []
+
+    if anyof_variants:
+        # Find discriminator field (usually 'type')
+        for field_name in ["type", "kind", "variant"]:
+            if field_name in properties:
+                prop = properties[field_name]
+                if isinstance(prop, dict) and "enum" in prop:
+                    discriminator_field = field_name
+                    break
+
+        # Build variant information and collect all discriminator values
+        for variant in anyof_variants:
+            variant_props = variant.get("properties", {})
+            variant_required = set(variant.get("required", []))
+
+            # Identify variant by discriminator value
+            variant_name = None
+            if discriminator_field and discriminator_field in variant_props:
+                disc_prop = variant_props[discriminator_field]
+                if isinstance(disc_prop, dict):
+                    if "enum" in disc_prop and disc_prop["enum"]:
+                        variant_name = disc_prop["enum"][0]
+                        discriminator_all_values.extend(disc_prop["enum"])
+                    elif "default" in disc_prop:
+                        variant_name = disc_prop["default"]
+                        discriminator_all_values.append(disc_prop["default"])
+
+            if variant_name:
+                variant_info[variant_name] = {
+                    "properties": set(variant_props.keys()),
+                    "required": variant_required,
+                }
 
     # Build example with required fields
     example_lines = []
@@ -767,8 +862,23 @@ def generate_resource_docs(base_name, properties, required, description, methods
 
         # Add enum values if present
         if isinstance(prop, dict) and "enum" in prop:
-            enum_vals = ", ".join(f"`{v}`" for v in prop["enum"][:5])
+            # For discriminator field in anyOf schemas, show all variant values
+            if name == discriminator_field and discriminator_all_values:
+                enum_vals = ", ".join(
+                    f"`{v}`" for v in sorted(set(discriminator_all_values))[:10]
+                )
+            else:
+                enum_vals = ", ".join(f"`{v}`" for v in prop["enum"][:10])
             desc += f" Valid values: {enum_vals}"
+
+        # Add variant applicability if this is an anyOf schema
+        if variant_info and name != discriminator_field:
+            applicable_variants = [
+                v for v, info in variant_info.items() if name in info["properties"]
+            ]
+            if applicable_variants and len(applicable_variants) < len(variant_info):
+                variant_list = ", ".join(f"`{v}`" for v in applicable_variants)
+                desc += f" **Applies to:** {variant_list}"
 
         arg_line = f"- `{name}` ({tf_type}) - {desc}"
 
@@ -777,16 +887,93 @@ def generate_resource_docs(base_name, properties, required, description, methods
         else:
             optional_args.append(arg_line)
 
-    doc = RESOURCE_DOC_TEMPLATE.format(
-        resource_type=tf_name,
-        description=description,
-        example_block=(
+    # Build variant examples if anyOf present
+    variant_examples = ""
+    if variant_info and discriminator_field:
+        variant_examples = "\n\n## Variants\n\n"
+        variant_examples += f"This resource has **{len(variant_info)} variants** controlled by the `{discriminator_field}` field. "
+        variant_examples += "Choose the appropriate variant for your use case:\n\n"
+
+        for variant_name, info in sorted(variant_info.items()):
+            variant_examples += f"### {variant_name}\n\n"
+
+            # Build example for this variant
+            variant_example_lines = []
+            variant_required = sorted(info["required"] - {"provider", "uuid", "id"})
+
+            # Add discriminator field first
+            variant_example_lines.append(f'  {discriminator_field} = "{variant_name}"')
+
+            # Add other required fields
+            for req_field in variant_required:
+                if req_field == discriminator_field:
+                    continue
+                if req_field in properties:
+                    prop = properties[req_field]
+                    tf_type = get_tf_type(prop)
+                    if tf_type == "String":
+                        variant_example_lines.append(f'  {req_field} = "value"')
+                    elif tf_type == "Int64":
+                        variant_example_lines.append(f"  {req_field} = 1024")
+                    elif tf_type == "Bool":
+                        variant_example_lines.append(f"  {req_field} = true")
+
+            # Show example
+            variant_examples += "```terraform\n"
+            variant_examples += f'resource "truenas_{tf_name}" "example" {{\n'
+            variant_examples += "\n".join(variant_example_lines)
+            variant_examples += "\n}\n```\n\n"
+
+            # Show required fields
+            if variant_required:
+                variant_examples += (
+                    "**Required fields:** "
+                    + ", ".join(f"`{r}`" for r in variant_required)
+                    + "\n\n"
+                )
+
+            # Show variant-specific optional fields (not in all variants)
+            variant_props = info["properties"] - {"provider", "uuid", "id"}
+            all_props = set()
+            for v_info in variant_info.values():
+                all_props.update(v_info["properties"])
+            variant_specific = sorted(
+                (
+                    variant_props
+                    - all_props.intersection(
+                        *[v["properties"] for v in variant_info.values()]
+                    )
+                )
+                - info["required"]
+            )
+
+            if variant_specific:
+                variant_examples += "**Key optional fields:** " + ", ".join(
+                    f"`{p}`" for p in variant_specific[:8]
+                )
+                if len(variant_specific) > 8:
+                    variant_examples += f" (and {len(variant_specific) - 8} more)"
+                variant_examples += "\n\n"
+
+    # Build generic example section (skip for anyOf resources)
+    generic_example = ""
+    if not variant_info:
+        generic_example = "\n## Example Usage\n\n```terraform\n"
+        generic_example += f'resource "truenas_{tf_name}" "example" {{\n'
+        generic_example += (
             chr(10).join(example_lines)
             if example_lines
             else "  # Configure required attributes"
-        ),
+        )
+        generic_example += "\n}\n```\n"
+
+    doc = RESOURCE_DOC_TEMPLATE.format(
+        resource_type=tf_name,
+        description=description,
         required_args=chr(10).join(required_args) if required_args else "- None",
         optional_args=chr(10).join(optional_args) if optional_args else "- None",
+        variant_examples=variant_examples,
+        generic_example=generic_example,
     )
 
     docs_dir = Path("docs/resources")
@@ -849,11 +1036,8 @@ def main():
 
     # Skip resources with complex array handling for now
     skip_resources = {
-        "keychaincredential",
-        "nvmet.port",
-        "pool.dataset",
-        "pool.snapshot",
-    }  # anyOf schemas only
+        "nvmet.port",  # No properties in create schema
+    }
 
     for base_name in resources.keys():
         if base_name in skip_resources:
@@ -870,15 +1054,38 @@ def main():
             accepts = create_spec.get("accepts", [])
             if accepts:
                 schema = accepts[0] if isinstance(accepts, list) else accepts
-                properties = schema.get("properties", {})
-                required = schema.get("required", [])
+
+                # Handle anyOf schemas by merging all variants (same as resource generation)
+                anyof_variants = None
+                if "anyOf" in schema:
+                    anyof_variants = schema["anyOf"]
+                    merged_props = {}
+                    for variant in schema["anyOf"]:
+                        merged_props.update(variant.get("properties", {}))
+                    properties = merged_props
+                    # Only mark fields as required if they're required in ALL variants
+                    all_required = [
+                        set(variant.get("required", [])) for variant in schema["anyOf"]
+                    ]
+                    required = (
+                        list(set.intersection(*all_required)) if all_required else []
+                    )
+                else:
+                    properties = schema.get("properties", {})
+                    required = schema.get("required", [])
+
                 description = (
                     create_spec.get("description")
                     or f"Manages TrueNAS {base_name} resources"
                 )
                 description = description.split("\n")[0][:200]
                 generate_resource_docs(
-                    base_name, properties, required, description, methods
+                    base_name,
+                    properties,
+                    required,
+                    description,
+                    methods,
+                    anyof_variants,
                 )
 
     print(f"\n✅ Generated {count} resources", file=sys.stderr)

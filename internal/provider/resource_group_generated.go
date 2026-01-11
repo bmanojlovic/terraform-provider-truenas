@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -49,11 +50,12 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Required: false,
 				Optional: true,
 				Description: "If `null`, it is automatically filled with the next one available.",
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
-				Description: "",
+				Description: "A string used to identify a group.",
 			},
 			"sudo_commands": schema.ListAttribute{
 				Required: false,
@@ -158,11 +160,13 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("group.get_instance", id)
 	if err != nil {
@@ -223,16 +227,15 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
-	if !data.Gid.IsNull() {
-		params["gid"] = data.Gid.ValueInt64()
-	}
 	if !data.Name.IsNull() {
 		params["name"] = data.Name.ValueString()
 	}
@@ -275,11 +278,13 @@ func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("group.delete", id)
 	if err != nil {

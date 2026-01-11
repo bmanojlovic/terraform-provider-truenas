@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -63,6 +65,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required: false,
 				Optional: true,
 				Description: "UNIX UID. If not provided, it is automatically filled with the next one available.",
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"username": schema.StringAttribute{
 				Required: true,
@@ -146,6 +149,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required: false,
 				Optional: true,
 				Description: "If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary g",
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"home_create": schema.BoolAttribute{
 				Required: false,
@@ -284,11 +288,13 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("user.get_instance", id)
 	if err != nil {
@@ -391,16 +397,15 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
-	if !data.Uid.IsNull() {
-		params["uid"] = data.Uid.ValueInt64()
-	}
 	if !data.Username.IsNull() {
 		params["username"] = data.Username.ValueString()
 	}
@@ -452,9 +457,6 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if !data.Email.IsNull() {
 		params["email"] = data.Email.ValueString()
 	}
-	if !data.GroupCreate.IsNull() {
-		params["group_create"] = data.GroupCreate.ValueBool()
-	}
 	if !data.HomeCreate.IsNull() {
 		params["home_create"] = data.HomeCreate.ValueBool()
 	}
@@ -485,11 +487,13 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("user.delete", id)
 	if err != nil {

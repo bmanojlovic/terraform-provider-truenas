@@ -9,6 +9,7 @@ description: |-
 
 Create a Virtual Machine (VM).
 
+
 ## Example Usage
 
 ```terraform

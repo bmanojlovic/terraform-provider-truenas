@@ -9,6 +9,7 @@ description: |-
 
 Create an app registry entry.
 
+
 ## Example Usage
 
 ```terraform

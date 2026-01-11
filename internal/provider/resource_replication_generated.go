@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -400,7 +400,12 @@ func (r *ReplicationResource) Create(ctx context.Context, req resource.CreateReq
 		params["properties_exclude"] = properties_excludeList
 	}
 	if !data.PropertiesOverride.IsNull() {
-		params["properties_override"] = data.PropertiesOverride.ValueString()
+		var properties_overrideObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.PropertiesOverride.ValueString()), &properties_overrideObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse properties_override: %s", err))
+			return
+		}
+		params["properties_override"] = properties_overrideObj
 	}
 	if !data.Replicate.IsNull() {
 		params["replicate"] = data.Replicate.ValueBool()
@@ -521,11 +526,13 @@ func (r *ReplicationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("replication.get_instance", id)
 	if err != nil {
@@ -719,11 +726,13 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Name.IsNull() {
@@ -781,7 +790,12 @@ func (r *ReplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		params["properties_exclude"] = properties_excludeList
 	}
 	if !data.PropertiesOverride.IsNull() {
-		params["properties_override"] = data.PropertiesOverride.ValueString()
+		var properties_overrideObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.PropertiesOverride.ValueString()), &properties_overrideObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse properties_override: %s", err))
+			return
+		}
+		params["properties_override"] = properties_overrideObj
 	}
 	if !data.Replicate.IsNull() {
 		params["replicate"] = data.Replicate.ValueBool()
@@ -896,11 +910,13 @@ func (r *ReplicationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("replication.delete", id)
 	if err != nil {

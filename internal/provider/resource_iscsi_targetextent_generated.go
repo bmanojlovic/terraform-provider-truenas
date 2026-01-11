@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -48,7 +47,7 @@ func (r *IscsiTargetextentResource) Schema(ctx context.Context, req resource.Sch
 			"lunid": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
-				Description: "LUN ID to assign or `null` to auto-assign the next available LUN.",
+				Description: "Logical Unit Number (LUN) ID for presenting the extent to the target.",
 			},
 			"extent": schema.Int64Attribute{
 				Required: true,
@@ -112,11 +111,13 @@ func (r *IscsiTargetextentResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("iscsi.targetextent.get_instance", id)
 	if err != nil {
@@ -153,11 +154,13 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Target.IsNull() {
@@ -187,11 +190,13 @@ func (r *IscsiTargetextentResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("iscsi.targetextent.delete", id)
 	if err != nil {

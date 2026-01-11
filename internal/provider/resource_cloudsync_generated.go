@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -207,10 +207,20 @@ func (r *CloudsyncResource) Create(ctx context.Context, req resource.CreateReque
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
 	if !data.Attributes.IsNull() {
-		params["attributes"] = data.Attributes.ValueString()
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
@@ -293,11 +303,13 @@ func (r *CloudsyncResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("cloudsync.get_instance", id)
 	if err != nil {
@@ -403,11 +415,13 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Description.IsNull() {
@@ -420,10 +434,20 @@ func (r *CloudsyncResource) Update(ctx context.Context, req resource.UpdateReque
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
 	if !data.Attributes.IsNull() {
-		params["attributes"] = data.Attributes.ValueString()
+		var attributesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
+			return
+		}
+		params["attributes"] = attributesObj
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.PreScript.IsNull() {
 		params["pre_script"] = data.PreScript.ValueString()
@@ -500,11 +524,13 @@ func (r *CloudsyncResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("cloudsync.delete", id)
 	if err != nil {

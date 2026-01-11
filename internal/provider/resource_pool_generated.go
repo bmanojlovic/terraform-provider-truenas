@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -27,6 +30,7 @@ type PoolResourceModel struct {
 	EncryptionOptions types.String `tfsdk:"encryption_options"`
 	Topology types.String `tfsdk:"topology"`
 	AllowDuplicateSerials types.Bool `tfsdk:"allow_duplicate_serials"`
+	Autotrim types.String `tfsdk:"autotrim"`
 }
 
 func NewPoolResource() resource.Resource {
@@ -55,6 +59,7 @@ func (r *PoolResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required: false,
 				Optional: true,
 				Description: "If set, create a ZFS encrypted root dataset for this pool.",
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"dedup_table_quota": schema.StringAttribute{
 				Required: false,
@@ -70,26 +75,34 @@ func (r *PoolResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required: false,
 				Optional: true,
 				Description: "Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"checksum": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Checksum algorithm to use for data integrity verification.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"encryption_options": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Specify configuration for encryption of root dataset.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"topology": schema.StringAttribute{
 				Required: true,
 				Optional: false,
-				Description: "Physical layout and configuration of vdevs in the pool.",
+				Description: "Updated topology configuration for adding new vdevs to the pool.",
 			},
 			"allow_duplicate_serials": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Whether to allow disks with duplicate serial numbers in the pool.",
+			},
+			"autotrim": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Whether to enable automatic TRIM operations on the pool.",
 			},
 		},
 	}
@@ -134,13 +147,26 @@ func (r *PoolResource) Create(ctx context.Context, req resource.CreateRequest, r
 		params["checksum"] = data.Checksum.ValueString()
 	}
 	if !data.EncryptionOptions.IsNull() {
-		params["encryption_options"] = data.EncryptionOptions.ValueString()
+		var encryption_optionsObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.EncryptionOptions.ValueString()), &encryption_optionsObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse encryption_options: %s", err))
+			return
+		}
+		params["encryption_options"] = encryption_optionsObj
 	}
 	if !data.Topology.IsNull() {
-		params["topology"] = data.Topology.ValueString()
+		var topologyObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Topology.ValueString()), &topologyObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse topology: %s", err))
+			return
+		}
+		params["topology"] = topologyObj
 	}
 	if !data.AllowDuplicateSerials.IsNull() {
 		params["allow_duplicate_serials"] = data.AllowDuplicateSerials.ValueBool()
+	}
+	if !data.Autotrim.IsNull() {
+		params["autotrim"] = data.Autotrim.ValueString()
 	}
 
 	result, err := r.client.CallWithJob("pool.create", params)
@@ -166,11 +192,13 @@ func (r *PoolResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("pool.get_instance", id)
 	if err != nil {
@@ -207,6 +235,9 @@ func (r *PoolResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		if v, ok := resultMap["allow_duplicate_serials"]; ok && v != nil {
 			if bv, ok := v.(bool); ok { data.AllowDuplicateSerials = types.BoolValue(bv) }
 		}
+		if v, ok := resultMap["autotrim"]; ok && v != nil {
+			data.Autotrim = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -225,39 +256,34 @@ func (r *PoolResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
-		params["name"] = data.Name.ValueString()
-	}
-	if !data.Encryption.IsNull() {
-		params["encryption"] = data.Encryption.ValueBool()
-	}
 	if !data.DedupTableQuota.IsNull() {
 		params["dedup_table_quota"] = data.DedupTableQuota.ValueString()
 	}
 	if !data.DedupTableQuotaValue.IsNull() {
 		params["dedup_table_quota_value"] = data.DedupTableQuotaValue.ValueInt64()
 	}
-	if !data.Deduplication.IsNull() {
-		params["deduplication"] = data.Deduplication.ValueString()
-	}
-	if !data.Checksum.IsNull() {
-		params["checksum"] = data.Checksum.ValueString()
-	}
-	if !data.EncryptionOptions.IsNull() {
-		params["encryption_options"] = data.EncryptionOptions.ValueString()
-	}
 	if !data.Topology.IsNull() {
-		params["topology"] = data.Topology.ValueString()
+		var topologyObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Topology.ValueString()), &topologyObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse topology: %s", err))
+			return
+		}
+		params["topology"] = topologyObj
 	}
 	if !data.AllowDuplicateSerials.IsNull() {
 		params["allow_duplicate_serials"] = data.AllowDuplicateSerials.ValueBool()
+	}
+	if !data.Autotrim.IsNull() {
+		params["autotrim"] = data.Autotrim.ValueString()
 	}
 
 	_, err = r.client.CallWithJob("pool.update", []interface{}{id, params})
@@ -277,11 +303,13 @@ func (r *PoolResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("pool.delete", id)
 	if err != nil {

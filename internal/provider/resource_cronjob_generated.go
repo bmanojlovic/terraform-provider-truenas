@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -113,7 +113,12 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 		params["stdout"] = data.Stdout.ValueBool()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.Command.IsNull() {
 		params["command"] = data.Command.ValueString()
@@ -148,11 +153,13 @@ func (r *CronjobResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("cronjob.get_instance", id)
 	if err != nil {
@@ -201,11 +208,13 @@ func (r *CronjobResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Enabled.IsNull() {
@@ -218,7 +227,12 @@ func (r *CronjobResource) Update(ctx context.Context, req resource.UpdateRequest
 		params["stdout"] = data.Stdout.ValueBool()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
 	}
 	if !data.Command.IsNull() {
 		params["command"] = data.Command.ValueString()
@@ -247,11 +261,13 @@ func (r *CronjobResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("cronjob.delete", id)
 	if err != nil {

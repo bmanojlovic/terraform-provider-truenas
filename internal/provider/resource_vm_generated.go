@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"time"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -162,6 +164,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required: false,
 				Optional: true,
 				Description: "OVMF firmware file to use for UEFI boot.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"autostart": schema.BoolAttribute{
 				Required: false,
@@ -207,6 +210,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required: false,
 				Optional: true,
 				Description: "Whether to enable UEFI Secure Boot for enhanced security.",
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 		},
 	}
@@ -356,11 +360,13 @@ func (r *VmResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("vm.get_instance", id)
 	if err != nil {
@@ -472,11 +478,13 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.CommandLineArgs.IsNull() {
@@ -533,9 +541,6 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	if !data.Bootloader.IsNull() {
 		params["bootloader"] = data.Bootloader.ValueString()
 	}
-	if !data.BootloaderOvmf.IsNull() {
-		params["bootloader_ovmf"] = data.BootloaderOvmf.ValueString()
-	}
 	if !data.Autostart.IsNull() {
 		params["autostart"] = data.Autostart.ValueBool()
 	}
@@ -560,9 +565,6 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	if !data.Uuid.IsNull() {
 		params["uuid"] = data.Uuid.ValueString()
 	}
-	if !data.EnableSecureBoot.IsNull() {
-		params["enable_secure_boot"] = data.EnableSecureBoot.ValueBool()
-	}
 
 	_, err = r.client.Call("vm.update", []interface{}{id, params})
 	if err != nil {
@@ -581,11 +583,13 @@ func (r *VmResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	// Stop VM before deletion if running
 	vmID, err := strconv.Atoi(data.ID.ValueString())

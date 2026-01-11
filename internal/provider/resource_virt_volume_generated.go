@@ -3,8 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -50,16 +51,18 @@ func (r *VirtVolumeResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Required: false,
 				Optional: true,
 				Description: "",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"size": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
-				Description: "Size of volume in MB and it should at least be 512 MB.",
+				Description: "New size for the volume in MB (minimum 512MB).",
 			},
 			"storage_pool": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Storage pool in which to create the volume. This must be one of pools listed     in virt.global.conf",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 		},
 	}
@@ -121,11 +124,9 @@ func (r *VirtVolumeResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	result, err := r.client.Call("virt.volume.get_instance", id)
 	if err != nil {
@@ -165,24 +166,13 @@ func (r *VirtVolumeResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
-		params["name"] = data.Name.ValueString()
-	}
-	if !data.ContentType.IsNull() {
-		params["content_type"] = data.ContentType.ValueString()
-	}
 	if !data.Size.IsNull() {
 		params["size"] = data.Size.ValueInt64()
-	}
-	if !data.StoragePool.IsNull() {
-		params["storage_pool"] = data.StoragePool.ValueString()
 	}
 
 	_, err = r.client.Call("virt.volume.update", []interface{}{id, params})
@@ -202,11 +192,9 @@ func (r *VirtVolumeResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	_, err = r.client.Call("virt.volume.delete", id)
 	if err != nil {

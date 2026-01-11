@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
+	"encoding/json"
 	"time"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -52,41 +55,46 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Required: false,
 				Optional: true,
 				Description: "Whether to create a custom application (`true`) or install from catalog (`false`).",
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"values": schema.StringAttribute{
 				Required: false,
 				Optional: true,
-				Description: "Configuration values for the application installation.",
+				Description: "Updated configuration values for the application.",
 			},
 			"custom_compose_config": schema.StringAttribute{
 				Required: false,
 				Optional: true,
-				Description: "Docker Compose configuration as a structured object for custom applications.",
+				Description: "Updated Docker Compose configuration as a structured object.",
 			},
 			"custom_compose_config_string": schema.StringAttribute{
 				Required: false,
 				Optional: true,
-				Description: "Docker Compose configuration as a YAML string for custom applications.",
+				Description: "Updated Docker Compose configuration as a YAML string.",
 			},
 			"catalog_app": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Name of the catalog application to install. Required when `custom_app` is `false`.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"app_name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
 				Description: "Application name must have the following:  * Lowercase alphanumeric characters can be specified. * N",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"train": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "The catalog train to install from.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"version": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "The version of the application to install.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 		},
 	}
@@ -116,10 +124,20 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		params["custom_app"] = data.CustomApp.ValueBool()
 	}
 	if !data.Values.IsNull() {
-		params["values"] = data.Values.ValueString()
+		var valuesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
+			return
+		}
+		params["values"] = valuesObj
 	}
 	if !data.CustomComposeConfig.IsNull() {
-		params["custom_compose_config"] = data.CustomComposeConfig.ValueString()
+		var custom_compose_configObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
+			return
+		}
+		params["custom_compose_config"] = custom_compose_configObj
 	}
 	if !data.CustomComposeConfigString.IsNull() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
@@ -176,11 +194,9 @@ func (r *AppResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	result, err := r.client.Call("app.get_instance", id)
 	if err != nil {
@@ -232,36 +248,29 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.CustomApp.IsNull() {
-		params["custom_app"] = data.CustomApp.ValueBool()
-	}
 	if !data.Values.IsNull() {
-		params["values"] = data.Values.ValueString()
+		var valuesObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
+			return
+		}
+		params["values"] = valuesObj
 	}
 	if !data.CustomComposeConfig.IsNull() {
-		params["custom_compose_config"] = data.CustomComposeConfig.ValueString()
+		var custom_compose_configObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
+			return
+		}
+		params["custom_compose_config"] = custom_compose_configObj
 	}
 	if !data.CustomComposeConfigString.IsNull() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
-	}
-	if !data.CatalogApp.IsNull() {
-		params["catalog_app"] = data.CatalogApp.ValueString()
-	}
-	if !data.AppName.IsNull() {
-		params["app_name"] = data.AppName.ValueString()
-	}
-	if !data.Train.IsNull() {
-		params["train"] = data.Train.ValueString()
-	}
-	if !data.Version.IsNull() {
-		params["version"] = data.Version.ValueString()
 	}
 
 	_, err = r.client.CallWithJob("app.update", []interface{}{id, params})
@@ -281,11 +290,9 @@ func (r *AppResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	// Stop VM before deletion if running
 	vmID, err := strconv.Atoi(data.ID.ValueString())

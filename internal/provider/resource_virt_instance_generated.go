@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"time"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -34,6 +35,11 @@ type VirtInstanceResourceModel struct {
 	Devices types.String `tfsdk:"devices"`
 	Memory types.Int64 `tfsdk:"memory"`
 	PrivilegedMode types.Bool `tfsdk:"privileged_mode"`
+	VncPort types.Int64 `tfsdk:"vnc_port"`
+	EnableVnc types.Bool `tfsdk:"enable_vnc"`
+	VncPassword types.String `tfsdk:"vnc_password"`
+	SecureBoot types.Bool `tfsdk:"secure_boot"`
+	ImageOs types.String `tfsdk:"image_os"`
 }
 
 func NewVirtInstanceResource() resource.Resource {
@@ -63,36 +69,41 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required: false,
 				Optional: true,
 				Description: "Source type for instance creation.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"storage_pool": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.gl",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"image": schema.StringAttribute{
 				Required: true,
 				Optional: false,
 				Description: "Image identifier to use for creating the instance.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"root_disk_size": schema.Int64Attribute{
 				Required: false,
 				Optional: true,
-				Description: "This can be specified when creating VMs so the root device's size can be configured. Root device for",
+				Description: "Size of the root disk in GB (minimum 5GB) or `null` to keep current size.",
 			},
 			"root_disk_io_bus": schema.StringAttribute{
 				Required: false,
 				Optional: true,
-				Description: "I/O bus type for the root disk (defaults to NVME for best performance).",
+				Description: "I/O bus type for the root disk or `null` to keep current setting.",
 			},
 			"remote": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Remote image source to use.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"instance_type": schema.StringAttribute{
 				Required: false,
 				Optional: true,
 				Description: "Type of instance to create.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"environment": schema.StringAttribute{
 				Required: false,
@@ -113,6 +124,7 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required: false,
 				Optional: true,
 				Description: "Array of devices to attach to the instance.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"memory": schema.Int64Attribute{
 				Required: false,
@@ -123,6 +135,31 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required: false,
 				Optional: true,
 				Description: "This is only valid for containers and should only be set when container instance which is to be depl",
+			},
+			"vnc_port": schema.Int64Attribute{
+				Required: false,
+				Optional: true,
+				Description: "TCP port number for VNC access (5900-65535) or `null` to disable VNC.",
+			},
+			"enable_vnc": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Whether to enable VNC remote access for the instance.",
+			},
+			"vnc_password": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Setting vnc_password to null will unset VNC password.",
+			},
+			"secure_boot": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Whether to enable UEFI Secure Boot (VMs only).",
+			},
+			"image_os": schema.StringAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Operating system type for the instance or `null` for auto-detection.",
 			},
 		},
 	}
@@ -190,6 +227,21 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	if !data.PrivilegedMode.IsNull() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
+	if !data.VncPort.IsNull() {
+		params["vnc_port"] = data.VncPort.ValueInt64()
+	}
+	if !data.EnableVnc.IsNull() {
+		params["enable_vnc"] = data.EnableVnc.ValueBool()
+	}
+	if !data.VncPassword.IsNull() {
+		params["vnc_password"] = data.VncPassword.ValueString()
+	}
+	if !data.SecureBoot.IsNull() {
+		params["secure_boot"] = data.SecureBoot.ValueBool()
+	}
+	if !data.ImageOs.IsNull() {
+		params["image_os"] = data.ImageOs.ValueString()
+	}
 
 	result, err := r.client.CallWithJob("virt.instance.create", params)
 	if err != nil {
@@ -230,11 +282,9 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	result, err := r.client.Call("virt.instance.get_instance", id)
 	if err != nil {
@@ -286,6 +336,21 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		if v, ok := resultMap["privileged_mode"]; ok && v != nil {
 			if bv, ok := v.(bool); ok { data.PrivilegedMode = types.BoolValue(bv) }
 		}
+		if v, ok := resultMap["vnc_port"]; ok && v != nil {
+			if fv, ok := v.(float64); ok { data.VncPort = types.Int64Value(int64(fv)) }
+		}
+		if v, ok := resultMap["enable_vnc"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.EnableVnc = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["vnc_password"]; ok && v != nil {
+			data.VncPassword = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["secure_boot"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.SecureBoot = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["image_os"]; ok && v != nil {
+			data.ImageOs = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -304,37 +369,11 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
-		params["name"] = data.Name.ValueString()
-	}
-	if !data.SourceType.IsNull() {
-		params["source_type"] = data.SourceType.ValueString()
-	}
-	if !data.StoragePool.IsNull() {
-		params["storage_pool"] = data.StoragePool.ValueString()
-	}
-	if !data.Image.IsNull() {
-		params["image"] = data.Image.ValueString()
-	}
-	if !data.RootDiskSize.IsNull() {
-		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
-	}
-	if !data.RootDiskIoBus.IsNull() {
-		params["root_disk_io_bus"] = data.RootDiskIoBus.ValueString()
-	}
-	if !data.Remote.IsNull() {
-		params["remote"] = data.Remote.ValueString()
-	}
-	if !data.InstanceType.IsNull() {
-		params["instance_type"] = data.InstanceType.ValueString()
-	}
 	if !data.Environment.IsNull() {
 		params["environment"] = data.Environment.ValueString()
 	}
@@ -344,11 +383,29 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 	if !data.Cpu.IsNull() {
 		params["cpu"] = data.Cpu.ValueString()
 	}
-	if !data.Devices.IsNull() {
-		params["devices"] = data.Devices.ValueString()
-	}
 	if !data.Memory.IsNull() {
 		params["memory"] = data.Memory.ValueInt64()
+	}
+	if !data.VncPort.IsNull() {
+		params["vnc_port"] = data.VncPort.ValueInt64()
+	}
+	if !data.EnableVnc.IsNull() {
+		params["enable_vnc"] = data.EnableVnc.ValueBool()
+	}
+	if !data.VncPassword.IsNull() {
+		params["vnc_password"] = data.VncPassword.ValueString()
+	}
+	if !data.SecureBoot.IsNull() {
+		params["secure_boot"] = data.SecureBoot.ValueBool()
+	}
+	if !data.RootDiskSize.IsNull() {
+		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
+	}
+	if !data.RootDiskIoBus.IsNull() {
+		params["root_disk_io_bus"] = data.RootDiskIoBus.ValueString()
+	}
+	if !data.ImageOs.IsNull() {
+		params["image_os"] = data.ImageOs.ValueString()
 	}
 	if !data.PrivilegedMode.IsNull() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
@@ -371,11 +428,9 @@ func (r *VirtInstanceResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	// Stop VM before deletion if running
 	vmID, err := strconv.Atoi(data.ID.ValueString())

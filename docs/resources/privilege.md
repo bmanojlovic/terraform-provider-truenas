@@ -9,6 +9,7 @@ description: |-
 
 Creates a privilege.
 
+
 ## Example Usage
 
 ```terraform

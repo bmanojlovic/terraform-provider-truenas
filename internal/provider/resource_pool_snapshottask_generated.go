@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -28,6 +28,7 @@ type PoolSnapshottaskResourceModel struct {
 	NamingSchema types.String `tfsdk:"naming_schema"`
 	AllowEmpty types.Bool `tfsdk:"allow_empty"`
 	Schedule types.String `tfsdk:"schedule"`
+	FixateRemovalDate types.Bool `tfsdk:"fixate_removal_date"`
 }
 
 func NewPoolSnapshottaskResource() resource.Resource {
@@ -93,6 +94,11 @@ func (r *PoolSnapshottaskResource) Schema(ctx context.Context, req resource.Sche
 				Optional: true,
 				Description: "Cron schedule for when snapshots should be taken.",
 			},
+			"fixate_removal_date": schema.BoolAttribute{
+				Required: false,
+				Optional: true,
+				Description: "Whether to fix the removal date of existing snapshots when retention settings change.",
+			},
 		},
 	}
 }
@@ -144,7 +150,15 @@ func (r *PoolSnapshottaskResource) Create(ctx context.Context, req resource.Crea
 		params["allow_empty"] = data.AllowEmpty.ValueBool()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
+	}
+	if !data.FixateRemovalDate.IsNull() {
+		params["fixate_removal_date"] = data.FixateRemovalDate.ValueBool()
 	}
 
 	result, err := r.client.Call("pool.snapshottask.create", params)
@@ -170,11 +184,13 @@ func (r *PoolSnapshottaskResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	result, err := r.client.Call("pool.snapshottask.get_instance", id)
 	if err != nil {
@@ -215,6 +231,9 @@ func (r *PoolSnapshottaskResource) Read(ctx context.Context, req resource.ReadRe
 		if v, ok := resultMap["schedule"]; ok && v != nil {
 			data.Schedule = types.StringValue(fmt.Sprintf("%v", v))
 		}
+		if v, ok := resultMap["fixate_removal_date"]; ok && v != nil {
+			if bv, ok := v.(bool); ok { data.FixateRemovalDate = types.BoolValue(bv) }
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -233,11 +252,13 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(state.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	params := map[string]interface{}{}
 	if !data.Dataset.IsNull() {
@@ -267,7 +288,15 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		params["allow_empty"] = data.AllowEmpty.ValueBool()
 	}
 	if !data.Schedule.IsNull() {
-		params["schedule"] = data.Schedule.ValueString()
+		var scheduleObj map[string]interface{}
+		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
+			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
+			return
+		}
+		params["schedule"] = scheduleObj
+	}
+	if !data.FixateRemovalDate.IsNull() {
+		params["fixate_removal_date"] = data.FixateRemovalDate.ValueBool()
 	}
 
 	_, err = r.client.Call("pool.snapshottask.update", []interface{}{id, params})
@@ -287,11 +316,13 @@ func (r *PoolSnapshottaskResource) Delete(ctx context.Context, req resource.Dele
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
+	var id interface{}
+	var err error
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {{
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
-	}
+	}}
 
 	_, err = r.client.Call("pool.snapshottask.delete", id)
 	if err != nil {

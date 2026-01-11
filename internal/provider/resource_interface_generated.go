@@ -3,9 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -74,6 +75,7 @@ func (r *InterfaceResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required: true,
 				Optional: false,
 				Description: "Type of interface to create.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"ipv4_dhcp": schema.BoolAttribute{
 				Required: false,
@@ -299,11 +301,9 @@ func (r *InterfaceResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	result, err := r.client.Call("interface.get_instance", id)
 	if err != nil {
@@ -417,11 +417,9 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	id, err := strconv.Atoi(state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
 	if !data.Name.IsNull() {
@@ -429,9 +427,6 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 	if !data.Description.IsNull() {
 		params["description"] = data.Description.ValueString()
-	}
-	if !data.Type.IsNull() {
-		params["type"] = data.Type.ValueString()
 	}
 	if !data.Ipv4Dhcp.IsNull() {
 		params["ipv4_dhcp"] = data.Ipv4Dhcp.ValueBool()
@@ -518,11 +513,9 @@ func (r *InterfaceResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	id, err := strconv.Atoi(data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
-		return
-	}
+	var id interface{}
+	var err error
+	id = data.ID.ValueString()
 
 	_, err = r.client.Call("interface.delete", id)
 	if err != nil {

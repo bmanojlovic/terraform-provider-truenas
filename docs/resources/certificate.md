@@ -9,6 +9,7 @@ description: |-
 
 Create a new Certificate
 
+
 ## Example Usage
 
 ```terraform

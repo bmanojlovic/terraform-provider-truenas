@@ -9,6 +9,7 @@ description: |-
 
 Create a new user.
 
+
 ## Example Usage
 
 ```terraform
