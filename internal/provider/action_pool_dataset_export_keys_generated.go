@@ -16,7 +16,7 @@ type ActionPoolDatasetExport_KeysResource struct {
 }
 
 type ActionPoolDatasetExport_KeysResourceModel struct {
-	Id types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -88,7 +88,7 @@ func (r *ActionPoolDatasetExport_KeysResource) Create(ctx context.Context, req r
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueString())
+	params = append(params, data.ID.ValueString())
 
 	// Execute action
 	result, err := r.client.Call("pool.dataset.export_keys", params)
@@ -119,6 +119,7 @@ func (r *ActionPoolDatasetExport_KeysResource) Create(ctx context.Context, req r
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

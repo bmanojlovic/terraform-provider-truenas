@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,7 @@ type ActionCloud_BackupRestoreResource struct {
 }
 
 type ActionCloud_BackupRestoreResourceModel struct {
-	Id              types.Int64  `tfsdk:"id"`
+	ID              types.Int64  `tfsdk:"id"`
 	SnapshotId      types.String `tfsdk:"snapshot_id"`
 	Subfolder       types.String `tfsdk:"subfolder"`
 	DestinationPath types.String `tfsdk:"destination_path"`
@@ -96,12 +97,15 @@ func (r *ActionCloud_BackupRestoreResource) Create(ctx context.Context, req reso
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 	params = append(params, data.SnapshotId.ValueString())
 	params = append(params, data.Subfolder.ValueString())
 	params = append(params, data.DestinationPath.ValueString())
 	if !data.Options.IsNull() {
-		params = append(params, data.Options.ValueString())
+		var optionsVal interface{}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -133,6 +137,7 @@ func (r *ActionCloud_BackupRestoreResource) Create(ctx context.Context, req reso
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -91,7 +92,10 @@ func (r *ActionPoolDatasetDestroy_SnapshotsResource) Create(ctx context.Context,
 	// Build parameters
 	params := []interface{}{}
 	params = append(params, data.Name.ValueString())
-	params = append(params, data.Snapshots.ValueString())
+	var snapshotsVal interface{}
+	if err := json.Unmarshal([]byte(data.Snapshots.ValueString()), &snapshotsVal); err == nil {
+		params = append(params, snapshotsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.dataset.destroy_snapshots", params)
@@ -122,6 +126,7 @@ func (r *ActionPoolDatasetDestroy_SnapshotsResource) Create(ctx context.Context,
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

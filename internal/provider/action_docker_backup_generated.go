@@ -121,6 +121,7 @@ func (r *ActionDockerBackupResource) Create(ctx context.Context, req resource.Cr
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

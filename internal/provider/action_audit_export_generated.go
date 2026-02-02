@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -89,7 +90,10 @@ func (r *ActionAuditExportResource) Create(ctx context.Context, req resource.Cre
 	// Build parameters
 	params := []interface{}{}
 	if !data.Data.IsNull() {
-		params = append(params, data.Data.ValueString())
+		var dataVal interface{}
+		if err := json.Unmarshal([]byte(data.Data.ValueString()), &dataVal); err == nil {
+			params = append(params, dataVal)
+		}
 	}
 
 	// Execute action
@@ -121,6 +125,7 @@ func (r *ActionAuditExportResource) Create(ctx context.Context, req resource.Cre
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

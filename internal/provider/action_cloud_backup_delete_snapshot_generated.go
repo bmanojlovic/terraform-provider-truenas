@@ -16,7 +16,7 @@ type ActionCloud_BackupDelete_SnapshotResource struct {
 }
 
 type ActionCloud_BackupDelete_SnapshotResourceModel struct {
-	Id         types.Int64  `tfsdk:"id"`
+	ID         types.Int64  `tfsdk:"id"`
 	SnapshotId types.String `tfsdk:"snapshot_id"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,7 +90,7 @@ func (r *ActionCloud_BackupDelete_SnapshotResource) Create(ctx context.Context, 
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 	params = append(params, data.SnapshotId.ValueString())
 
 	// Execute action
@@ -122,6 +122,7 @@ func (r *ActionCloud_BackupDelete_SnapshotResource) Create(ctx context.Context, 
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

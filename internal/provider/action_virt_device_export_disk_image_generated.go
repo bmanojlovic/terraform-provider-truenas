@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionVirtDeviceExport_Disk_ImageResource) Create(ctx context.Context, 
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.VirtDeviceExportDiskImage.ValueString())
+	var virt_device_export_disk_imageVal interface{}
+	if err := json.Unmarshal([]byte(data.VirtDeviceExportDiskImage.ValueString()), &virt_device_export_disk_imageVal); err == nil {
+		params = append(params, virt_device_export_disk_imageVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("virt.device.export_disk_image", params)
@@ -119,6 +123,7 @@ func (r *ActionVirtDeviceExport_Disk_ImageResource) Create(ctx context.Context, 
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

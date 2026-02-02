@@ -4,8 +4,8 @@ help:
 	@echo "TrueNAS Terraform Provider - Development Commands"
 	@echo ""
 	@echo "  make fetch-spec   - Download latest API spec from TrueNAS"
-	@echo "  make generate     - Generate provider code from spec (production)"
-	@echo "  make generate-new - Generate with new modular generator (experimental)"
+	@echo "  make generate     - Generate provider code from spec"
+	@echo "  make build        - Build the provider"
 	@echo "  make build        - Build provider binary"
 	@echo "  make install      - Install provider locally"
 	@echo "  make test         - Run tests"
@@ -26,12 +26,6 @@ fetch-spec:
 
 generate:
 	@echo "Generating provider code..."
-	python3 generate.py
-	@echo "Formatting generated code..."
-	go fmt ./...
-
-generate-new:
-	@echo "Generating provider code with new modular generator..."
 	python3 -m generator.main
 	@echo "Formatting generated code..."
 	go fmt ./...

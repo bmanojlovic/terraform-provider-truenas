@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionFilesystemSetaclResource) Create(ctx context.Context, req resourc
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.FilesystemAcl.ValueString())
+	var filesystem_aclVal interface{}
+	if err := json.Unmarshal([]byte(data.FilesystemAcl.ValueString()), &filesystem_aclVal); err == nil {
+		params = append(params, filesystem_aclVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("filesystem.setacl", params)
@@ -119,6 +123,7 @@ func (r *ActionFilesystemSetaclResource) Create(ctx context.Context, req resourc
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

@@ -1,6 +1,10 @@
+locals {
+  pool = coalesce(var.pool_name, var.truenas_pool)
+}
+
 # FILESYSTEM dataset
 resource "truenas_pool_dataset" "test_filesystem" {
-  name        = "${var.pool_name}/terraform-test-fs"
+  name        = "${local.pool}/terraform-test-fs"
   type        = "FILESYSTEM"
   comments    = "Test filesystem dataset created by Terraform"
   compression = "LZ4"
@@ -10,7 +14,7 @@ resource "truenas_pool_dataset" "test_filesystem" {
 
 # VOLUME dataset (zvol)
 resource "truenas_pool_dataset" "test_volume" {
-  name         = "${var.pool_name}/terraform-test-vol"
+  name         = "${local.pool}/terraform-test-vol"
   type         = "VOLUME"
   comments     = "Test volume dataset created by Terraform"
   compression  = "LZ4"
@@ -21,13 +25,13 @@ resource "truenas_pool_dataset" "test_volume" {
 
 # Nested dataset
 resource "truenas_pool_dataset" "test_parent" {
-  name     = "${var.pool_name}/terraform-test-parent"
+  name     = "${local.pool}/terraform-test-parent"
   type     = "FILESYSTEM"
   comments = "Parent dataset"
 }
 
 resource "truenas_pool_dataset" "test_child" {
-  name       = "${var.pool_name}/terraform-test-parent/child"
+  name       = "${local.pool}/terraform-test-parent/child"
   type       = "FILESYSTEM"
   comments   = "Child dataset"
   depends_on = [truenas_pool_dataset.test_parent]

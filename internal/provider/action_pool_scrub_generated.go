@@ -16,7 +16,7 @@ type ActionPoolScrubResource struct {
 }
 
 type ActionPoolScrubResourceModel struct {
-	Id     types.Int64  `tfsdk:"id"`
+	ID     types.Int64  `tfsdk:"id"`
 	Action types.String `tfsdk:"action"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,7 +90,7 @@ func (r *ActionPoolScrubResource) Create(ctx context.Context, req resource.Creat
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 	params = append(params, data.Action.ValueString())
 
 	// Execute action
@@ -122,6 +122,7 @@ func (r *ActionPoolScrubResource) Create(ctx context.Context, req resource.Creat
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

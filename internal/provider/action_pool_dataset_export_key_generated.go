@@ -16,7 +16,7 @@ type ActionPoolDatasetExport_KeyResource struct {
 }
 
 type ActionPoolDatasetExport_KeyResourceModel struct {
-	Id       types.String `tfsdk:"id"`
+	ID       types.String `tfsdk:"id"`
 	Download types.Bool   `tfsdk:"download"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,7 +90,7 @@ func (r *ActionPoolDatasetExport_KeyResource) Create(ctx context.Context, req re
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueString())
+	params = append(params, data.ID.ValueString())
 	if !data.Download.IsNull() {
 		params = append(params, data.Download.ValueBool())
 	}
@@ -124,6 +124,7 @@ func (r *ActionPoolDatasetExport_KeyResource) Create(ctx context.Context, req re
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

@@ -16,7 +16,7 @@ type ActionCronjobRunResource struct {
 }
 
 type ActionCronjobRunResourceModel struct {
-	Id           types.Int64 `tfsdk:"id"`
+	ID           types.Int64 `tfsdk:"id"`
 	SkipDisabled types.Bool  `tfsdk:"skip_disabled"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,7 +90,7 @@ func (r *ActionCronjobRunResource) Create(ctx context.Context, req resource.Crea
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 	if !data.SkipDisabled.IsNull() {
 		params = append(params, data.SkipDisabled.ValueBool())
 	}
@@ -124,6 +124,7 @@ func (r *ActionCronjobRunResource) Create(ctx context.Context, req resource.Crea
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

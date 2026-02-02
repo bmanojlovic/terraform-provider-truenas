@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionVirtVolumeImport_ZvolResource) Create(ctx context.Context, req re
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.VirtVolumeImportIso.ValueString())
+	var virt_volume_import_isoVal interface{}
+	if err := json.Unmarshal([]byte(data.VirtVolumeImportIso.ValueString()), &virt_volume_import_isoVal); err == nil {
+		params = append(params, virt_volume_import_isoVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("virt.volume.import_zvol", params)
@@ -119,6 +123,7 @@ func (r *ActionVirtVolumeImport_ZvolResource) Create(ctx context.Context, req re
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

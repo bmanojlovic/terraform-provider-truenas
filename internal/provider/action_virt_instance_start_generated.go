@@ -16,7 +16,7 @@ type ActionVirtInstanceStartResource struct {
 }
 
 type ActionVirtInstanceStartResourceModel struct {
-	Id types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -88,7 +88,7 @@ func (r *ActionVirtInstanceStartResource) Create(ctx context.Context, req resour
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueString())
+	params = append(params, data.ID.ValueString())
 
 	// Execute action
 	result, err := r.client.Call("virt.instance.start", params)
@@ -119,6 +119,7 @@ func (r *ActionVirtInstanceStartResource) Create(ctx context.Context, req resour
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

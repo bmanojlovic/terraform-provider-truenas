@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,7 @@ type ActionCloudsyncSyncResource struct {
 }
 
 type ActionCloudsyncSyncResourceModel struct {
-	Id                   types.Int64  `tfsdk:"id"`
+	ID                   types.Int64  `tfsdk:"id"`
 	CloudSyncSyncOptions types.String `tfsdk:"cloud_sync_sync_options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,9 +91,12 @@ func (r *ActionCloudsyncSyncResource) Create(ctx context.Context, req resource.C
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 	if !data.CloudSyncSyncOptions.IsNull() {
-		params = append(params, data.CloudSyncSyncOptions.ValueString())
+		var cloud_sync_sync_optionsVal interface{}
+		if err := json.Unmarshal([]byte(data.CloudSyncSyncOptions.ValueString()), &cloud_sync_sync_optionsVal); err == nil {
+			params = append(params, cloud_sync_sync_optionsVal)
+		}
 	}
 
 	// Execute action
@@ -124,6 +128,7 @@ func (r *ActionCloudsyncSyncResource) Create(ctx context.Context, req resource.C
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

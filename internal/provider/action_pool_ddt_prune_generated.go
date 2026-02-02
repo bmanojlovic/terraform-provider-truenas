@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionPoolDdt_PruneResource) Create(ctx context.Context, req resource.C
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Options.ValueString())
+	var optionsVal interface{}
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+		params = append(params, optionsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.ddt_prune", params)
@@ -119,6 +123,7 @@ func (r *ActionPoolDdt_PruneResource) Create(ctx context.Context, req resource.C
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

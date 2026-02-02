@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,7 @@ type ActionPoolDatasetLockResource struct {
 }
 
 type ActionPoolDatasetLockResourceModel struct {
-	Id      types.String `tfsdk:"id"`
+	ID      types.String `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,9 +91,12 @@ func (r *ActionPoolDatasetLockResource) Create(ctx context.Context, req resource
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueString())
+	params = append(params, data.ID.ValueString())
 	if !data.Options.IsNull() {
-		params = append(params, data.Options.ValueString())
+		var optionsVal interface{}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -124,6 +128,7 @@ func (r *ActionPoolDatasetLockResource) Create(ctx context.Context, req resource
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

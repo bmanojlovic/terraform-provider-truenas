@@ -13,8 +13,8 @@ provider "truenas" {
 
 # Test filesystem.put - upload cloud-init config
 resource "truenas_filesystem_put" "cloud_init" {
-  path    = "/mnt/${var.pool_name}/test-upload.txt"
-  content = base64encode("Hello from Terraform!\nThis is a test file.\n")
+  path         = "/mnt/${var.pool_name}/test-upload.txt"
+  file_content = base64encode("Hello from Terraform!\nThis is a test file.\n")
 }
 
 output "file_path" {

@@ -16,7 +16,7 @@ type ActionCoreJob_WaitResource struct {
 }
 
 type ActionCoreJob_WaitResourceModel struct {
-	Id types.Int64 `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -88,7 +88,7 @@ func (r *ActionCoreJob_WaitResource) Create(ctx context.Context, req resource.Cr
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
+	params = append(params, data.ID.ValueInt64())
 
 	// Execute action
 	result, err := r.client.Call("core.job_wait", params)
@@ -119,6 +119,7 @@ func (r *ActionCoreJob_WaitResource) Create(ctx context.Context, req resource.Cr
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

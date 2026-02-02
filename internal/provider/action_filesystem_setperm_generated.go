@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionFilesystemSetpermResource) Create(ctx context.Context, req resour
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.FilesystemSetperm.ValueString())
+	var filesystem_setpermVal interface{}
+	if err := json.Unmarshal([]byte(data.FilesystemSetperm.ValueString()), &filesystem_setpermVal); err == nil {
+		params = append(params, filesystem_setpermVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("filesystem.setperm", params)
@@ -119,6 +123,7 @@ func (r *ActionFilesystemSetpermResource) Create(ctx context.Context, req resour
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

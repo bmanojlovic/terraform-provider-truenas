@@ -9,8 +9,13 @@ variable "truenas_token" {
   sensitive   = true
 }
 
-variable "pool_name" {
+variable "truenas_pool" {
   description = "Pool name to create datasets in"
   type        = string
-  default     = "tank"
+}
+
+variable "pool_name" {
+  description = "Pool name (alias for truenas_pool)"
+  type        = string
+  default     = null
 }

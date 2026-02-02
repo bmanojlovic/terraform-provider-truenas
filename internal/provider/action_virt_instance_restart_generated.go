@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,7 @@ type ActionVirtInstanceRestartResource struct {
 }
 
 type ActionVirtInstanceRestartResourceModel struct {
-	Id       types.String `tfsdk:"id"`
+	ID       types.String `tfsdk:"id"`
 	StopArgs types.String `tfsdk:"stop_args"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,9 +91,12 @@ func (r *ActionVirtInstanceRestartResource) Create(ctx context.Context, req reso
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueString())
+	params = append(params, data.ID.ValueString())
 	if !data.StopArgs.IsNull() {
-		params = append(params, data.StopArgs.ValueString())
+		var stop_argsVal interface{}
+		if err := json.Unmarshal([]byte(data.StopArgs.ValueString()), &stop_argsVal); err == nil {
+			params = append(params, stop_argsVal)
+		}
 	}
 
 	// Execute action
@@ -124,6 +128,7 @@ func (r *ActionVirtInstanceRestartResource) Create(ctx context.Context, req reso
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

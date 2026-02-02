@@ -1,0 +1,162 @@
+# TrueNAS Provider Generation Config
+
+# Resources: auto-detected from *.create pattern
+resources:
+  auto_detect: true
+  exclude: []
+
+# Datasources: explicit list with get_instance support
+datasources:
+  - vm
+  - pool
+  - pool.dataset
+  - disk
+  - user
+  - group
+  - interface
+  - service
+
+# Query datasources: explicit list with query support  
+query_datasources:
+  - vm
+  - pool
+  - pool.dataset
+  - pool.snapshot
+  - pool.snapshottask
+  - disk
+  - user
+  - group
+  - interface
+  - service
+  - app
+  - certificate
+  - sharing.nfs
+  - sharing.smb
+  - vm.device
+  - virt.instance
+  - virt.volume
+  - boot.environment
+  - cronjob
+  - replication
+  - keychaincredential
+  - staticroute
+
+# Actions: job-based or keyword-matched methods
+actions:
+  keywords:
+    - start
+    - stop
+    - restart
+    - run
+    - sync
+    - scrub
+    - backup
+    - restore
+    - rollback
+    - redeploy
+  
+  # Explicit actions with metadata
+  explicit:
+    interface.commit:
+      description: "Commit pending network changes. Starts rollback timer."
+      workflow: |
+        1. Make interface changes with truenas_interface
+        2. Call commit (starts checkin_timeout rollback timer)
+        3. Call checkin within timeout to confirm changes
+      related:
+        - interface.checkin
+        - interface.rollback
+      example: |
+        resource "truenas_action_interface_commit" "apply" {
+          depends_on       = [truenas_interface.vlan10]
+          checkin_timeout  = 60
+        }
+
+    interface.checkin:
+      description: "Confirm network changes work. Cancels rollback timer."
+      depends_on: interface.commit
+      workflow: |
+        Must be called within checkin_timeout seconds after commit.
+        If not called, changes auto-rollback.
+      example: |
+        resource "truenas_action_interface_checkin" "confirm" {
+          depends_on = [truenas_action_interface_commit.apply]
+        }
+
+    interface.rollback:
+      description: "Manually rollback pending network changes."
+
+    filesystem.mkdir:
+      description: "Create a directory on the filesystem."
+      verify_with: filesystem.stat
+      example: |
+        resource "truenas_action_filesystem_mkdir" "data" {
+          path = "/mnt/tank/data"
+          mode = "755"
+        }
+
+    boot.environment.activate:
+      description: "Activate a boot environment for next reboot."
+      example: |
+        resource "truenas_action_boot_environment_activate" "switch" {
+          boot_environment_activate = jsonencode({
+            id = "24.10-MASTER-20241201-015106"
+          })
+        }
+
+    boot.environment.clone:
+      description: "Clone current boot environment."
+      example: |
+        resource "truenas_action_boot_environment_clone" "backup" {
+          boot_environment_clone = jsonencode({
+            id     = "24.10-MASTER-20241201-015106"
+            target = "backup-before-upgrade"
+          })
+        }
+
+    boot.environment.destroy:
+      description: "Delete a boot environment."
+
+    boot.environment.keep:
+      description: "Mark boot environment to keep (prevent auto-pruning)."
+
+    boot.detach:
+      description: "Detach a disk from the boot pool."
+
+    vm.clone:
+      description: "Clone an existing VM."
+      example: |
+        resource "truenas_action_vm_clone" "copy" {
+          id   = 1
+          name = "cloned-vm"
+        }
+
+    vm.poweroff:
+      description: "Force power off a VM."
+
+    vm.suspend:
+      description: "Suspend a running VM."
+
+    vm.resume:
+      description: "Resume a suspended VM."
+
+    pool.upgrade:
+      description: "Upgrade pool to latest ZFS features."
+
+    pool.offline:
+      description: "Take a pool disk offline."
+
+    pool.online:
+      description: "Bring a pool disk online."
+
+    pool.detach:
+      description: "Detach a disk from a pool."
+
+# Skip patterns: methods to ignore
+skip:
+  - "*.choices"
+  - "*.choice"
+  - "auth.*"
+  - "core.ping"
+  - "core.subscribe"
+  - "core.unsubscribe"

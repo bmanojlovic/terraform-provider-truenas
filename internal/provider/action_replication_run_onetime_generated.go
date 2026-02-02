@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -88,7 +89,10 @@ func (r *ActionReplicationRun_OnetimeResource) Create(ctx context.Context, req r
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.ReplicationRunOnetime.ValueString())
+	var replication_run_onetimeVal interface{}
+	if err := json.Unmarshal([]byte(data.ReplicationRunOnetime.ValueString()), &replication_run_onetimeVal); err == nil {
+		params = append(params, replication_run_onetimeVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("replication.run_onetime", params)
@@ -119,6 +123,7 @@ func (r *ActionReplicationRun_OnetimeResource) Create(ctx context.Context, req r
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

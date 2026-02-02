@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -90,9 +91,15 @@ func (r *ActionCloudsyncSync_OnetimeResource) Create(ctx context.Context, req re
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.CloudSyncSyncOnetime.ValueString())
+	var cloud_sync_sync_onetimeVal interface{}
+	if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetime.ValueString()), &cloud_sync_sync_onetimeVal); err == nil {
+		params = append(params, cloud_sync_sync_onetimeVal)
+	}
 	if !data.CloudSyncSyncOnetimeOptions.IsNull() {
-		params = append(params, data.CloudSyncSyncOnetimeOptions.ValueString())
+		var cloud_sync_sync_onetime_optionsVal interface{}
+		if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetimeOptions.ValueString()), &cloud_sync_sync_onetime_optionsVal); err == nil {
+			params = append(params, cloud_sync_sync_onetime_optionsVal)
+		}
 	}
 
 	// Execute action
@@ -124,6 +131,7 @@ func (r *ActionCloudsyncSync_OnetimeResource) Create(ctx context.Context, req re
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

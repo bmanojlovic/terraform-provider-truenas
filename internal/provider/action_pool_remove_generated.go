@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,7 @@ type ActionPoolRemoveResource struct {
 }
 
 type ActionPoolRemoveResourceModel struct {
-	Id      types.Int64  `tfsdk:"id"`
+	ID      types.Int64  `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -90,8 +91,11 @@ func (r *ActionPoolRemoveResource) Create(ctx context.Context, req resource.Crea
 
 	// Build parameters
 	params := []interface{}{}
-	params = append(params, data.Id.ValueInt64())
-	params = append(params, data.Options.ValueString())
+	params = append(params, data.ID.ValueInt64())
+	var optionsVal interface{}
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+		params = append(params, optionsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.remove", params)
@@ -122,6 +126,7 @@ func (r *ActionPoolRemoveResource) Create(ctx context.Context, req resource.Crea
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

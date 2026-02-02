@@ -98,7 +98,10 @@ func (r *ActionIpmiSelElistResource) Create(ctx context.Context, req resource.Cr
 		}
 	}
 	if !data.Options.IsNull() {
-		params = append(params, data.Options.ValueString())
+		var optionsVal interface{}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -130,6 +133,7 @@ func (r *ActionIpmiSelElistResource) Create(ctx context.Context, req resource.Cr
 		}
 	} else {
 		// Immediate result
+		data.JobID = types.Int64Value(0)
 		data.State = types.StringValue("SUCCESS")
 		data.Progress = types.Float64Value(100.0)
 		data.Result = types.StringValue(fmt.Sprintf("%v", result))

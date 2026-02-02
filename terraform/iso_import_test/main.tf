@@ -25,9 +25,11 @@ variable "truenas_pool" {
 }
 
 resource "truenas_virt_volume_import_iso" "test_iso" {
-  name = "test-netboot-iso"
-  upload_iso = true
-  storage_pool = var.truenas_pool
+  virt_volume_import_iso = jsonencode({
+    name         = "test-netboot-iso"
+    upload_iso   = true
+    storage_pool = var.truenas_pool
+  })
   file_content = filebase64("/tmp/tiny.iso")
 }
 
