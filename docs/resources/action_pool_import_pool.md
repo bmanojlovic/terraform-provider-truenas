@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_import_pool Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Import a pool found with `pool.import_find`.  Errors:     ENOENT - Pool not found
 ---

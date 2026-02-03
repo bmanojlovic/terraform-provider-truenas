@@ -17,7 +17,7 @@ type ActionSystemShutdownResource struct {
 }
 
 type ActionSystemShutdownResourceModel struct {
-	Reason  types.String `tfsdk:"reason"`
+	Reason types.String `tfsdk:"reason"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionSystemShutdownResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Shuts down the operating system.  An \"added\" event of name \"system\" and id \"shutdown\" is emitted when shutdown is initiated.",
 		Attributes: map[string]schema.Attribute{
-			"reason":  schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system shutdown."},
+			"reason": schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system shutdown."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the shutdown process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionSystemShutdownResource) Create(ctx context.Context, req resource.
 	params = append(params, data.Reason.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionSystemShutdownResource) Create(ctx context.Context, req resource.
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

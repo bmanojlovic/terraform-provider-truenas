@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type StaticrouteResource struct {
@@ -17,9 +17,9 @@ type StaticrouteResource struct {
 }
 
 type StaticrouteResourceModel struct {
-	ID          types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Destination types.String `tfsdk:"destination"`
-	Gateway     types.String `tfsdk:"gateway"`
+	Gateway types.String `tfsdk:"gateway"`
 	Description types.String `tfsdk:"description"`
 }
 
@@ -41,18 +41,18 @@ func (r *StaticrouteResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"destination": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Destination network or host for this static route.",
 			},
 			"gateway": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Gateway IP address for this static route.",
 			},
 			"description": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Optional description for this static route.",
 			},
 		},
@@ -144,33 +144,33 @@ func (r *StaticrouteResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["destination"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Destination = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Destination = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Destination = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["gateway"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Gateway = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Gateway = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["destination"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Destination = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Destination = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Destination = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Gateway = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["gateway"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Gateway = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Gateway = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Gateway = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

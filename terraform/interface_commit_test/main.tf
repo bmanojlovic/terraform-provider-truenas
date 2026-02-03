@@ -21,15 +21,13 @@ variable "truenas_token" {
   sensitive = true
 }
 
-# Test interface.commit action
-resource "truenas_action_interface_commit" "test" {
-  options = jsonencode({
-    checkin_timeout = 30
-    rollback        = true
-  })
+# Test interface.commit action (flat structure)
+resource "truenas_interface_commit" "test" {
+  checkin_timeout = 30
+  rollback        = true
 }
 
 # Test interface.checkin action (depends on commit)
-resource "truenas_action_interface_checkin" "test" {
-  depends_on = [truenas_action_interface_commit.test]
+resource "truenas_interface_checkin" "test" {
+  depends_on = [truenas_interface_commit.test]
 }

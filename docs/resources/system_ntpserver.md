@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_system_ntpserver Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "System"
 description: |-
   Add an NTP Server.
 ---

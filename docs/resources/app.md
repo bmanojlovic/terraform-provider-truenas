@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_app Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Applications"
 description: |-
   Create an app with `app_name` using `catalog_app` with `train` and `version`.
 ---

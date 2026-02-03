@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_iscsi_auth Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "iSCSI"
 description: |-
   Create an iSCSI Authorized Access.
 ---

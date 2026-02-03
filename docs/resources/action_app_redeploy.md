@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_redeploy Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Redeploy `app_name` app.
 ---

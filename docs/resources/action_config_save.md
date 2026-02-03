@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_config_save Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Config"
 description: |-
   Create a tar file of security-sensitive information. These options select which information is included in the tar file:  `secretseed` bool: When true, include password secret seed. `pool_keys` bool: IGNORED and DEPRECATED as it does not apply on SCALE systems. `root_authorized_keys` bool: When true, include "/root/.ssh/authorized_keys" file for the root user.  If none of these options are set, the tar file is not generated and the database file is returned.
 ---

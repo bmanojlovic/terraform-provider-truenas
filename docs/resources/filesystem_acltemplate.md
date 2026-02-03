@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_filesystem_acltemplate Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Filesystem"
 description: |-
   Create a new filesystem ACL template.
 ---

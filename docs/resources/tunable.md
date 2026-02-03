@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_tunable Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a tunable.
 ---

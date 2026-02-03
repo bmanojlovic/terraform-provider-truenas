@@ -17,7 +17,7 @@ type ActionPoolOfflineResource struct {
 }
 
 type ActionPoolOfflineResourceModel struct {
-	ID      types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolOfflineResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Offline a disk from pool of id `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to modify."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to modify."},
 			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Disk identifier to take offline."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,9 +93,7 @@ func (r *ActionPoolOfflineResource) Create(ctx context.Context, req resource.Cre
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
 	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-		params = append(params, optionsVal)
-	}
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 
 	// Execute action
 	result, err := r.client.Call("pool.offline", params)
@@ -108,7 +106,7 @@ func (r *ActionPoolOfflineResource) Create(ctx context.Context, req resource.Cre
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type SharingSmbResource struct {
@@ -18,17 +18,17 @@ type SharingSmbResource struct {
 }
 
 type SharingSmbResourceModel struct {
-	ID                          types.String `tfsdk:"id"`
-	Purpose                     types.String `tfsdk:"purpose"`
-	Name                        types.String `tfsdk:"name"`
-	Path                        types.String `tfsdk:"path"`
-	Enabled                     types.Bool   `tfsdk:"enabled"`
-	Comment                     types.String `tfsdk:"comment"`
-	Readonly                    types.Bool   `tfsdk:"readonly"`
-	Browsable                   types.Bool   `tfsdk:"browsable"`
-	AccessBasedShareEnumeration types.Bool   `tfsdk:"access_based_share_enumeration"`
-	Audit                       types.String `tfsdk:"audit"`
-	Options                     types.String `tfsdk:"options"`
+	ID types.String `tfsdk:"id"`
+	Purpose types.String `tfsdk:"purpose"`
+	Name types.String `tfsdk:"name"`
+	Path types.String `tfsdk:"path"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	Comment types.String `tfsdk:"comment"`
+	Readonly types.Bool `tfsdk:"readonly"`
+	Browsable types.Bool `tfsdk:"browsable"`
+	AccessBasedShareEnumeration types.Bool `tfsdk:"access_based_share_enumeration"`
+	Audit types.String `tfsdk:"audit"`
+	Options types.String `tfsdk:"options"`
 }
 
 func NewSharingSmbResource() resource.Resource {
@@ -49,53 +49,53 @@ func (r *SharingSmbResource) Schema(ctx context.Context, req resource.SchemaRequ
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"purpose": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "This parameter sets the purpose of the SMB share. It controls how the SMB share behaves and what fea",
 			},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "SMB share name. SMB share names are case-insensitive and must be unique, and are subject     to the ",
 			},
 			"path": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Local server path to share by using the SMB protocol. The path must start with `/mnt/` and must be i",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If unset, the SMB share is not available over the SMB protocol. ",
 			},
 			"comment": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Text field that is seen next to a share when an SMB client requests a list of SMB shares on the True",
 			},
 			"readonly": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If set, SMB clients cannot create or change files and directories in the SMB share.  NOTE: If set, t",
 			},
 			"browsable": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If set, the share is included when an SMB client requests a list of SMB shares on the TrueNAS server",
 			},
 			"access_based_share_enumeration": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If set, the share is only included when an SMB client requests a list of shares on the SMB server if",
 			},
 			"audit": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Audit configuration for monitoring SMB share access and operations.",
 			},
 			"options": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Additional configuration related to the configured SMB share purpose. If null, then the default     ",
 			},
 		},
@@ -213,33 +213,33 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["path"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Path = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Path = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["path"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

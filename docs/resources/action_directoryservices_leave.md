@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_directoryservices_leave Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directory services configuration on TrueNAS.
 ---

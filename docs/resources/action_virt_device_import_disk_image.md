@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_virt_device_import_disk_image Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtualization"
 description: |-
   Imports a specified disk image.  Utilized qemu-img with the auto-detect functionality to auto-convert any supported disk image format to RAW -> ZVOL  As of this implementation it supports:  - QCOW2 - QED - RAW - VDI - VPC - VMDK  `diskimg` is a required parameter for the incoming disk image `zvol` is the required target for the imported disk image
 ---

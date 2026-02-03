@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_image_pull Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   `image` is the name of the image to pull. Format for the name is "registry/repo/image:v1.2.3" where registry may be omitted and it will default to docker registry in this case. It can or cannot contain the tag - this will be passed as is to docker so this should be analogous to what `docker pull` expects.  `auth_config` should be specified if image to be retrieved is under a private repository.
 ---

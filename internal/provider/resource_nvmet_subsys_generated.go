@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type NvmetSubsysResource struct {
@@ -17,14 +17,14 @@ type NvmetSubsysResource struct {
 }
 
 type NvmetSubsysResourceModel struct {
-	ID           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	Subnqn       types.String `tfsdk:"subnqn"`
-	AllowAnyHost types.Bool   `tfsdk:"allow_any_host"`
-	PiEnable     types.Bool   `tfsdk:"pi_enable"`
-	QidMax       types.Int64  `tfsdk:"qid_max"`
-	IeeeOui      types.String `tfsdk:"ieee_oui"`
-	Ana          types.Bool   `tfsdk:"ana"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Subnqn types.String `tfsdk:"subnqn"`
+	AllowAnyHost types.Bool `tfsdk:"allow_any_host"`
+	PiEnable types.Bool `tfsdk:"pi_enable"`
+	QidMax types.Int64 `tfsdk:"qid_max"`
+	IeeeOui types.String `tfsdk:"ieee_oui"`
+	Ana types.Bool `tfsdk:"ana"`
 }
 
 func NewNvmetSubsysResource() resource.Resource {
@@ -45,38 +45,38 @@ func (r *NvmetSubsysResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Human readable name for the subsystem.  If `subnqn` is not provided on creation, then this name will",
 			},
 			"subnqn": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "NVMe Qualified Name (NQN) for the subsystem.  Must be a valid NQN format if provided.",
 			},
 			"allow_any_host": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Any host can access the storage associated with this subsystem (i.e. no access control).",
 			},
 			"pi_enable": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Enable Protection Information (PI) for data integrity checking.",
 			},
 			"qid_max": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Maximum number of queue IDs allowed for this subsystem.",
 			},
 			"ieee_oui": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "IEEE Organizationally Unique Identifier for the subsystem.",
 			},
 			"ana": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If set to either `True` or `False`, then *override* the global `ana` setting from `nvmet.global.conf",
 			},
 		},
@@ -180,21 +180,21 @@ func (r *NvmetSubsysResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["name"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_cloudsync_credentials Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Cloud Sync"
 description: |-
   Create Cloud Sync Credentials.
 ---

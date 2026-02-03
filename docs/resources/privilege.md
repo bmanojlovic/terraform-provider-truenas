@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_privilege Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Creates a privilege.
 ---

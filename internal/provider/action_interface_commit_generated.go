@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,8 @@ type ActionInterfaceCommitResource struct {
 }
 
 type ActionInterfaceCommitResourceModel struct {
-	Options types.String `tfsdk:"options"`
+	Rollback       types.Bool  `tfsdk:"rollback"`
+	CheckinTimeout types.Int64 `tfsdk:"checkin_timeout"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,8 @@ func (r *ActionInterfaceCommitResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Commit/apply pending interfaces changes.",
 		Attributes: map[string]schema.Attribute{
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for committing interface changes."},
+			"rollback":        schema.BoolAttribute{Optional: true, MarkdownDescription: "Roll back changes in case they fail to apply."},
+			"checkin_timeout": schema.Int64Attribute{Optional: true, MarkdownDescription: "Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from     the user. If checkin does not happen within this period of time, the changes will get r"},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,16 +89,17 @@ func (r *ActionInterfaceCommitResource) Create(ctx context.Context, req resource
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	if !data.Options.IsNull() {
-		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+	params := map[string]interface{}{}
+	if !data.Rollback.IsNull() {
+		params["rollback"] = data.Rollback.ValueBool()
 	}
+	if !data.CheckinTimeout.IsNull() {
+		params["checkin_timeout"] = data.CheckinTimeout.ValueInt64()
+	}
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("interface.commit", params)
+	result, err := r.client.Call("interface.commit", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute interface.commit: %s", err.Error()))
 		return

@@ -87,11 +87,11 @@ func (r *ActionPoolExpandResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("pool.expand", params)
+	result, err := r.client.Call("pool.expand", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.expand: %s", err.Error()))
 		return

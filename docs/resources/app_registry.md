@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_app_registry Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Applications"
 description: |-
   Create an app registry entry.
 ---

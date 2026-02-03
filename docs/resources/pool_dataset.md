@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_pool_dataset Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Storage - Pools"
 description: |-
   Creates a dataset/zvol.
 ---

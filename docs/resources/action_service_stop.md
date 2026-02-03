@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_service_stop Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Services"
 description: |-
   Stop the service specified by `service`.
 ---

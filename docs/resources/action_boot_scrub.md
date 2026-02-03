@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_scrub Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Scrub on boot pool.
 ---

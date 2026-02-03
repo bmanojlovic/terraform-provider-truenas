@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_virt_volume_import_zvol Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtualization"
 description: |-
   Execute virt.volume.import_zvol
 ---

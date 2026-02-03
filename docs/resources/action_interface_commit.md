@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_interface_commit Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Network"
 description: |-
   Commit pending network changes. Starts rollback timer.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloud_backup_delete_snapshot Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Delete snapshot `snapshot_id` created by the cloud backup job `id`.
 ---

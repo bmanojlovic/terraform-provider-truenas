@@ -87,10 +87,10 @@ func (r *ActionInterfaceServices_Restarted_On_SyncResource) Create(ctx context.C
 	}
 
 	// Build parameters
-	params := []interface{}{}
+	paramsArr := []interface{}{}
 
 	// Execute action
-	result, err := r.client.Call("interface.services_restarted_on_sync", params)
+	result, err := r.client.Call("interface.services_restarted_on_sync", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute interface.services_restarted_on_sync: %s", err.Error()))
 		return

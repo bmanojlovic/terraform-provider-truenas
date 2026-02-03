@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloudsync_restore Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Cloud Sync"
 description: |-
   Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).
 ---

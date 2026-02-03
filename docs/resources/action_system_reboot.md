@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_system_reboot Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System"
 description: |-
   Reboots the operating system.  Emits an "added" event of name "system" and id "reboot".
 ---

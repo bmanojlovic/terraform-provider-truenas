@@ -87,11 +87,11 @@ func (r *ActionAppRollback_VersionsResource) Create(ctx context.Context, req res
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.AppName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.AppName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("app.rollback_versions", params)
+	result, err := r.client.Call("app.rollback_versions", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute app.rollback_versions: %s", err.Error()))
 		return

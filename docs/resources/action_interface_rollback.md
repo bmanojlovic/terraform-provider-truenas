@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_interface_rollback Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Network"
 description: |-
   Manually rollback pending network changes.
 ---

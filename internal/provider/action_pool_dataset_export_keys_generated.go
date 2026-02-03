@@ -87,11 +87,11 @@ func (r *ActionPoolDatasetExport_KeysResource) Create(ctx context.Context, req r
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("pool.dataset.export_keys", params)
+	result, err := r.client.Call("pool.dataset.export_keys", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.dataset.export_keys: %s", err.Error()))
 		return

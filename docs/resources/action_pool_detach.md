@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_detach Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Detach a disk from a pool.
 ---

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,9 +27,9 @@ type StaticroutesDataSourceModel struct {
 }
 
 type StaticroutesItemModel struct {
-	ID          types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Destination types.String `tfsdk:"destination"`
-	Gateway     types.String `tfsdk:"gateway"`
+	Gateway types.String `tfsdk:"gateway"`
 	Description types.String `tfsdk:"description"`
 }
 
@@ -42,23 +42,23 @@ func (d *StaticroutesDataSource) Schema(ctx context.Context, req datasource.Sche
 		Description: "Query staticroutes",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of staticroutes resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"destination": schema.StringAttribute{
-							Computed:    true,
-							Description: "Destination network or host for this static route.",
-						},
-						"gateway": schema.StringAttribute{
-							Computed:    true,
-							Description: "Gateway IP address for this static route.",
-						},
-						"description": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional description for this static route.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"destination": schema.StringAttribute{
+				Computed: true,
+				Description: "Destination network or host for this static route.",
+			},
+			"gateway": schema.StringAttribute{
+				Computed: true,
+				Description: "Gateway IP address for this static route.",
+			},
+			"description": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional description for this static route.",
+			},
 					},
 				},
 			},
@@ -123,8 +123,8 @@ func (d *StaticroutesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		AttrTypes: map[string]attr.Type{
 			"description": types.StringType,
 			"destination": types.StringType,
-			"gateway":     types.StringType,
-			"id":          types.StringType,
+			"gateway": types.StringType,
+			"id": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

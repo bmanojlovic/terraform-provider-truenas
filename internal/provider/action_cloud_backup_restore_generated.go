@@ -17,11 +17,11 @@ type ActionCloud_BackupRestoreResource struct {
 }
 
 type ActionCloud_BackupRestoreResourceModel struct {
-	ID              types.Int64  `tfsdk:"id"`
-	SnapshotId      types.String `tfsdk:"snapshot_id"`
-	Subfolder       types.String `tfsdk:"subfolder"`
+	ID types.Int64 `tfsdk:"id"`
+	SnapshotId types.String `tfsdk:"snapshot_id"`
+	Subfolder types.String `tfsdk:"subfolder"`
 	DestinationPath types.String `tfsdk:"destination_path"`
-	Options         types.String `tfsdk:"options"`
+	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -43,11 +43,11 @@ func (r *ActionCloud_BackupRestoreResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder` created by the cloud backup job `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":               schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud backup task."},
-			"snapshot_id":      schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to restore."},
-			"subfolder":        schema.StringAttribute{Required: true, MarkdownDescription: "Path within the snapshot to restore."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud backup task."},
+			"snapshot_id": schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to restore."},
+			"subfolder": schema.StringAttribute{Required: true, MarkdownDescription: "Path within the snapshot to restore."},
 			"destination_path": schema.StringAttribute{Required: true, MarkdownDescription: "Local path to restore to."},
-			"options":          schema.StringAttribute{Optional: true, MarkdownDescription: "Additional restore options."},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Additional restore options."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -103,9 +103,7 @@ func (r *ActionCloud_BackupRestoreResource) Create(ctx context.Context, req reso
 	params = append(params, data.DestinationPath.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -119,7 +117,7 @@ func (r *ActionCloud_BackupRestoreResource) Create(ctx context.Context, req reso
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

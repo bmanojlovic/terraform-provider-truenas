@@ -87,11 +87,11 @@ func (r *ActionVmResumeResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("vm.resume", params)
+	result, err := r.client.Call("vm.resume", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.resume: %s", err.Error()))
 		return

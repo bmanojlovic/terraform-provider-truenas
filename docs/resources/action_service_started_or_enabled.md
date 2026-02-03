@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_service_started_or_enabled Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Services"
 description: |-
   Test if service specified by `service` is started or enabled to start automatically.
 ---

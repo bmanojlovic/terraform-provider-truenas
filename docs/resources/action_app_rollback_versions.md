@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_rollback_versions Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Retrieve versions available for rollback for `app_name` app.
 ---

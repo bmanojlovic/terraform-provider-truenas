@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_vm_log_file_download Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtual Machines"
 description: |-
   Retrieve log file contents of `id` VM.  It will download empty file if log file does not exist.
 ---

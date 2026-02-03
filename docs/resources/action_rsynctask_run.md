@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_rsynctask_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Job to run rsync task of `id`.  Output is saved to job log excerpt (not syslog).
 ---

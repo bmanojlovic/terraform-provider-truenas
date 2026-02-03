@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_offline Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Take a pool disk offline.
 ---

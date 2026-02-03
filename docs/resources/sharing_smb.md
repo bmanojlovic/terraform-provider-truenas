@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_sharing_smb Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Sharing"
 description: |-
   Manages sharing.smb
 ---

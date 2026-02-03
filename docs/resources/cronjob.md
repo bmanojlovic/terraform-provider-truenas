@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_cronjob Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Scheduled Tasks"
 description: |-
   Create a new cron job.
 ---

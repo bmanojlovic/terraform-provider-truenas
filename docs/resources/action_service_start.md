@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_service_start Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Services"
 description: |-
   Start the service specified by `service`.
 ---

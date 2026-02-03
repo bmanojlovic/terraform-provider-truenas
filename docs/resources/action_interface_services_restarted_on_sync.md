@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_interface_services_restarted_on_sync Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Network"
 description: |-
   Returns which services will be set to listen on 0.0.0.0 (and, thus, restarted) on sync.  Example result: [     // Samba service will be set ot listen on 0.0.0.0 and restarted because it was set up to listen on     // 192.168.0.1 which is being removed.     {"type": "SYSTEM_SERVICE", "service": "cifs", "ips": ["192.168.0.1"]}, ]
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_environment_destroy Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Delete a boot environment.
 ---

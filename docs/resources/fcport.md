@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_fcport Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Creates mapping between a FC port and a target.
 ---

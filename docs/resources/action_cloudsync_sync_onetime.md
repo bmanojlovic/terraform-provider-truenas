@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloudsync_sync_onetime Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Cloud Sync"
 description: |-
   Run cloud sync task without creating it.
 ---

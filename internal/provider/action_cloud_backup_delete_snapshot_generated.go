@@ -89,12 +89,12 @@ func (r *ActionCloud_BackupDelete_SnapshotResource) Create(ctx context.Context, 
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
-	params = append(params, data.SnapshotId.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
+	paramsArr = append(paramsArr, data.SnapshotId.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("cloud_backup.delete_snapshot", params)
+	result, err := r.client.Call("cloud_backup.delete_snapshot", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute cloud_backup.delete_snapshot: %s", err.Error()))
 		return

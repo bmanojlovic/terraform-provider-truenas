@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type IscsiTargetextentResource struct {
@@ -17,10 +17,10 @@ type IscsiTargetextentResource struct {
 }
 
 type IscsiTargetextentResourceModel struct {
-	ID     types.String `tfsdk:"id"`
-	Target types.Int64  `tfsdk:"target"`
-	Lunid  types.Int64  `tfsdk:"lunid"`
-	Extent types.Int64  `tfsdk:"extent"`
+	ID types.String `tfsdk:"id"`
+	Target types.Int64 `tfsdk:"target"`
+	Lunid types.Int64 `tfsdk:"lunid"`
+	Extent types.Int64 `tfsdk:"extent"`
 }
 
 func NewIscsiTargetextentResource() resource.Resource {
@@ -41,18 +41,18 @@ func (r *IscsiTargetextentResource) Schema(ctx context.Context, req resource.Sch
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"target": schema.Int64Attribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "ID of the iSCSI target to associate with the extent.",
 			},
 			"lunid": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Logical Unit Number (LUN) ID for presenting the extent to the target.",
 			},
 			"extent": schema.Int64Attribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "ID of the iSCSI extent to associate with the target.",
 			},
 		},
@@ -144,33 +144,29 @@ func (r *IscsiTargetextentResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["target"]; ok && v != nil {
-		switch val := v.(type) {
-		case float64:
-			data.Target = types.Int64Value(int64(val))
-		case map[string]interface{}:
-			if parsed, ok := val["parsed"]; ok && parsed != nil {
-				if fv, ok := parsed.(float64); ok {
-					data.Target = types.Int64Value(int64(fv))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["target"]; ok && v != nil {
+			switch val := v.(type) {
+			case float64:
+				data.Target = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Target = types.Int64Value(int64(fv)) }
 				}
 			}
 		}
-	}
-	if v, ok := resultMap["extent"]; ok && v != nil {
-		switch val := v.(type) {
-		case float64:
-			data.Extent = types.Int64Value(int64(val))
-		case map[string]interface{}:
-			if parsed, ok := val["parsed"]; ok && parsed != nil {
-				if fv, ok := parsed.(float64); ok {
-					data.Extent = types.Int64Value(int64(fv))
+		if v, ok := resultMap["extent"]; ok && v != nil {
+			switch val := v.(type) {
+			case float64:
+				data.Extent = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Extent = types.Int64Value(int64(fv)) }
 				}
 			}
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_docker_delete_backup Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Delete `backup_name` app backup.
 ---

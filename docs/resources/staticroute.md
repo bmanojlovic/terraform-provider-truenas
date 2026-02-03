@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_staticroute Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Network"
 description: |-
   Create a Static Route.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_vm Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Virtual Machines"
 description: |-
   Create a Virtual Machine (VM).
 ---

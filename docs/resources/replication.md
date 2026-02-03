@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_replication Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Replication"
 description: |-
   Create a Replication Task that will push or pull ZFS snapshots to or from remote host.
 ---

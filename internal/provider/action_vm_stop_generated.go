@@ -17,7 +17,7 @@ type ActionVmStopResource struct {
 }
 
 type ActionVmStopResourceModel struct {
-	ID      types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionVmStopResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Stops a VM.  For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to stop."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to stop."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the VM stop process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionVmStopResource) Create(ctx context.Context, req resource.CreateRe
 	params = append(params, data.ID.ValueInt64())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionVmStopResource) Create(ctx context.Context, req resource.CreateRe
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

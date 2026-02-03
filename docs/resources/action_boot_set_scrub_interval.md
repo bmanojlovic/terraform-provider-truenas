@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_set_scrub_interval Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Set Automatic Scrub Interval value in days.
 ---

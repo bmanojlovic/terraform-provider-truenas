@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_docker_restore_backup Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Restore a backup of existing apps.
 ---

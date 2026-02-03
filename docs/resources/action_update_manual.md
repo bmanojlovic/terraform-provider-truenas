@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_update_manual Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Update the system using a manual update file.
 ---

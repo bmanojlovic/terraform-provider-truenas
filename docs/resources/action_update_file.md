@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_update_file Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Updates the system using the uploaded .tar file.
 ---

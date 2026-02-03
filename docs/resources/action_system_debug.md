@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_system_debug Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System"
 description: |-
   Download a debug file.
 ---

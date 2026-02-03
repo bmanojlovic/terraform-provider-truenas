@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_interface_checkin Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Network"
 description: |-
   Confirm network changes work. Cancels rollback timer.
 ---

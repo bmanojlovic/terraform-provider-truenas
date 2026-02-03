@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_virt_instance_start Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtualization"
 description: |-
   Start an instance.
 ---

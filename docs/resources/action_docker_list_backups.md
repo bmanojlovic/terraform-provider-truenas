@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_docker_list_backups Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   List existing app backups.
 ---

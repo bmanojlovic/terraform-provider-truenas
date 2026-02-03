@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_api_key Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Creates API Key.
 ---

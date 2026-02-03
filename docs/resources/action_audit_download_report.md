@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_audit_download_report Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Audit"
 description: |-
   Download the audit report with the specified name from the server. Note that users will only be able to download reports that they personally generated.
 ---

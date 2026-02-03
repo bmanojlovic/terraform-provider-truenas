@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from generator.schema import get_tf_type, merge_anyof_schema, has_complex_objects, get_array_item_schema, is_complex_object, to_field_name
+from generator.schema import get_tf_type, merge_anyof_schema, has_complex_objects, get_array_item_schema, is_complex_object, to_field_name, is_flattenable, flatten_schema
 from generator.codegen import gen_schema_attrs, gen_fields, gen_create_params, gen_read_mapping
 from generator.docs import gen_resource_docs, gen_datasource_docs, gen_action_docs
 
@@ -18,8 +18,10 @@ def load_templates():
     return {k: (TEMPLATE_DIR / f"{k}.tmpl").read_text() for k in [
         "resource.go", "resource_update_only.go", "resource_with_json.go",
         "resource_vm_device.go", "resource_uploadable.go", "action_resource.go",
+        "action_resource_flat.go", "action_resource_flat_updatable.go",
         "action_uploadable.go", "resource_doc.md", "datasource.go",
         "datasource_doc.md", "datasource_query.go", "datasource_query_doc.md",
+        "singleton_config.go",
     ]}
 
 
@@ -136,6 +138,135 @@ def gen_resource(base_name, methods, templates):
         update_call="CallWithJob" if update_is_job else "Call",
         delete_call="CallWithJob" if delete_is_job else "Call",
     )
+
+
+def gen_flat_action_resource(method_name, method_spec, templates, resource_bases=None, action_config=None):
+    """Generate action resource with flattened fields (no jsonencode wrapper)."""
+    parts = method_name.split(".")
+    accepts = method_spec.get("accepts", [])
+    flat_props = flatten_schema(accepts)
+    action_config = action_config or {}
+    
+    # Only add prefix if exact method name matches a CRUD resource
+    needs_prefix = resource_bases and method_name in resource_bases
+    
+    if needs_prefix:
+        resource_name = "Action" + "".join(p.title() for p in parts)
+        resource_type = "action_" + method_name.replace(".", "_")
+    else:
+        resource_name = "".join(p.title() for p in parts)
+        resource_type = method_name.replace(".", "_")
+    
+    desc = (method_spec.get("description") or f"Execute {method_name}").replace("\n", " ").replace('"', '\\"')[:200].strip()
+
+    reserved = {"count", "for_each", "depends_on", "provider", "lifecycle"}
+    def safe_attr(n):
+        attr = n.replace("-", "_")
+        return f"{attr}_value" if attr in reserved else attr
+
+    # Check for update config
+    update_config = action_config.get("update")
+    force_new = set(action_config.get("force_new", []))
+
+    # Generate fields
+    fields = "\n".join(
+        f'\t{to_field_name(n)} types.{get_tf_type(p)} `tfsdk:"{safe_attr(n)}"`'
+        for n, p in flat_props
+    ) if flat_props else ""
+
+    # Generate schema with RequiresReplace for force_new fields
+    schema_lines = []
+    for n, p in flat_props:
+        tf_type = get_tf_type(p)
+        req = p.get("_required_", False)
+        d = p.get("description", "").replace('"', '\\"').replace("\n", " ")[:200]
+        req_opt = "Required" if req else "Optional"
+        if n in force_new:
+            schema_lines.append(f'\t\t\t"{safe_attr(n)}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}", PlanModifiers: []planmodifier.{tf_type}{{{"string" if tf_type == "String" else tf_type.lower()}planmodifier.RequiresReplace()}}}},')
+        else:
+            schema_lines.append(f'\t\t\t"{safe_attr(n)}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}"}},')
+
+    # Determine param style
+    primitives = ("string", "integer", "boolean", "number")
+    is_primitives = len(accepts) > 0 and all(p.get("type") in primitives for p in accepts)
+    
+    # Generate param building
+    if len(accepts) == 0:
+        param_lines = ["\tparamsArr := []interface{}{}"]
+    elif is_primitives:
+        param_lines = ["\tparamsArr := []interface{}{}"]
+        for n, p in flat_props:
+            field = to_field_name(n)
+            tf_type = get_tf_type(p)
+            val_method = {"String": "ValueString", "Int64": "ValueInt64", "Bool": "ValueBool", "Float64": "ValueFloat64"}.get(tf_type, "ValueString")
+            req = p.get("_required_", False)
+            if req:
+                param_lines.append(f'\tparamsArr = append(paramsArr, data.{field}.{val_method}())')
+            else:
+                param_lines.append(f'\tif !data.{field}.IsNull() {{ paramsArr = append(paramsArr, data.{field}.{val_method}()) }}')
+    else:
+        top_level = [(n, p) for n, p in flat_props if "_nested_parent_" not in p]
+        nested = {}
+        for n, p in flat_props:
+            parent = p.get("_nested_parent_")
+            if parent:
+                nested.setdefault(parent, []).append((n, p))
+
+        param_lines = ["\tparams := map[string]interface{}{}"]
+        
+        for n, p in top_level:
+            field = to_field_name(n)
+            tf_type = get_tf_type(p)
+            val_method = {"String": "ValueString", "Int64": "ValueInt64", "Bool": "ValueBool", "Float64": "ValueFloat64"}.get(tf_type, "ValueString")
+            req = p.get("_required_", False)
+            if req:
+                param_lines.append(f'\tparams["{n}"] = data.{field}.{val_method}()')
+            else:
+                param_lines.append(f'\tif !data.{field}.IsNull() {{ params["{n}"] = data.{field}.{val_method}() }}')
+
+        for parent, props in nested.items():
+            param_lines.append(f'\t{parent}Opts := map[string]interface{{}}{{}}')
+            for n, p in props:
+                field = to_field_name(n)
+                nested_name = p.get("_nested_name_")
+                tf_type = get_tf_type(p)
+                val_method = {"String": "ValueString", "Int64": "ValueInt64", "Bool": "ValueBool", "Float64": "ValueFloat64"}.get(tf_type, "ValueString")
+                param_lines.append(f'\tif !data.{field}.IsNull() {{ {parent}Opts["{nested_name}"] = data.{field}.{val_method}() }}')
+            param_lines.append(f'\tif len({parent}Opts) > 0 {{ params["{parent}"] = {parent}Opts }}')
+
+        param_lines.append("\tparamsArr := []interface{}{params}")
+
+    # Choose template based on update config
+    if update_config:
+        # Build update param lines
+        update_params = update_config.get("params", {})
+        update_lines = ["\tupdateParams := map[string]interface{}{}"]
+        for api_param, our_field in update_params.items():
+            field = to_field_name(our_field)
+            # Find the type for this field
+            tf_type = "String"
+            for n, p in flat_props:
+                if n == our_field:
+                    tf_type = get_tf_type(p)
+                    break
+            val_method = {"String": "ValueString", "Int64": "ValueInt64", "Bool": "ValueBool", "Float64": "ValueFloat64"}.get(tf_type, "ValueString")
+            update_lines.append(f'\tif !data.{field}.IsNull() {{ updateParams["{api_param}"] = data.{field}.{val_method}() }}')
+        update_lines.append("\tupdateParamsArr := []interface{}{updateParams}")
+        
+        code = templates["action_resource_flat_updatable.go"]
+        code = code.replace("{update_param_building}", "\n".join(update_lines))
+        code = code.replace("{update_method}", update_config.get("method", ""))
+    else:
+        code = templates["action_resource_flat.go"]
+
+    for k, v in {
+        "{resource_name}": resource_name, "{resource_type_name}": resource_type,
+        "{fields}": fields, "{schema_attrs}": "\n".join(schema_lines),
+        "{param_building}": "\n".join(param_lines), "{method_name}": method_name,
+        "{description}": desc, "{is_job}": "true" if method_spec.get("job") else "false",
+    }.items():
+        code = code.replace(k, v)
+    return code
 
 
 def gen_action_resource(method_name, method_spec, templates):
@@ -418,16 +549,95 @@ def gen_query_datasource(base_name, methods, templates):
     )
 
 
-def gen_provider(resources, datasources, actions, uploadables, templates):
+def gen_singleton_config(name, singleton_config, methods, templates):
+    """Generate singleton config resource."""
+    read_method = singleton_config.get("read")
+    update_method = singleton_config.get("update")
+    desc = singleton_config.get("description", f"{name.upper()} service configuration")
+    
+    if not read_method or not update_method:
+        return None
+    
+    update_spec = methods.get(update_method, {})
+    accepts = update_spec.get("accepts", [])
+    if not accepts:
+        return None
+    
+    param = accepts[0]
+    properties = param.get("properties", {})
+    
+    resource_name = name.title()
+    
+    # Generate fields
+    fields = []
+    schema_lines = []
+    param_lines = ["\tparams := map[string]interface{}{}"]
+    read_lines = []
+    
+    for n, p in properties.items():
+        tf_type = get_tf_type(p)
+        if tf_type == "List":
+            continue  # Skip arrays for now
+        
+        field = to_field_name(n)
+        d = p.get("description", "").replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")[:200]
+        
+        fields.append(f'\t{field} types.{tf_type} `tfsdk:"{n}"`')
+        schema_lines.append(f'\t\t\t"{n}": schema.{tf_type}Attribute{{Optional: true, Computed: true, MarkdownDescription: "{d}"}},')
+        
+        val_method = {"String": "ValueString", "Int64": "ValueInt64", "Bool": "ValueBool", "Float64": "ValueFloat64"}.get(tf_type, "ValueString")
+        param_lines.append(f'\tif !data.{field}.IsNull() && !data.{field}.IsUnknown() {{ params["{n}"] = data.{field}.{val_method}() }}')
+        
+        # Handle nullable fields - set to null if API returns nil
+        if tf_type == "String":
+            read_lines.append(f'\t\tif v, ok := m["{n}"]; ok {{ if v == nil {{ data.{field} = types.StringNull() }} else if s, ok := v.(string); ok {{ data.{field} = types.StringValue(s) }} else {{ if j, e := json.Marshal(v); e == nil {{ data.{field} = types.StringValue(string(j)) }} }} }}')
+        elif tf_type == "Int64":
+            read_lines.append(f'\t\tif v, ok := m["{n}"]; ok {{ if v == nil {{ data.{field} = types.Int64Null() }} else if f, ok := v.(float64); ok {{ data.{field} = types.Int64Value(int64(f)) }} }}')
+        elif tf_type == "Bool":
+            read_lines.append(f'\t\tif v, ok := m["{n}"]; ok {{ if v == nil {{ data.{field} = types.BoolNull() }} else if b, ok := v.(bool); ok {{ data.{field} = types.BoolValue(b) }} }}')
+    
+    param_lines.append("\tparamsArr := []interface{}{params}")
+    
+    code = templates["singleton_config.go"]
+    for k, v in {
+        "{resource_name}": resource_name,
+        "{resource_type}": name,
+        "{name}": name,
+        "{description}": desc,
+        "{fields}": "\n".join(fields),
+        "{schema_attrs}": "\n".join(schema_lines),
+        "{param_building}": "\n".join(param_lines),
+        "{read_mapping}": "\n".join(read_lines),
+        "{read_method}": read_method,
+        "{update_method}": update_method,
+    }.items():
+        code = code.replace(k, v)
+    
+    return code
+
+
+def gen_provider(resources, datasources, actions, flat_actions, uploadables, singletons, templates):
     """Generate provider.go."""
     template_path = Path(__file__).parent / "templates" / "provider.go.tmpl"
     template = template_path.read_text()
 
+    resource_bases = set(resources)
+    
     resource_funcs = [f"New{r.replace('.', '_').title().replace('_', '')}Resource" for r in resources]
     uploadable_funcs = [f"New{''.join(p.title() for p in u.split('.'))}Resource" for u in uploadables]
+    singleton_funcs = [f"New{s.title()}ConfigResource" for s in singletons]
+    # Wrapped actions have "Action" prefix
     action_funcs = [f"NewAction{''.join(p.title() for p in a.split('.'))}Resource" for a in actions]
+    # Flat actions: add "Action" prefix only if exact name matches a resource
+    flat_action_funcs = []
+    for a in flat_actions:
+        parts = a.split(".")
+        if a in resource_bases:
+            flat_action_funcs.append(f"NewAction{''.join(p.title() for p in parts)}Resource")
+        else:
+            flat_action_funcs.append(f"New{''.join(p.title() for p in parts)}Resource")
 
-    all_funcs = resource_funcs + uploadable_funcs + action_funcs
+    all_funcs = resource_funcs + uploadable_funcs + singleton_funcs + action_funcs + flat_action_funcs
     ds_funcs = [f"New{d.replace('.', '_').title().replace('_', '')}DataSource" for d in datasources]
 
     code = template.replace("{{resource_list}}", ",\n\t\t".join(all_funcs))
@@ -482,7 +692,7 @@ def main():
     uploadable_actions = {"mail.send", "support.attach_ticket"}
     skip_uploadable = {"pool.dataset.encryption_summary"}
 
-    generated_actions, generated_uploadables = [], []
+    generated_actions, generated_flat_actions, generated_uploadables = [], [], []
 
     for method, spec in methods.items():
         if any(method.endswith(s) for s in [".create", ".update", ".delete", ".query", ".get_instance"]):
@@ -509,18 +719,31 @@ def main():
         is_action = spec.get("job") or any(k in method.split(".")[-1] for k in action_keywords) or method in explicit_actions
         
         if is_action:
-            code = gen_action_resource(method, spec, templates)
-            if code:
-                (output_dir / f"action_{method.replace('.', '_')}_generated.go").write_text(code)
+            accepts = spec.get("accepts", [])
+            resource_bases = set(generated_resources)
+            # Get config metadata for this action if available
+            action_config = config.get("actions", {}).get("explicit", {}).get(method, {})
+            # Use flat generation for simple schemas (no jsonencode wrapper needed)
+            if is_flattenable(accepts):
+                code = gen_flat_action_resource(method, spec, templates, resource_bases, action_config)
+                # Only add prefix if exact method name matches a CRUD resource
+                if method in resource_bases:
+                    filename = f"action_{method.replace('.', '_')}_generated.go"
+                else:
+                    filename = f"{method.replace('.', '_')}_generated.go"
+                generated_flat_actions.append(method)
+            else:
+                code = gen_action_resource(method, spec, templates)
+                filename = f"action_{method.replace('.', '_')}_generated.go"
                 generated_actions.append(method)
+            if code:
+                (output_dir / filename).write_text(code)
 
                 props = {p.get("_name_", ""): p for p in spec.get("accepts", []) if p.get("_name_")}
                 desc = (spec.get("description") or f"Execute {method}").replace("\n", " ").strip()
-                # Get config metadata for this action if available
-                action_config = config.get("actions", {}).get("explicit", {}).get(method, {})
                 gen_action_docs(method, props, desc, action_config)
 
-    print(f"✅ Generated {len(generated_actions)} actions, {len(generated_uploadables)} uploadables", file=sys.stderr)
+    print(f"✅ Generated {len(generated_actions)} wrapped actions, {len(generated_flat_actions)} flat actions, {len(generated_uploadables)} uploadables", file=sys.stderr)
 
     # Data sources
     generated_ds, generated_query = [], []
@@ -548,14 +771,31 @@ def main():
 
     print(f"✅ Generated {len(generated_ds)} datasources, {len(generated_query)} query datasources", file=sys.stderr)
 
-    gen_provider(generated_resources, generated_ds + generated_query, generated_actions, generated_uploadables, templates)
+    # Singleton configs
+    generated_singletons = []
+    singletons = config.get("singletons", {})
+    for name, singleton_config in singletons.items():
+        code = gen_singleton_config(name, singleton_config, methods, templates)
+        if code:
+            (output_dir / f"singleton_{name}_config_generated.go").write_text(code)
+            generated_singletons.append(name)
+
+    if generated_singletons:
+        print(f"✅ Generated {len(generated_singletons)} singleton configs", file=sys.stderr)
+
+    gen_provider(generated_resources, generated_ds + generated_query, generated_actions, generated_flat_actions, generated_uploadables, generated_singletons, templates)
 
     # Coverage tracking
     generated = set()
     for base in generated_resources:
         generated.update([f"{base}.create", f"{base}.update", f"{base}.delete", f"{base}.get_instance"])
     generated.update(generated_actions)
+    generated.update(generated_flat_actions)
     generated.update(generated_uploadables)
+    for name in generated_singletons:
+        sc = singletons.get(name, {})
+        if sc.get("read"): generated.add(sc["read"])
+        if sc.get("update"): generated.add(sc["update"])
     for base in ds_candidates:
         if f"{base}.get_instance" in methods: generated.add(f"{base}.get_instance")
         if f"{base}.query" in methods: generated.add(f"{base}.query")

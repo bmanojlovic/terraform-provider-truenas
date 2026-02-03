@@ -89,10 +89,17 @@ actions:
     filesystem.mkdir:
       description: "Create a directory on the filesystem."
       verify_with: filesystem.stat
+      update:
+        method: filesystem.setperm
+        params:
+          path: path
+          mode: options_mode
+      force_new:
+        - path
       example: |
-        resource "truenas_action_filesystem_mkdir" "data" {
-          path = "/mnt/tank/data"
-          mode = "755"
+        resource "truenas_filesystem_mkdir" "data" {
+          path         = "/mnt/tank/data"
+          options_mode = "755"
         }
 
     boot.environment.activate:
@@ -151,6 +158,53 @@ actions:
 
     pool.detach:
       description: "Detach a disk from a pool."
+
+# Singleton configs: services with only config/update (no create/delete)
+singletons:
+  nfs:
+    read: nfs.config
+    update: nfs.update
+    description: "NFS service configuration"
+  smb:
+    read: smb.config
+    update: smb.update
+    description: "SMB service configuration"
+  ftp:
+    read: ftp.config
+    update: ftp.update
+    description: "FTP service configuration"
+  ssh:
+    read: ssh.config
+    update: ssh.update
+    description: "SSH service configuration"
+  snmp:
+    read: snmp.config
+    update: snmp.update
+    description: "SNMP service configuration"
+  ups:
+    read: ups.config
+    update: ups.update
+    description: "UPS service configuration"
+  mail:
+    read: mail.config
+    update: mail.update
+    description: "Mail/SMTP configuration"
+  iscsi_global:
+    read: iscsi.global.config
+    update: iscsi.global.update
+    description: "iSCSI global configuration"
+  system_advanced:
+    read: system.advanced.config
+    update: system.advanced.update
+    description: "System advanced settings"
+  system_general:
+    read: system.general.config
+    update: system.general.update
+    description: "System general settings"
+  network_configuration:
+    read: network.configuration.config
+    update: network.configuration.update
+    description: "Network configuration"
 
 # Skip patterns: methods to ignore
 skip:

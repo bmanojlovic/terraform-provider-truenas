@@ -16,7 +16,7 @@ type ActionVmCloneResource struct {
 }
 
 type ActionVmCloneResourceModel struct {
-	ID   types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *ActionVmCloneResource) Schema(ctx context.Context, req resource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Clone the VM `id`.  `name` is an optional parameter for the cloned VM. If not provided it will append the next number available to the VM name.",
 		Attributes: map[string]schema.Attribute{
-			"id":   schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to clone."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to clone."},
 			"name": schema.StringAttribute{Optional: true, MarkdownDescription: "Name for the cloned virtual machine. `null` to auto-generate."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,9 +91,7 @@ func (r *ActionVmCloneResource) Create(ctx context.Context, req resource.CreateR
 	// Build parameters
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
-	if !data.Name.IsNull() {
-		params = append(params, data.Name.ValueString())
-	}
+	if !data.Name.IsNull() { params = append(params, data.Name.ValueString()) }
 
 	// Execute action
 	result, err := r.client.Call("vm.clone", params)
@@ -106,7 +104,7 @@ func (r *ActionVmCloneResource) Create(ctx context.Context, req resource.CreateR
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

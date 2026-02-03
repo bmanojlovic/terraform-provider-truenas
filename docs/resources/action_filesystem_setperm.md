@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_filesystem_setperm Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Filesystem"
 description: |-
   Set unix permissions on given `path`.  If `mode` is specified then the mode will be applied to the path and files and subdirectories depending on which `options` are selected. Mode should be formatted as string representation of octal permissions bits.  `uid` the desired UID of the file user. If set to None (the default), then user is not changed.  `gid` the desired GID of the file group. If set to None (the default), then group is not changed.  `user` and `group` alternatively allow specifying the owner by name.  WARNING: `uid`, `gid, `user`, and `group` _should_ remain unset _unless_ the administrator wishes to change the owner or group of files.  `stripacl` setperm will fail if an extended ACL is present on `path`, unless `stripacl` is set to True.  `recursive` remove ACLs recursively, but do not traverse dataset boundaries.  `traverse` remove ACLs from child datasets.  If no `mode` is set, and `stripacl` is True, then non-trivial ACLs will be converted to trivial ACLs. An ACL is trivial if it can be expressed as a file mode without losing any access rules.
 ---

@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type RsynctaskResource struct {
@@ -18,31 +18,31 @@ type RsynctaskResource struct {
 }
 
 type RsynctaskResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	Path           types.String `tfsdk:"path"`
-	User           types.String `tfsdk:"user"`
-	Mode           types.String `tfsdk:"mode"`
-	Remotehost     types.String `tfsdk:"remotehost"`
-	Remoteport     types.Int64  `tfsdk:"remoteport"`
-	Remotemodule   types.String `tfsdk:"remotemodule"`
-	SshCredentials types.Int64  `tfsdk:"ssh_credentials"`
-	Remotepath     types.String `tfsdk:"remotepath"`
-	Direction      types.String `tfsdk:"direction"`
-	Desc           types.String `tfsdk:"desc"`
-	Schedule       types.String `tfsdk:"schedule"`
-	Recursive      types.Bool   `tfsdk:"recursive"`
-	Times          types.Bool   `tfsdk:"times"`
-	Compress       types.Bool   `tfsdk:"compress"`
-	Archive        types.Bool   `tfsdk:"archive"`
-	Delete         types.Bool   `tfsdk:"delete"`
-	Quiet          types.Bool   `tfsdk:"quiet"`
-	Preserveperm   types.Bool   `tfsdk:"preserveperm"`
-	Preserveattr   types.Bool   `tfsdk:"preserveattr"`
-	Delayupdates   types.Bool   `tfsdk:"delayupdates"`
-	Extra          types.List   `tfsdk:"extra"`
-	Enabled        types.Bool   `tfsdk:"enabled"`
-	ValidateRpath  types.Bool   `tfsdk:"validate_rpath"`
-	SshKeyscan     types.Bool   `tfsdk:"ssh_keyscan"`
+	ID types.String `tfsdk:"id"`
+	Path types.String `tfsdk:"path"`
+	User types.String `tfsdk:"user"`
+	Mode types.String `tfsdk:"mode"`
+	Remotehost types.String `tfsdk:"remotehost"`
+	Remoteport types.Int64 `tfsdk:"remoteport"`
+	Remotemodule types.String `tfsdk:"remotemodule"`
+	SshCredentials types.Int64 `tfsdk:"ssh_credentials"`
+	Remotepath types.String `tfsdk:"remotepath"`
+	Direction types.String `tfsdk:"direction"`
+	Desc types.String `tfsdk:"desc"`
+	Schedule types.String `tfsdk:"schedule"`
+	Recursive types.Bool `tfsdk:"recursive"`
+	Times types.Bool `tfsdk:"times"`
+	Compress types.Bool `tfsdk:"compress"`
+	Archive types.Bool `tfsdk:"archive"`
+	Delete types.Bool `tfsdk:"delete"`
+	Quiet types.Bool `tfsdk:"quiet"`
+	Preserveperm types.Bool `tfsdk:"preserveperm"`
+	Preserveattr types.Bool `tfsdk:"preserveattr"`
+	Delayupdates types.Bool `tfsdk:"delayupdates"`
+	Extra types.List `tfsdk:"extra"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	ValidateRpath types.Bool `tfsdk:"validate_rpath"`
+	SshKeyscan types.Bool `tfsdk:"ssh_keyscan"`
 }
 
 func NewRsynctaskResource() resource.Resource {
@@ -63,124 +63,124 @@ func (r *RsynctaskResource) Schema(ctx context.Context, req resource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"path": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Local filesystem path to synchronize.",
 			},
 			"user": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Username to run the rsync task as.",
 			},
 			"mode": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Operating mechanism for Rsync, i.e. Rsync Module mode or Rsync SSH mode.",
 			},
 			"remotehost": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "IP address or hostname of the remote system. If username differs on the remote host, \"username@remot",
 			},
 			"remoteport": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Port number for SSH connection. Only applies when `mode` is SSH.",
 			},
 			"remotemodule": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Name of remote module, this attribute should be specified when `mode` is set to MODULE.",
 			},
 			"ssh_credentials": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Keychain credential ID for SSH authentication. `null` to use user's SSH keys.",
 			},
 			"remotepath": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Path on the remote system to synchronize with.",
 			},
 			"direction": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Specify if data should be PULLED or PUSHED from the remote system.",
 			},
 			"desc": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Description of the rsync task.",
 			},
 			"schedule": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Cron schedule for when the rsync task should run.",
 			},
 			"recursive": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Recursively transfer subdirectories.",
 			},
 			"times": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Preserve modification times of files.",
 			},
 			"compress": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Reduce the size of the data to be transmitted.",
 			},
 			"archive": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Make rsync run recursively, preserving symlinks, permissions, modification times, group, and special",
 			},
 			"delete": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Delete files in the destination directory that do not exist in the source directory.",
 			},
 			"quiet": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Suppress informational messages from rsync.",
 			},
 			"preserveperm": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Preserve original file permissions.",
 			},
 			"preserveattr": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Preserve extended attributes of files.",
 			},
 			"delayupdates": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Delay updating destination files until all transfers are complete.",
 			},
 			"extra": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of additional rsync command-line options.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether this rsync task is enabled.",
 			},
 			"validate_rpath": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Validate the existence of the remote path.",
 			},
 			"ssh_keyscan": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Automatically add remote host key to user's known_hosts file.",
 			},
 		},
@@ -342,33 +342,33 @@ func (r *RsynctaskResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["path"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Path = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Path = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["user"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.User = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.User = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["path"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.User = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["user"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.User = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.User = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

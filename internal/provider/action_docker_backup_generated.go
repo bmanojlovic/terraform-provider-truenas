@@ -88,9 +88,7 @@ func (r *ActionDockerBackupResource) Create(ctx context.Context, req resource.Cr
 
 	// Build parameters
 	params := []interface{}{}
-	if !data.BackupName.IsNull() {
-		params = append(params, data.BackupName.ValueString())
-	}
+	if !data.BackupName.IsNull() { params = append(params, data.BackupName.ValueString()) }
 
 	// Execute action
 	result, err := r.client.Call("docker.backup", params)
@@ -103,7 +101,7 @@ func (r *ActionDockerBackupResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

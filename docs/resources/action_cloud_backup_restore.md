@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloud_backup_restore Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder` created by the cloud backup job `id`.
 ---

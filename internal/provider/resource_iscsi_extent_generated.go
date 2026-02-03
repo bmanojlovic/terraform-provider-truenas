@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type IscsiExtentResource struct {
@@ -17,23 +17,23 @@ type IscsiExtentResource struct {
 }
 
 type IscsiExtentResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	Type           types.String `tfsdk:"type"`
-	Disk           types.String `tfsdk:"disk"`
-	Serial         types.String `tfsdk:"serial"`
-	Path           types.String `tfsdk:"path"`
-	Filesize       types.Int64  `tfsdk:"filesize"`
-	Blocksize      types.Int64  `tfsdk:"blocksize"`
-	Pblocksize     types.Bool   `tfsdk:"pblocksize"`
-	AvailThreshold types.Int64  `tfsdk:"avail_threshold"`
-	Comment        types.String `tfsdk:"comment"`
-	InsecureTpc    types.Bool   `tfsdk:"insecure_tpc"`
-	Xen            types.Bool   `tfsdk:"xen"`
-	Rpm            types.String `tfsdk:"rpm"`
-	Ro             types.Bool   `tfsdk:"ro"`
-	Enabled        types.Bool   `tfsdk:"enabled"`
-	ProductId      types.String `tfsdk:"product_id"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Type types.String `tfsdk:"type"`
+	Disk types.String `tfsdk:"disk"`
+	Serial types.String `tfsdk:"serial"`
+	Path types.String `tfsdk:"path"`
+	Filesize types.Int64 `tfsdk:"filesize"`
+	Blocksize types.Int64 `tfsdk:"blocksize"`
+	Pblocksize types.Bool `tfsdk:"pblocksize"`
+	AvailThreshold types.Int64 `tfsdk:"avail_threshold"`
+	Comment types.String `tfsdk:"comment"`
+	InsecureTpc types.Bool `tfsdk:"insecure_tpc"`
+	Xen types.Bool `tfsdk:"xen"`
+	Rpm types.String `tfsdk:"rpm"`
+	Ro types.Bool `tfsdk:"ro"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	ProductId types.String `tfsdk:"product_id"`
 }
 
 func NewIscsiExtentResource() resource.Resource {
@@ -54,83 +54,83 @@ func (r *IscsiExtentResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Name of the iSCSI extent.",
 			},
 			"type": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Type of the extent storage backend.",
 			},
 			"disk": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Disk device to use for the extent or `null` if using a file.",
 			},
 			"serial": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
+				Optional: true,
+				Computed: true,
 				Description: "Serial number for the extent or `null` to auto-generate.",
 			},
 			"path": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "File path for file-based extents or `null` if using a disk.",
 			},
 			"filesize": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Size of the file-based extent in bytes.",
 			},
 			"blocksize": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Block size for the extent in bytes.",
 			},
 			"pblocksize": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to use physical block size reporting.",
 			},
 			"avail_threshold": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Available space threshold percentage or `null` to disable.",
 			},
 			"comment": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Optional comment describing the extent.",
 			},
 			"insecure_tpc": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to enable insecure Third Party Copy (TPC) operations.",
 			},
 			"xen": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to enable Xen compatibility mode.",
 			},
 			"rpm": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Reported RPM type for the extent.",
 			},
 			"ro": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether the extent is read-only.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether the extent is enabled and available for use.",
 			},
 			"product_id": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Product ID string for the extent or `null` for default.",
 			},
 		},
@@ -261,33 +261,33 @@ func (r *IscsiExtentResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["type"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Type = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["type"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

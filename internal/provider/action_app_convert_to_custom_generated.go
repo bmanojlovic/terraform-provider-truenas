@@ -87,11 +87,11 @@ func (r *ActionAppConvert_To_CustomResource) Create(ctx context.Context, req res
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.AppName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.AppName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("app.convert_to_custom", params)
+	result, err := r.client.Call("app.convert_to_custom", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute app.convert_to_custom: %s", err.Error()))
 		return

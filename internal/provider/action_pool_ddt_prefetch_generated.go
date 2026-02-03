@@ -87,11 +87,11 @@ func (r *ActionPoolDdt_PrefetchResource) Create(ctx context.Context, req resourc
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.PoolName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.PoolName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("pool.ddt_prefetch", params)
+	result, err := r.client.Call("pool.ddt_prefetch", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.ddt_prefetch: %s", err.Error()))
 		return

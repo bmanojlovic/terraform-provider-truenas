@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_snapshot_rollback Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Execute pool.snapshot.rollback
 ---

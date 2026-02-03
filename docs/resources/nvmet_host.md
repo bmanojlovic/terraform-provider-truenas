@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_nvmet_host Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create an NVMe target `host`.
 ---

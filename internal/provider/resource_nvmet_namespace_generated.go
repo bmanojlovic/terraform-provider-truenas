@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type NvmetNamespaceResource struct {
@@ -17,13 +17,13 @@ type NvmetNamespaceResource struct {
 }
 
 type NvmetNamespaceResourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Nsid       types.Int64  `tfsdk:"nsid"`
+	ID types.String `tfsdk:"id"`
+	Nsid types.Int64 `tfsdk:"nsid"`
 	DeviceType types.String `tfsdk:"device_type"`
 	DevicePath types.String `tfsdk:"device_path"`
-	Filesize   types.Int64  `tfsdk:"filesize"`
-	Enabled    types.Bool   `tfsdk:"enabled"`
-	SubsysId   types.Int64  `tfsdk:"subsys_id"`
+	Filesize types.Int64 `tfsdk:"filesize"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	SubsysId types.Int64 `tfsdk:"subsys_id"`
 }
 
 func NewNvmetNamespaceResource() resource.Resource {
@@ -44,33 +44,33 @@ func (r *NvmetNamespaceResource) Schema(ctx context.Context, req resource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"nsid": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Namespace ID (NSID).  Each namespace within a subsystem has an associated NSID, unique within that s",
 			},
 			"device_type": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Type of device (or file) used to implement the namespace. ",
 			},
 			"device_path": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Normalized path to the device or file for the namespace.",
 			},
 			"filesize": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "When `device_type` is \"FILE\" then this will be the size of the file in bytes.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "If `enabled` is `False` then the namespace will not be accessible.  Some namespace configuration cha",
 			},
 			"subsys_id": schema.Int64Attribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "ID of the NVMe-oF subsystem to contain this namespace.",
 			},
 		},
@@ -171,45 +171,43 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["device_type"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.DeviceType = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.DeviceType = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.DeviceType = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["device_path"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.DevicePath = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.DevicePath = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["device_type"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.DeviceType = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DeviceType = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.DeviceType = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["subsys_id"]; ok && v != nil {
-		switch val := v.(type) {
-		case float64:
-			data.SubsysId = types.Int64Value(int64(val))
-		case map[string]interface{}:
-			if parsed, ok := val["parsed"]; ok && parsed != nil {
-				if fv, ok := parsed.(float64); ok {
-					data.SubsysId = types.Int64Value(int64(fv))
+		if v, ok := resultMap["device_path"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.DevicePath = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DevicePath = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["subsys_id"]; ok && v != nil {
+			switch val := v.(type) {
+			case float64:
+				data.SubsysId = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
 				}
 			}
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

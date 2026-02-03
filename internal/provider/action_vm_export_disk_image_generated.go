@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,9 @@ type ActionVmExport_Disk_ImageResource struct {
 }
 
 type ActionVmExport_Disk_ImageResourceModel struct {
-	VmExportDiskImage types.String `tfsdk:"vm_export_disk_image"`
+	Format    types.String `tfsdk:"format"`
+	Directory types.String `tfsdk:"directory"`
+	Zvol      types.String `tfsdk:"zvol"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +40,9 @@ func (r *ActionVmExport_Disk_ImageResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Exports a zvol to a formatted VM disk image.  Utilized qemu-img with the conversion functionality to export a zvol to any supported disk image format, from RAW -> ${OTHER}. The resulting file will be",
 		Attributes: map[string]schema.Attribute{
-			"vm_export_disk_image": schema.StringAttribute{Required: true, MarkdownDescription: "VMExportDiskImageArgs parameters."},
+			"format":    schema.StringAttribute{Required: true, MarkdownDescription: "Output format for the exported disk image (e.g., 'qcow2', 'raw')."},
+			"directory": schema.StringAttribute{Required: true, MarkdownDescription: "Directory path where the exported disk image will be saved."},
+			"zvol":      schema.StringAttribute{Required: true, MarkdownDescription: "Source ZFS volume to export as a disk image."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,14 +91,14 @@ func (r *ActionVmExport_Disk_ImageResource) Create(ctx context.Context, req reso
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	var vm_export_disk_imageVal interface{}
-	if err := json.Unmarshal([]byte(data.VmExportDiskImage.ValueString()), &vm_export_disk_imageVal); err == nil {
-		params = append(params, vm_export_disk_imageVal)
-	}
+	params := map[string]interface{}{}
+	params["format"] = data.Format.ValueString()
+	params["directory"] = data.Directory.ValueString()
+	params["zvol"] = data.Zvol.ValueString()
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("vm.export_disk_image", params)
+	result, err := r.client.Call("vm.export_disk_image", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.export_disk_image: %s", err.Error()))
 		return

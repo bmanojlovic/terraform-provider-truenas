@@ -17,7 +17,7 @@ type ActionBootAttachResource struct {
 }
 
 type ActionBootAttachResourceModel struct {
-	Dev     types.String `tfsdk:"dev"`
+	Dev types.String `tfsdk:"dev"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionBootAttachResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Attach a disk to the boot pool, turning a stripe into a mirror.  `expand` option will determine whether the new disk partition will be          the maximum available or the same size as the current di",
 		Attributes: map[string]schema.Attribute{
-			"dev":     schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path to attach to the boot pool."},
+			"dev": schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path to attach to the boot pool."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the attach operation."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionBootAttachResource) Create(ctx context.Context, req resource.Crea
 	params = append(params, data.Dev.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionBootAttachResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

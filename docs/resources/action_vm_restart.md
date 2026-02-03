@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_vm_restart Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtual Machines"
 description: |-
   Restart a VM.
 ---

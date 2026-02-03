@@ -2,18 +2,18 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type PoolResource struct {
@@ -21,17 +21,17 @@ type PoolResource struct {
 }
 
 type PoolResourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	Name                  types.String `tfsdk:"name"`
-	Encryption            types.Bool   `tfsdk:"encryption"`
-	DedupTableQuota       types.String `tfsdk:"dedup_table_quota"`
-	DedupTableQuotaValue  types.Int64  `tfsdk:"dedup_table_quota_value"`
-	Deduplication         types.String `tfsdk:"deduplication"`
-	Checksum              types.String `tfsdk:"checksum"`
-	EncryptionOptions     types.String `tfsdk:"encryption_options"`
-	Topology              types.String `tfsdk:"topology"`
-	AllowDuplicateSerials types.Bool   `tfsdk:"allow_duplicate_serials"`
-	Autotrim              types.String `tfsdk:"autotrim"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Encryption types.Bool `tfsdk:"encryption"`
+	DedupTableQuota types.String `tfsdk:"dedup_table_quota"`
+	DedupTableQuotaValue types.Int64 `tfsdk:"dedup_table_quota_value"`
+	Deduplication types.String `tfsdk:"deduplication"`
+	Checksum types.String `tfsdk:"checksum"`
+	EncryptionOptions types.String `tfsdk:"encryption_options"`
+	Topology types.String `tfsdk:"topology"`
+	AllowDuplicateSerials types.Bool `tfsdk:"allow_duplicate_serials"`
+	Autotrim types.String `tfsdk:"autotrim"`
 }
 
 func NewPoolResource() resource.Resource {
@@ -52,57 +52,57 @@ func (r *PoolResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Name for the new storage pool.",
 			},
 			"encryption": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "If set, create a ZFS encrypted root dataset for this pool.",
+				Required: false,
+				Optional: true,
+				Description: "If set, create a ZFS encrypted root dataset for this pool.",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"dedup_table_quota": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "How to manage the deduplication table quota allocation.",
 			},
 			"dedup_table_quota_value": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Custom quota value in bytes when `dedup_table_quota` is set to CUSTOM.",
 			},
 			"deduplication": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar",
+				Required: false,
+				Optional: true,
+				Description: "Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"checksum": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Checksum algorithm to use for data integrity verification.",
+				Required: false,
+				Optional: true,
+				Description: "Checksum algorithm to use for data integrity verification.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"encryption_options": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Specify configuration for encryption of root dataset.",
+				Required: false,
+				Optional: true,
+				Description: "Specify configuration for encryption of root dataset.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"topology": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Updated topology configuration for adding new vdevs to the pool.",
 			},
 			"allow_duplicate_serials": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to allow disks with duplicate serial numbers in the pool.",
 			},
 			"autotrim": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to enable automatic TRIM operations on the pool.",
 			},
 		},
@@ -225,33 +225,33 @@ func (r *PoolResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["topology"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Topology = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Topology = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Topology = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["topology"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Topology = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Topology = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Topology = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

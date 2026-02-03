@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_attach Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Attach a disk to the boot pool, turning a stripe into a mirror.  `expand` option will determine whether the new disk partition will be          the maximum available or the same size as the current disk.
 ---

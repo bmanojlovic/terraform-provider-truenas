@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_expand Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Expand pool to fit all available disk space.
 ---

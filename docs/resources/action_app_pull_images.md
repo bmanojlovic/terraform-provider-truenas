@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_pull_images Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Pulls docker images for the specified app `name`.
 ---

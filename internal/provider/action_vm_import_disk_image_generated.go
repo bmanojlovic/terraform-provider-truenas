@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,8 @@ type ActionVmImport_Disk_ImageResource struct {
 }
 
 type ActionVmImport_Disk_ImageResourceModel struct {
-	VmImportDiskImage types.String `tfsdk:"vm_import_disk_image"`
+	Diskimg types.String `tfsdk:"diskimg"`
+	Zvol    types.String `tfsdk:"zvol"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,8 @@ func (r *ActionVmImport_Disk_ImageResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Imports a specified disk image.  Utilized qemu-img with the auto-detect functionality to auto-convert any supported disk image format to RAW -> ZVOL  As of this implementation it supports:  - QCOW2 -",
 		Attributes: map[string]schema.Attribute{
-			"vm_import_disk_image": schema.StringAttribute{Required: true, MarkdownDescription: "VMImportDiskImageArgs parameters."},
+			"diskimg": schema.StringAttribute{Required: true, MarkdownDescription: "Path to the disk image file to import."},
+			"zvol":    schema.StringAttribute{Required: true, MarkdownDescription: "Target ZFS volume path where the disk image will be imported."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,14 +89,13 @@ func (r *ActionVmImport_Disk_ImageResource) Create(ctx context.Context, req reso
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	var vm_import_disk_imageVal interface{}
-	if err := json.Unmarshal([]byte(data.VmImportDiskImage.ValueString()), &vm_import_disk_imageVal); err == nil {
-		params = append(params, vm_import_disk_imageVal)
-	}
+	params := map[string]interface{}{}
+	params["diskimg"] = data.Diskimg.ValueString()
+	params["zvol"] = data.Zvol.ValueString()
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("vm.import_disk_image", params)
+	result, err := r.client.Call("vm.import_disk_image", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.import_disk_image: %s", err.Error()))
 		return

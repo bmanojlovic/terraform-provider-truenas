@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_system_shutdown Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System"
 description: |-
   Shuts down the operating system.  An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_ipmi_sel_info Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Query General information about the IPMI System Event Log
 ---

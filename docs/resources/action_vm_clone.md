@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_vm_clone Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtual Machines"
 description: |-
   Clone an existing VM.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_dataset_export_keys_for_replication Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Export keys for replication task `id` for source dataset(s) which are stored in the system. The exported file is a JSON file which has a dictionary containing dataset names as keys and their keys as the value.  Please refer to websocket documentation for downloading the file.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_cloud_backup Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a new cloud backup task
 ---

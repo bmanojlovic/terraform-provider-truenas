@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_environment_keep Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Mark boot environment to keep (prevent auto-pruning).
 ---

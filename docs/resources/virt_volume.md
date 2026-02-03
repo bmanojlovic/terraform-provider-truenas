@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_virt_volume Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Virtualization"
 description: |-
   Manages virt.volume
 ---

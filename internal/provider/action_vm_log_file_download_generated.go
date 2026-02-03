@@ -87,11 +87,11 @@ func (r *ActionVmLog_File_DownloadResource) Create(ctx context.Context, req reso
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("vm.log_file_download", params)
+	result, err := r.client.Call("vm.log_file_download", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.log_file_download: %s", err.Error()))
 		return

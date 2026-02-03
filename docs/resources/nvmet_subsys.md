@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_nvmet_subsys Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a NVMe target subsystem (`subsys`).
 ---

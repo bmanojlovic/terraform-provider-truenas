@@ -87,11 +87,11 @@ func (r *ActionAppRedeployResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.AppName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.AppName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("app.redeploy", params)
+	result, err := r.client.Call("app.redeploy", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute app.redeploy: %s", err.Error()))
 		return

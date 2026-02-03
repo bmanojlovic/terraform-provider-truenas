@@ -87,11 +87,11 @@ func (r *ActionAppStartResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.AppName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.AppName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("app.start", params)
+	result, err := r.client.Call("app.start", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute app.start: %s", err.Error()))
 		return

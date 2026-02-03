@@ -87,11 +87,11 @@ func (r *ActionReplicationRunResource) Create(ctx context.Context, req resource.
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("replication.run", params)
+	result, err := r.client.Call("replication.run", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute replication.run: %s", err.Error()))
 		return

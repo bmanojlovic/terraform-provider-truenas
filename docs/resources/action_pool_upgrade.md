@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_upgrade Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Upgrade pool to latest ZFS features.
 ---

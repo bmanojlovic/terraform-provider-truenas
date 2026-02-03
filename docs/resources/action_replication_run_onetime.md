@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_replication_run_onetime Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Replication"
 description: |-
   Run replication task without creating it.
 ---

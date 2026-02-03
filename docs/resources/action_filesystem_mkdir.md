@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_filesystem_mkdir Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Filesystem"
 description: |-
   Create a directory on the filesystem.
 ---
@@ -14,9 +14,9 @@ This is an action resource that executes the `filesystem.mkdir` operation. Actio
 ## Example Usage
 
 ```terraform
-resource "truenas_action_filesystem_mkdir" "data" {
-  path = "/mnt/tank/data"
-  mode = "755"
+resource "truenas_filesystem_mkdir" "data" {
+  path         = "/mnt/tank/data"
+  options_mode = "755"
 }
 ```
 

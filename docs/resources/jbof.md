@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_jbof Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a new JBOF.
 ---

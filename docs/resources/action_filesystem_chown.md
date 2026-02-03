@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_filesystem_chown Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Filesystem"
 description: |-
   Change owner or group of file at `path`.  `uid` and `gid` specify new owner of the file. If either key is absent or None, then existing value on the file is not changed.  `user` and `group` alternatively allow specifying a uid gid by user name or group name.  `recursive` performs action recursively, but does not traverse filesystem mount points.  If `traverse` and `recursive` are specified, then the chown operation will traverse filesystem mount points.
 ---

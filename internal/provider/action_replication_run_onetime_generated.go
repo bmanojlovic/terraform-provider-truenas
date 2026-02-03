@@ -90,9 +90,7 @@ func (r *ActionReplicationRun_OnetimeResource) Create(ctx context.Context, req r
 	// Build parameters
 	params := []interface{}{}
 	var replication_run_onetimeVal interface{}
-	if err := json.Unmarshal([]byte(data.ReplicationRunOnetime.ValueString()), &replication_run_onetimeVal); err == nil {
-		params = append(params, replication_run_onetimeVal)
-	}
+	if err := json.Unmarshal([]byte(data.ReplicationRunOnetime.ValueString()), &replication_run_onetimeVal); err == nil { params = append(params, replication_run_onetimeVal) }
 
 	// Execute action
 	result, err := r.client.Call("replication.run_onetime", params)
@@ -105,7 +103,7 @@ func (r *ActionReplicationRun_OnetimeResource) Create(ctx context.Context, req r
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

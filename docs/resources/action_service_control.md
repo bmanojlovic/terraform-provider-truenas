@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_service_control Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Services"
 description: |-
   Execute service.control
 ---

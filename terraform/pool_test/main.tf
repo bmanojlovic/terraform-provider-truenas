@@ -32,8 +32,8 @@ locals {
   pool = [for p in data.truenas_pools.all.items : p if p.name == var.truenas_pool][0]
 }
 
-# Test pool.upgrade action
-resource "truenas_action_pool_upgrade" "test" {
+# Test pool.upgrade action (flat structure)
+resource "truenas_pool_upgrade" "test" {
   id = local.pool.id
 }
 
@@ -41,7 +41,7 @@ output "upgrade_result" {
   value = {
     pool_name = local.pool.name
     pool_id   = local.pool.id
-    state     = truenas_action_pool_upgrade.test.state
-    result    = truenas_action_pool_upgrade.test.result
+    state     = truenas_pool_upgrade.test.state
+    result    = truenas_pool_upgrade.test.result
   }
 }

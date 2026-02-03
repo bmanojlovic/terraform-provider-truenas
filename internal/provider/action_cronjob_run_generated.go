@@ -89,14 +89,14 @@ func (r *ActionCronjobRunResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 	if !data.SkipDisabled.IsNull() {
-		params = append(params, data.SkipDisabled.ValueBool())
+		paramsArr = append(paramsArr, data.SkipDisabled.ValueBool())
 	}
 
 	// Execute action
-	result, err := r.client.Call("cronjob.run", params)
+	result, err := r.client.Call("cronjob.run", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute cronjob.run: %s", err.Error()))
 		return

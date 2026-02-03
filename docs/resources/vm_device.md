@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_vm_device Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Virtual Machines"
 description: |-
   Create a new device for the VM of id `vm`.
 ---

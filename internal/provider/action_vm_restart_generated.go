@@ -87,11 +87,11 @@ func (r *ActionVmRestartResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("vm.restart", params)
+	result, err := r.client.Call("vm.restart", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.restart: %s", err.Error()))
 		return

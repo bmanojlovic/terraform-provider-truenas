@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,9 @@ type ActionPoolDdt_PruneResource struct {
 }
 
 type ActionPoolDdt_PruneResourceModel struct {
-	Options types.String `tfsdk:"options"`
+	PoolName   types.String `tfsdk:"pool_name"`
+	Percentage types.Int64  `tfsdk:"percentage"`
+	Days       types.Int64  `tfsdk:"days"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +40,9 @@ func (r *ActionPoolDdt_PruneResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prune DDT entries in pool `pool_name` based on the specified options.  `percentage` is the percentage of DDT entries to prune.  `days` is the number of days to prune DDT entries.",
 		Attributes: map[string]schema.Attribute{
-			"options": schema.StringAttribute{Required: true, MarkdownDescription: "PoolDdtPruneArgs parameters."},
+			"pool_name":  schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prune deduplication table entries from."},
+			"percentage": schema.Int64Attribute{Optional: true, MarkdownDescription: "Percentage of deduplication table entries to prune."},
+			"days":       schema.Int64Attribute{Optional: true, MarkdownDescription: "Remove entries older than this many days."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,14 +91,18 @@ func (r *ActionPoolDdt_PruneResource) Create(ctx context.Context, req resource.C
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-		params = append(params, optionsVal)
+	params := map[string]interface{}{}
+	params["pool_name"] = data.PoolName.ValueString()
+	if !data.Percentage.IsNull() {
+		params["percentage"] = data.Percentage.ValueInt64()
 	}
+	if !data.Days.IsNull() {
+		params["days"] = data.Days.ValueInt64()
+	}
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("pool.ddt_prune", params)
+	result, err := r.client.Call("pool.ddt_prune", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.ddt_prune: %s", err.Error()))
 		return

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_disk_wipe Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Disks"
 description: |-
   Performs a wipe of a disk `dev`.
 ---

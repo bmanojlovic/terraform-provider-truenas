@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,8 @@ type ActionPoolImport_PoolResource struct {
 }
 
 type ActionPoolImport_PoolResourceModel struct {
-	PoolImport types.String `tfsdk:"pool_import"`
+	Guid types.String `tfsdk:"guid"`
+	Name types.String `tfsdk:"name"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,8 @@ func (r *ActionPoolImport_PoolResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Import a pool found with `pool.import_find`.  Errors:     ENOENT - Pool not found",
 		Attributes: map[string]schema.Attribute{
-			"pool_import": schema.StringAttribute{Required: true, MarkdownDescription: "PoolImportPoolArgs parameters."},
+			"guid": schema.StringAttribute{Required: true, MarkdownDescription: "GUID of the pool to import."},
+			"name": schema.StringAttribute{Optional: true, MarkdownDescription: "If specified, import the pool using this name."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,14 +89,15 @@ func (r *ActionPoolImport_PoolResource) Create(ctx context.Context, req resource
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	var pool_importVal interface{}
-	if err := json.Unmarshal([]byte(data.PoolImport.ValueString()), &pool_importVal); err == nil {
-		params = append(params, pool_importVal)
+	params := map[string]interface{}{}
+	params["guid"] = data.Guid.ValueString()
+	if !data.Name.IsNull() {
+		params["name"] = data.Name.ValueString()
 	}
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("pool.import_pool", params)
+	result, err := r.client.Call("pool.import_pool", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.import_pool: %s", err.Error()))
 		return

@@ -17,7 +17,7 @@ type ActionUpdateManualResource struct {
 }
 
 type ActionUpdateManualResourceModel struct {
-	Path    types.String `tfsdk:"path"`
+	Path types.String `tfsdk:"path"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionUpdateManualResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Update the system using a manual update file.",
 		Attributes: map[string]schema.Attribute{
-			"path":    schema.StringAttribute{Required: true, MarkdownDescription: "The absolute path to the update file."},
+			"path": schema.StringAttribute{Required: true, MarkdownDescription: "The absolute path to the update file."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the manual update process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionUpdateManualResource) Create(ctx context.Context, req resource.Cr
 	params = append(params, data.Path.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionUpdateManualResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

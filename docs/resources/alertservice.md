@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_alertservice Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create an Alert Service of specified `type`.
 ---

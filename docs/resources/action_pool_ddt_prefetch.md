@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_ddt_prefetch Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Prefetch DDT entries in pool `pool_name`.
 ---

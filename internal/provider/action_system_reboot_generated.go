@@ -17,7 +17,7 @@ type ActionSystemRebootResource struct {
 }
 
 type ActionSystemRebootResourceModel struct {
-	Reason  types.String `tfsdk:"reason"`
+	Reason types.String `tfsdk:"reason"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionSystemRebootResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Reboots the operating system.  Emits an \"added\" event of name \"system\" and id \"reboot\".",
 		Attributes: map[string]schema.Attribute{
-			"reason":  schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system reboot."},
+			"reason": schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system reboot."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the reboot process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionSystemRebootResource) Create(ctx context.Context, req resource.Cr
 	params = append(params, data.Reason.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionSystemRebootResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

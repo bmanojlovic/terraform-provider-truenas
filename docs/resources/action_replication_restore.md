@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_replication_restore Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Replication"
 description: |-
   Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
 ---

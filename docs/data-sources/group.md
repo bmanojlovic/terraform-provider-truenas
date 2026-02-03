@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_group Data Source - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Users & Groups"
 description: |-
   Returns instance matching `id`. If `id` is not found, Validation error is raised.
 ---

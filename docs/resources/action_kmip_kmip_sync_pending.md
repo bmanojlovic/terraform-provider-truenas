@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_kmip_kmip_sync_pending Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Returns true or false based on if there are keys which are to be synced from local database to remote KMIP server or vice versa.
 ---

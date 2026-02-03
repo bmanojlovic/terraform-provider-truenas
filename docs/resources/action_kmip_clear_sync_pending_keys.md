@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_kmip_clear_sync_pending_keys Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Clear all keys which are pending to be synced between KMIP server and TN database.  For ZFS/SED keys, we remove the UID from local database with which we are able to retrieve ZFS/SED keys. It should be used with caution.
 ---

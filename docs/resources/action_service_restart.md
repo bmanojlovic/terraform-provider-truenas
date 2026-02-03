@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_service_restart Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Services"
 description: |-
   Restart the service specified by `service`.
 ---

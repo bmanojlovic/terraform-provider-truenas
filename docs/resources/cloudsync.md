@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_cloudsync Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Cloud Sync"
 description: |-
   Creates a new cloud_sync entry.
 ---

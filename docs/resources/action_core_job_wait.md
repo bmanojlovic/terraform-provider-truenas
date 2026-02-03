@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_core_job_wait Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Execute core.job_wait
 ---

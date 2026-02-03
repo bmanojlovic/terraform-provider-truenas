@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_upgrade Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Upgrade `app_name` app to `app_version`.
 ---

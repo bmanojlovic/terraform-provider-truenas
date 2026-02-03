@@ -87,11 +87,11 @@ func (r *ActionRsynctaskRunResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("rsynctask.run", params)
+	result, err := r.client.Call("rsynctask.run", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute rsynctask.run: %s", err.Error()))
 		return

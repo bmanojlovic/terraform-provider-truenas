@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_scrub Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Performs a scrub action to pool of `id`.  `action` can be either of "START", "STOP" or "PAUSE".
 ---

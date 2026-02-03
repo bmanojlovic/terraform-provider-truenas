@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_pool_snapshottask Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Storage - Pools"
 description: |-
   Create a Periodic Snapshot Task
 ---

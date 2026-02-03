@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_sharing_nfs Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Sharing"
 description: |-
   Create a NFS Share.
 ---

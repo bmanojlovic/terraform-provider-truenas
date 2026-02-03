@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_snapshottask_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Execute a Periodic Snapshot Task of `id`.
 ---

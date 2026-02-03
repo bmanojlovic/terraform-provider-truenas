@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_iscsi_extent Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "iSCSI"
 description: |-
   Create an iSCSI Extent.
 ---

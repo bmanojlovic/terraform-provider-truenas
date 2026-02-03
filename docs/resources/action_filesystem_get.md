@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_filesystem_get Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Filesystem"
 description: |-
   Job to get contents of `path`.
 ---

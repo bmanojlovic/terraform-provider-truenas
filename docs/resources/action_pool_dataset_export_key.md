@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_dataset_export_key Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file where the same file can be used to unlock the dataset, otherwise it will be returned as string.  Please refer to websocket documentation for downloading the file.
 ---

@@ -20,12 +20,10 @@ variable "truenas_token" {
 
 data "truenas_boot_environments" "all" {}
 
-# Clone the old boot environment
-resource "truenas_action_boot_environment_clone" "backup" {
-  boot_environment_clone = jsonencode({
-    id     = "25.04.2.4"
-    target = "25.04.2.4-terraform-clone"
-  })
+# Clone the boot environment (flat structure - no jsonencode needed)
+resource "truenas_boot_environment_clone" "backup" {
+  id     = "25.04.2.4"
+  target = "25.04.2.4-terraform-clone"
 }
 
 output "boot_envs" {
@@ -34,7 +32,7 @@ output "boot_envs" {
 
 output "clone_result" {
   value = {
-    state  = truenas_action_boot_environment_clone.backup.state
-    result = truenas_action_boot_environment_clone.backup.result
+    state  = truenas_boot_environment_clone.backup.state
+    result = truenas_boot_environment_clone.backup.result
   }
 }

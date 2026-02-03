@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_interface Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Network"
 description: |-
   Create virtual interfaces (Link Aggregation, VLAN)
 ---

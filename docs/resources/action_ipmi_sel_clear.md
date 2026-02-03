@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_ipmi_sel_clear Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Execute ipmi.sel.clear
 ---

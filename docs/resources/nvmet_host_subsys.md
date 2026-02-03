@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_nvmet_host_subsys Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create an association between a `host` and a subsystem (`subsys`).
 ---

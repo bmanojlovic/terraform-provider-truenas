@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_acme_dns_authenticator Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Certificates"
 description: |-
   Create a DNS Authenticator
 ---

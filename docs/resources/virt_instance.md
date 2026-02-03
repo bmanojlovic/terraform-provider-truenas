@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_virt_instance Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Virtualization"
 description: |-
   Create a new virtualized instance.
 ---

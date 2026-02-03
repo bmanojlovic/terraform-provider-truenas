@@ -87,11 +87,11 @@ func (r *ActionVirtInstanceStartResource) Create(ctx context.Context, req resour
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("virt.instance.start", params)
+	result, err := r.client.Call("virt.instance.start", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute virt.instance.start: %s", err.Error()))
 		return

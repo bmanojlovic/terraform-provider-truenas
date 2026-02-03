@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_vmware Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create VMWare snapshot.
 ---

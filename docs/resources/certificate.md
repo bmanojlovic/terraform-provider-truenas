@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_certificate Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Certificates"
 description: |-
   Create a new Certificate
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_kmip_sync_keys Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Sync ZFS/SED keys between KMIP Server and TN database.
 ---

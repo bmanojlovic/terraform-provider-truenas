@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_vm_stop Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtual Machines"
 description: |-
   Stops a VM.  For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.  `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has not already stopped within the specified `shutdown_timeout`.
 ---

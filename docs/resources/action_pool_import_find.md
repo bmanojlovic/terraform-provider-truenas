@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_import_find Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Returns a job id which can be used to retrieve a list of pools available for import with the following details as a result of the job: name, guid, status, hostname.
 ---

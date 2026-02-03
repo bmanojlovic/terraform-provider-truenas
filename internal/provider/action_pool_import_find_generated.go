@@ -87,10 +87,10 @@ func (r *ActionPoolImport_FindResource) Create(ctx context.Context, req resource
 	}
 
 	// Build parameters
-	params := []interface{}{}
+	paramsArr := []interface{}{}
 
 	// Execute action
-	result, err := r.client.Call("pool.import_find", params)
+	result, err := r.client.Call("pool.import_find", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.import_find: %s", err.Error()))
 		return

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_initshutdownscript Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create an initshutdown script task.
 ---

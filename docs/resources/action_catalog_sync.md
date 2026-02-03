@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_catalog_sync Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Sync truenas catalog to retrieve latest changes from upstream.
 ---

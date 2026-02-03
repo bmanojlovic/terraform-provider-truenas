@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloudsync_sync Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Cloud Sync"
 description: |-
   Run the cloud_sync job `id`, syncing the local data to remote.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_export Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Export pool of `id`.  `cascade` will delete all attachments of the given pool (`pool.attachments`). `restart_services` will restart services that have open files on given pool. `destroy` will also PERMANENTLY destroy the pool/data.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_replication_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Replication"
 description: |-
   Run Replication Task of `id`.
 ---

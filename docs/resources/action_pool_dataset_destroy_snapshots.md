@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_dataset_destroy_snapshots Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Destroy specified snapshots of a given dataset.
 ---

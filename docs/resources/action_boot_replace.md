@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_replace Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Replace device `label` on boot pool with `dev`.
 ---

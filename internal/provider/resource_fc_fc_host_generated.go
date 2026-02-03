@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type FcFcHostResource struct {
@@ -17,11 +17,11 @@ type FcFcHostResource struct {
 }
 
 type FcFcHostResourceModel struct {
-	ID    types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Alias types.String `tfsdk:"alias"`
-	Wwpn  types.String `tfsdk:"wwpn"`
+	Wwpn types.String `tfsdk:"wwpn"`
 	WwpnB types.String `tfsdk:"wwpn_b"`
-	Npiv  types.Int64  `tfsdk:"npiv"`
+	Npiv types.Int64 `tfsdk:"npiv"`
 }
 
 func NewFcFcHostResource() resource.Resource {
@@ -42,23 +42,23 @@ func (r *FcFcHostResource) Schema(ctx context.Context, req resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"alias": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Human-readable alias for the Fibre Channel host.",
 			},
 			"wwpn": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "World Wide Port Name for port A or `null` if not configured.",
 			},
 			"wwpn_b": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "World Wide Port Name for port B or `null` if not configured.",
 			},
 			"npiv": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Number of N_Port ID Virtualization (NPIV) virtual ports to create.",
 			},
 		},
@@ -153,21 +153,21 @@ func (r *FcFcHostResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["alias"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Alias = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Alias = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Alias = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["alias"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Alias = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Alias = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Alias = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

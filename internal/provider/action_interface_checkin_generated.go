@@ -87,10 +87,10 @@ func (r *ActionInterfaceCheckinResource) Create(ctx context.Context, req resourc
 	}
 
 	// Build parameters
-	params := []interface{}{}
+	paramsArr := []interface{}{}
 
 	// Execute action
-	result, err := r.client.Call("interface.checkin", params)
+	result, err := r.client.Call("interface.checkin", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute interface.checkin: %s", err.Error()))
 		return

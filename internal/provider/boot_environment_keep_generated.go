@@ -11,13 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type ActionPoolScrubScrubResource struct {
+type BootEnvironmentKeepResource struct {
 	client *client.Client
 }
 
-type ActionPoolScrubScrubResourceModel struct {
-	Name   types.String `tfsdk:"name"`
-	Action types.String `tfsdk:"action"`
+type BootEnvironmentKeepResourceModel struct {
+	ID types.String `tfsdk:"id"`
+	Value types.Bool `tfsdk:"value"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -27,20 +27,20 @@ type ActionPoolScrubScrubResourceModel struct {
 	Error    types.String  `tfsdk:"error"`
 }
 
-func NewActionPoolScrubScrubResource() resource.Resource {
-	return &ActionPoolScrubScrubResource{}
+func NewBootEnvironmentKeepResource() resource.Resource {
+	return &BootEnvironmentKeepResource{}
 }
 
-func (r *ActionPoolScrubScrubResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_action_pool_scrub_scrub"
+func (r *BootEnvironmentKeepResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_boot_environment_keep"
 }
 
-func (r *ActionPoolScrubScrubResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *BootEnvironmentKeepResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Start/Stop/Pause a scrub on pool `name`.",
+		MarkdownDescription: "Execute boot.environment.keep",
 		Attributes: map[string]schema.Attribute{
-			"name":   schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to perform scrub action on."},
-			"action": schema.StringAttribute{Optional: true, MarkdownDescription: "The scrub action to perform on the pool."},
+			"id": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the boot environment to modify."},
+			"value": schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to protect this boot environment from automatic deletion."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -69,7 +69,7 @@ func (r *ActionPoolScrubScrubResource) Schema(ctx context.Context, req resource.
 	}
 }
 
-func (r *ActionPoolScrubScrubResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *BootEnvironmentKeepResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -81,32 +81,31 @@ func (r *ActionPoolScrubScrubResource) Configure(ctx context.Context, req resour
 	r.client = client
 }
 
-func (r *ActionPoolScrubScrubResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ActionPoolScrubScrubResourceModel
+func (r *BootEnvironmentKeepResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data BootEnvironmentKeepResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.Name.ValueString())
-	if !data.Action.IsNull() {
-		params = append(params, data.Action.ValueString())
-	}
+	params := map[string]interface{}{}
+	params["id"] = data.ID.ValueString()
+	params["value"] = data.Value.ValueBool()
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("pool.scrub.scrub", params)
+	result, err := r.client.Call("boot.environment.keep", paramsArr)
 	if err != nil {
-		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.scrub.scrub: %s", err.Error()))
+		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute boot.environment.keep: %s", err.Error()))
 		return
 	}
 
 	// Check if result is a job ID
-	if jobID, ok := result.(float64); ok && true {
+	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")
@@ -132,20 +131,20 @@ func (r *ActionPoolScrubScrubResource) Create(ctx context.Context, req resource.
 	}
 
 	// Generate ID from timestamp
-	data.ActionID = types.StringValue(fmt.Sprintf("pool.scrub.scrub-%d", time.Now().Unix()))
+	data.ActionID = types.StringValue(fmt.Sprintf("boot.environment.keep-%d", time.Now().Unix()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ActionPoolScrubScrubResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *BootEnvironmentKeepResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Actions are immutable - just return current state
-	var data ActionPoolScrubScrubResourceModel
+	var data BootEnvironmentKeepResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 }
 
-func (r *ActionPoolScrubScrubResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *BootEnvironmentKeepResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.AddError("Update Not Supported", "Actions cannot be updated, only recreated")
 }
 
-func (r *ActionPoolScrubScrubResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *BootEnvironmentKeepResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// No-op - actions cannot be undone
 }

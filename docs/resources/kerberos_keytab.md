@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_kerberos_keytab Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a kerberos keytab. Uploaded keytab files will be merged with the system
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_interface_cancel_rollback Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Network"
 description: |-
   If this method is called after interface changes have been committed and within the checkin timeout, then the task that automatically rolls back any interface changes is cancelled and the in-memory snapshot of database tables for the various interface tables will NOT be cleared.
 ---

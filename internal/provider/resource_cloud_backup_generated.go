@@ -2,17 +2,17 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type CloudBackupResource struct {
@@ -20,25 +20,25 @@ type CloudBackupResource struct {
 }
 
 type CloudBackupResourceModel struct {
-	ID              types.String `tfsdk:"id"`
-	Description     types.String `tfsdk:"description"`
-	Path            types.String `tfsdk:"path"`
-	Credentials     types.Int64  `tfsdk:"credentials"`
-	Attributes      types.String `tfsdk:"attributes"`
-	Schedule        types.String `tfsdk:"schedule"`
-	PreScript       types.String `tfsdk:"pre_script"`
-	PostScript      types.String `tfsdk:"post_script"`
-	Snapshot        types.Bool   `tfsdk:"snapshot"`
-	Include         types.List   `tfsdk:"include"`
-	Exclude         types.List   `tfsdk:"exclude"`
-	Args            types.String `tfsdk:"args"`
-	Enabled         types.Bool   `tfsdk:"enabled"`
-	Password        types.String `tfsdk:"password"`
-	KeepLast        types.Int64  `tfsdk:"keep_last"`
+	ID types.String `tfsdk:"id"`
+	Description types.String `tfsdk:"description"`
+	Path types.String `tfsdk:"path"`
+	Credentials types.Int64 `tfsdk:"credentials"`
+	Attributes types.String `tfsdk:"attributes"`
+	Schedule types.String `tfsdk:"schedule"`
+	PreScript types.String `tfsdk:"pre_script"`
+	PostScript types.String `tfsdk:"post_script"`
+	Snapshot types.Bool `tfsdk:"snapshot"`
+	Include types.List `tfsdk:"include"`
+	Exclude types.List `tfsdk:"exclude"`
+	Args types.String `tfsdk:"args"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	Password types.String `tfsdk:"password"`
+	KeepLast types.Int64 `tfsdk:"keep_last"`
 	TransferSetting types.String `tfsdk:"transfer_setting"`
-	AbsolutePaths   types.Bool   `tfsdk:"absolute_paths"`
-	CachePath       types.String `tfsdk:"cache_path"`
-	RateLimit       types.Int64  `tfsdk:"rate_limit"`
+	AbsolutePaths types.Bool `tfsdk:"absolute_paths"`
+	CachePath types.String `tfsdk:"cache_path"`
+	RateLimit types.Int64 `tfsdk:"rate_limit"`
 }
 
 func NewCloudBackupResource() resource.Resource {
@@ -59,96 +59,96 @@ func (r *CloudBackupResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"description": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "The name of the task to display in the UI.",
 			},
 			"path": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "The local path to back up beginning with `/mnt` or `/dev/zvol`.",
 			},
 			"credentials": schema.Int64Attribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "ID of the cloud credential to use for each backup.",
 			},
 			"attributes": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Additional information for each backup, e.g. bucket name.",
 			},
 			"schedule": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Cron schedule dictating when the task should run.",
 			},
 			"pre_script": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "A Bash script to run immediately before every backup.",
 			},
 			"post_script": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "A Bash script to run immediately after every backup if it succeeds.",
 			},
 			"snapshot": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to create a temporary snapshot of the dataset before every backup.",
 			},
 			"include": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Paths to pass to `restic backup --include`.",
 			},
 			"exclude": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Paths to pass to `restic backup --exclude`.",
 			},
 			"args": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "(Slated for removal).",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Can enable/disable the task.",
 			},
 			"password": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Password for the remote repository.",
 			},
 			"keep_last": schema.Int64Attribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "How many of the most recent backup snapshots to keep after each backup.",
 			},
 			"transfer_setting": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "* DEFAULT:     * pack size given by `$RESTIC_PACK_SIZE` (default 16 MiB)     * read concurrency give",
 			},
 			"absolute_paths": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Preserve absolute paths in each backup (cannot be set when `snapshot=True`).",
+				Required: false,
+				Optional: true,
+				Description: "Preserve absolute paths in each backup (cannot be set when `snapshot=True`).",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"cache_path": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Cache path. If not set, performance may degrade.",
 			},
 			"rate_limit": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Maximum upload/download rate in KiB/s. Passed to `restic --limit-upload` on `cloud_backup.sync` and ",
 			},
 		},
@@ -299,69 +299,65 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["path"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Path = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Path = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["credentials"]; ok && v != nil {
-		switch val := v.(type) {
-		case float64:
-			data.Credentials = types.Int64Value(int64(val))
-		case map[string]interface{}:
-			if parsed, ok := val["parsed"]; ok && parsed != nil {
-				if fv, ok := parsed.(float64); ok {
-					data.Credentials = types.Int64Value(int64(fv))
+		if v, ok := resultMap["path"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["credentials"]; ok && v != nil {
+			switch val := v.(type) {
+			case float64:
+				data.Credentials = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Credentials = types.Int64Value(int64(fv)) }
 				}
 			}
 		}
-	}
-	if v, ok := resultMap["attributes"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Attributes = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["attributes"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["password"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Password = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["password"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Password = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["keep_last"]; ok && v != nil {
-		switch val := v.(type) {
-		case float64:
-			data.KeepLast = types.Int64Value(int64(val))
-		case map[string]interface{}:
-			if parsed, ok := val["parsed"]; ok && parsed != nil {
-				if fv, ok := parsed.(float64); ok {
-					data.KeepLast = types.Int64Value(int64(fv))
+		if v, ok := resultMap["keep_last"]; ok && v != nil {
+			switch val := v.(type) {
+			case float64:
+				data.KeepLast = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.KeepLast = types.Int64Value(int64(fv)) }
 				}
 			}
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

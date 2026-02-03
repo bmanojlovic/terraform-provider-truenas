@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_fc_fc_host Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Creates FC host (pairing).
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_detach Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Detach a disk from the boot pool.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_pool_scrub Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Storage - Pools"
 description: |-
   Create a scrub task for a pool.
 ---

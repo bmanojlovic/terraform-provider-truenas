@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_pool_scrub_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Storage - Pools"
 description: |-
   Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
 ---

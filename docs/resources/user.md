@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_user Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Users & Groups"
 description: |-
   Create a new user.
 ---

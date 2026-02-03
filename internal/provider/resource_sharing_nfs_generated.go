@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type SharingNfsResource struct {
@@ -17,20 +17,20 @@ type SharingNfsResource struct {
 }
 
 type SharingNfsResourceModel struct {
-	ID              types.String `tfsdk:"id"`
-	Path            types.String `tfsdk:"path"`
-	Aliases         types.List   `tfsdk:"aliases"`
-	Comment         types.String `tfsdk:"comment"`
-	Networks        types.List   `tfsdk:"networks"`
-	Hosts           types.List   `tfsdk:"hosts"`
-	Ro              types.Bool   `tfsdk:"ro"`
-	MaprootUser     types.String `tfsdk:"maproot_user"`
-	MaprootGroup    types.String `tfsdk:"maproot_group"`
-	MapallUser      types.String `tfsdk:"mapall_user"`
-	MapallGroup     types.String `tfsdk:"mapall_group"`
-	Security        types.List   `tfsdk:"security"`
-	Enabled         types.Bool   `tfsdk:"enabled"`
-	ExposeSnapshots types.Bool   `tfsdk:"expose_snapshots"`
+	ID types.String `tfsdk:"id"`
+	Path types.String `tfsdk:"path"`
+	Aliases types.List `tfsdk:"aliases"`
+	Comment types.String `tfsdk:"comment"`
+	Networks types.List `tfsdk:"networks"`
+	Hosts types.List `tfsdk:"hosts"`
+	Ro types.Bool `tfsdk:"ro"`
+	MaprootUser types.String `tfsdk:"maproot_user"`
+	MaprootGroup types.String `tfsdk:"maproot_group"`
+	MapallUser types.String `tfsdk:"mapall_user"`
+	MapallGroup types.String `tfsdk:"mapall_group"`
+	Security types.List `tfsdk:"security"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	ExposeSnapshots types.Bool `tfsdk:"expose_snapshots"`
 }
 
 func NewSharingNfsResource() resource.Resource {
@@ -51,72 +51,72 @@ func (r *SharingNfsResource) Schema(ctx context.Context, req resource.SchemaRequ
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"path": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Local path to be exported. ",
 			},
 			"aliases": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "IGNORED for now. ",
 			},
 			"comment": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "User comment associated with share. ",
 			},
 			"networks": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "List of authorized networks that are allowed to access the share having format     \"network/mask\" CI",
 			},
 			"hosts": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "List of IP's/hostnames which are allowed to access the share. No quotes or spaces are allowed. Each ",
 			},
 			"ro": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Export the share as read only. ",
 			},
 			"maproot_user": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Map root user client to a specified user. ",
 			},
 			"maproot_group": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Map root group client to a specified group. ",
 			},
 			"mapall_user": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Map all client users to a specified user. ",
 			},
 			"mapall_group": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Map all client groups to a specified group. ",
 			},
 			"security": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Specify the security schema. ",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Enable or disable the share. ",
 			},
 			"expose_snapshots": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Enterprise feature to enable access to the ZFS snapshot directory for the export. Export path must b",
 			},
 		},
@@ -246,21 +246,21 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["path"]; ok && v != nil {
-		switch val := v.(type) {
-		case string:
-			data.Path = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Path = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["path"]; ok && v != nil {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

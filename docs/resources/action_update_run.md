@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_update_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Downloads (if not already in cache) and apply an update.
 ---

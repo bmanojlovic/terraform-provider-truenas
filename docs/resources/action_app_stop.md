@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_stop Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Stop `app_name` app.
 ---

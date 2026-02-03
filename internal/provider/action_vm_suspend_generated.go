@@ -87,11 +87,11 @@ func (r *ActionVmSuspendResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("vm.suspend", params)
+	result, err := r.client.Call("vm.suspend", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.suspend: %s", err.Error()))
 		return

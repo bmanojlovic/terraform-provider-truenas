@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_truenas_set_production Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Sets system production state and optionally sends initial debug.
 ---

@@ -87,11 +87,11 @@ func (r *ActionPoolUpgradeResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("pool.upgrade", params)
+	result, err := r.client.Call("pool.upgrade", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.upgrade: %s", err.Error()))
 		return

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_audit_export Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Audit"
 description: |-
   Generate an audit report based on the specified `query-filters` and `query-options` for the specified `services` in the specified `export_format`.  Supported export_formats are CSV, JSON, and YAML. The endpoint returns a local filesystem path where the resulting audit report is located.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_nvmet_namespace Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a NVMe target namespace in a subsystem (`subsys`).
 ---

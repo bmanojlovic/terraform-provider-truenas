@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_config_reset Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Config"
 description: |-
   Reset database to configuration defaults.  If `reboot` is true this job will reboot the system after its completed with a delay of 10 seconds.
 ---

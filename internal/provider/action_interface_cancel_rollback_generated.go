@@ -87,10 +87,10 @@ func (r *ActionInterfaceCancel_RollbackResource) Create(ctx context.Context, req
 	}
 
 	// Build parameters
-	params := []interface{}{}
+	paramsArr := []interface{}{}
 
 	// Execute action
-	result, err := r.client.Call("interface.cancel_rollback", params)
+	result, err := r.client.Call("interface.cancel_rollback", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute interface.cancel_rollback: %s", err.Error()))
 		return

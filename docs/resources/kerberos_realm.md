@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_kerberos_realm Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create a new kerberos realm. This will be automatically populated during the
 ---

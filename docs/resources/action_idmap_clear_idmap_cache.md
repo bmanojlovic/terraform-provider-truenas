@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_idmap_clear_idmap_cache Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache. This should be performed after finalizing idmap changes.
 ---

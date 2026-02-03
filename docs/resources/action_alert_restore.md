@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_alert_restore Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Alerts"
 description: |-
   Restore `id` alert which had been dismissed.
 ---

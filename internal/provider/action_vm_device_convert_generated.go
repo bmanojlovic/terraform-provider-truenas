@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,7 +16,8 @@ type ActionVmDeviceConvertResource struct {
 }
 
 type ActionVmDeviceConvertResourceModel struct {
-	VmConvert types.String `tfsdk:"vm_convert"`
+	Source      types.String `tfsdk:"source"`
+	Destination types.String `tfsdk:"destination"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,8 @@ func (r *ActionVmDeviceConvertResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Convert between disk images and ZFS volumes. Supported disk image formats         are qcow2, qed, raw, vdi, vhdx, and vmdk. The conversion direction is determined         automatically based on file e",
 		Attributes: map[string]schema.Attribute{
-			"vm_convert": schema.StringAttribute{Required: true, MarkdownDescription: "VMDeviceConvertArgs parameters."},
+			"source":      schema.StringAttribute{Required: true, MarkdownDescription: "Source path for the conversion (disk image file or ZFS volume)."},
+			"destination": schema.StringAttribute{Required: true, MarkdownDescription: "Destination path for the conversion (disk image file or ZFS volume)."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -88,14 +89,13 @@ func (r *ActionVmDeviceConvertResource) Create(ctx context.Context, req resource
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	var vm_convertVal interface{}
-	if err := json.Unmarshal([]byte(data.VmConvert.ValueString()), &vm_convertVal); err == nil {
-		params = append(params, vm_convertVal)
-	}
+	params := map[string]interface{}{}
+	params["source"] = data.Source.ValueString()
+	params["destination"] = data.Destination.ValueString()
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("vm.device.convert", params)
+	result, err := r.client.Call("vm.device.convert", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.device.convert: %s", err.Error()))
 		return

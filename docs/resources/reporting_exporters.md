@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_reporting_exporters Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Reporting"
 description: |-
   Create a specific reporting exporter configuration containing required details for exporting reporting metrics.
 ---

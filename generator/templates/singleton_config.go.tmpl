@@ -1,0 +1,135 @@
+package provider
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+type {resource_name}ConfigResource struct {
+	client *client.Client
+}
+
+type {resource_name}ConfigResourceModel struct {
+{fields}
+}
+
+func New{resource_name}ConfigResource() resource.Resource {
+	return &{resource_name}ConfigResource{}
+}
+
+func (r *{resource_name}ConfigResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_{resource_type}_config"
+}
+
+func (r *{resource_name}ConfigResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "{description}",
+		Attributes: map[string]schema.Attribute{
+{schema_attrs}
+		},
+	}
+}
+
+func (r *{resource_name}ConfigResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	client, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError("Unexpected Resource Configure Type", "Expected *client.Client")
+		return
+	}
+	r.client = client
+}
+
+func (r *{resource_name}ConfigResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data {resource_name}ConfigResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build update parameters
+{param_building}
+
+	// Apply configuration
+	_, err := r.client.Call("{update_method}", paramsArr)
+	if err != nil {
+		resp.Diagnostics.AddError("Configuration Failed", fmt.Sprintf("Failed to apply {name} config: %s", err.Error()))
+		return
+	}
+
+	// Read back to populate computed fields
+	result, err := r.client.Call("{read_method}", []interface{}{})
+	if err != nil {
+		resp.Diagnostics.AddError("Read Failed", fmt.Sprintf("Failed to read {name} config: %s", err.Error()))
+		return
+	}
+	if m, ok := result.(map[string]interface{}); ok {
+{read_mapping}
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *{resource_name}ConfigResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data {resource_name}ConfigResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read current configuration
+	result, err := r.client.Call("{read_method}", []interface{}{})
+	if err != nil {
+		resp.Diagnostics.AddError("Read Failed", fmt.Sprintf("Failed to read {name} config: %s", err.Error()))
+		return
+	}
+
+	// Map result to state
+	if m, ok := result.(map[string]interface{}); ok {
+{read_mapping}
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *{resource_name}ConfigResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data {resource_name}ConfigResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build update parameters
+{param_building}
+
+	// Apply configuration
+	_, err := r.client.Call("{update_method}", paramsArr)
+	if err != nil {
+		resp.Diagnostics.AddError("Update Failed", fmt.Sprintf("Failed to update {name} config: %s", err.Error()))
+		return
+	}
+
+	// Read back to populate computed fields
+	result, err := r.client.Call("{read_method}", []interface{}{})
+	if err != nil {
+		resp.Diagnostics.AddError("Read Failed", fmt.Sprintf("Failed to read {name} config: %s", err.Error()))
+		return
+	}
+	if m, ok := result.(map[string]interface{}); ok {
+{read_mapping}
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *{resource_name}ConfigResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Singleton configs cannot be deleted - just remove from state
+}

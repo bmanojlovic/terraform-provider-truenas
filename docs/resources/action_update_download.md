@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_update_download Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Download updates.
 ---

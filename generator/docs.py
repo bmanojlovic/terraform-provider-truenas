@@ -4,6 +4,65 @@ from pathlib import Path
 from .schema import get_tf_type, is_complex_object
 
 
+# Subcategory mapping for Terraform Registry sidebar grouping
+SUBCATEGORY_MAP = {
+    "pool": "Storage - Pools",
+    "disk": "Storage - Disks",
+    "vm": "Virtual Machines",
+    "virt": "Virtualization",
+    "sharing": "Sharing",
+    "interface": "Network",
+    "staticroute": "Network",
+    "user": "Users & Groups",
+    "group": "Users & Groups",
+    "app": "Applications",
+    "docker": "Applications",
+    "certificate": "Certificates",
+    "acme": "Certificates",
+    "service": "Services",
+    "cronjob": "Scheduled Tasks",
+    "replication": "Replication",
+    "cloudsync": "Cloud Sync",
+    "cloud_backup": "Cloud Backup",
+    "boot": "System - Boot",
+    "system": "System",
+    "config": "System - Config",
+    "filesystem": "Filesystem",
+    "alert": "Alerts",
+    "reporting": "Reporting",
+    "audit": "Audit",
+    "mail": "Notifications",
+    "smart": "S.M.A.R.T.",
+    "ups": "UPS",
+    "iscsi": "iSCSI",
+    "nfs": "Sharing",
+    "smb": "Sharing",
+    "ftp": "Sharing",
+}
+
+
+def get_subcategory(name, is_action=False):
+    """Get subcategory for a resource/datasource based on its name."""
+    if is_action:
+        prefix = "Actions - "
+    else:
+        prefix = ""
+    
+    # Check each prefix in order of specificity (longer first)
+    parts = name.replace("_", ".").split(".")
+    for i in range(len(parts), 0, -1):
+        key = ".".join(parts[:i])
+        if key in SUBCATEGORY_MAP:
+            return prefix + SUBCATEGORY_MAP[key]
+    
+    # Fallback to first part
+    first = parts[0]
+    if first in SUBCATEGORY_MAP:
+        return prefix + SUBCATEGORY_MAP[first]
+    
+    return prefix + "Other" if is_action else "Other"
+
+
 def gen_resource_docs(base_name, properties, required, description, methods, anyof_variants, templates):
     """Generate resource documentation."""
     tf_name = base_name.replace(".", "_")
@@ -127,6 +186,7 @@ resource "truenas_{tf_name}" "example" {{
 
     doc = templates["resource_doc.md"].format(
         resource_type=tf_name,
+        subcategory=get_subcategory(base_name),
         description=description,
         required_args=chr(10).join(req_args) or "- None",
         optional_args=chr(10).join(opt_args) or "- None",
@@ -149,6 +209,7 @@ def gen_datasource_docs(base_name, properties, description, templates):
 
     doc = templates["datasource_doc.md"].format(
         resource_type=tf_name,
+        subcategory=get_subcategory(base_name),
         description=description,
         name=tf_name,
         attrs=chr(10).join(attrs) or "- None",
@@ -197,9 +258,11 @@ def gen_action_docs(method_name, properties, description, config_meta=None):
         related_links = [f"- `truenas_action_{r.replace('.', '_')}`" for r in related]
         related_section = f"\n## Related Actions\n\n{chr(10).join(related_links)}\n"
 
+    subcategory = get_subcategory(method_name, is_action=True)
+
     doc = f"""---
 page_title: "truenas_{resource_name} Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "{subcategory}"
 description: |-
   {description}
 ---

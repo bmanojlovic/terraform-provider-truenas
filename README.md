@@ -52,7 +52,7 @@ resource "truenas_vm" "example" {
 
 ## Available Resources
 
-This provider includes **274 resources** covering:
+This provider covers:
 
 - **Virtual Machines** (`truenas_vm`, `truenas_vm_device`)
 - **Storage** (`truenas_pool`, `truenas_pool_dataset`, `truenas_pool_snapshot`)
@@ -61,6 +61,8 @@ This provider includes **274 resources** covering:
 - **Network** (`truenas_interface`, `truenas_staticroute`)
 - **Services** (`truenas_service`)
 - **And many more...**
+
+See [Resource Documentation](docs/resources/) for the complete list.
 
 ## Documentation
 

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_boot_environment_activate Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System - Boot"
 description: |-
   Activate a boot environment for next reboot.
 ---

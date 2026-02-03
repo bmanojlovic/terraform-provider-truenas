@@ -87,11 +87,11 @@ func (r *ActionAppStopResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.AppName.ValueString())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.AppName.ValueString())
 
 	// Execute action
-	result, err := r.client.Call("app.stop", params)
+	result, err := r.client.Call("app.stop", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute app.stop: %s", err.Error()))
 		return

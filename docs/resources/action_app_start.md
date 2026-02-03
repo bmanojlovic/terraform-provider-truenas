@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_app_start Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Applications"
 description: |-
   Start `app_name` app.
 ---

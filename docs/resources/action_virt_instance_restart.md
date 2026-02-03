@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_virt_instance_restart Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Virtualization"
 description: |-
   Restart an instance.  Timeout is how long it should wait for the instance to shutdown cleanly.
 ---

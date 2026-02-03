@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cronjob_run Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Scheduled Tasks"
 description: |-
   Job to run cronjob task of `id`.
 ---

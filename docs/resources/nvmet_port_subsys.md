@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_nvmet_port_subsys Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Create an association between a `port` and a subsystem (`subsys`).
 ---

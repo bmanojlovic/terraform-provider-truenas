@@ -11,13 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type ActionPoolScrubRunResource struct {
+type SystemGeneralUi_RestartResource struct {
 	client *client.Client
 }
 
-type ActionPoolScrubRunResourceModel struct {
-	Name      types.String `tfsdk:"name"`
-	Threshold types.Int64  `tfsdk:"threshold"`
+type SystemGeneralUi_RestartResourceModel struct {
+	Delay types.Int64 `tfsdk:"delay"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -27,20 +26,19 @@ type ActionPoolScrubRunResourceModel struct {
 	Error    types.String  `tfsdk:"error"`
 }
 
-func NewActionPoolScrubRunResource() resource.Resource {
-	return &ActionPoolScrubRunResource{}
+func NewSystemGeneralUi_RestartResource() resource.Resource {
+	return &SystemGeneralUi_RestartResource{}
 }
 
-func (r *ActionPoolScrubRunResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_action_pool_scrub_run"
+func (r *SystemGeneralUi_RestartResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_system_general_ui_restart"
 }
 
-func (r *ActionPoolScrubRunResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *SystemGeneralUi_RestartResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.",
+		MarkdownDescription: "Restart HTTP server to use latest UI settings.  HTTP server will be restarted after `delay` seconds.",
 		Attributes: map[string]schema.Attribute{
-			"name":      schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to run scrub on."},
-			"threshold": schema.Int64Attribute{Optional: true, MarkdownDescription: "Days before a scrub is due when the scrub should start."},
+			"delay": schema.Int64Attribute{Optional: true, MarkdownDescription: "How long to wait before the UI is restarted."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -69,7 +67,7 @@ func (r *ActionPoolScrubRunResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *ActionPoolScrubRunResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *SystemGeneralUi_RestartResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -81,24 +79,21 @@ func (r *ActionPoolScrubRunResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *ActionPoolScrubRunResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ActionPoolScrubRunResourceModel
+func (r *SystemGeneralUi_RestartResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data SystemGeneralUi_RestartResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.Name.ValueString())
-	if !data.Threshold.IsNull() {
-		params = append(params, data.Threshold.ValueInt64())
-	}
+	paramsArr := []interface{}{}
+	if !data.Delay.IsNull() { paramsArr = append(paramsArr, data.Delay.ValueInt64()) }
 
 	// Execute action
-	result, err := r.client.Call("pool.scrub.run", params)
+	result, err := r.client.Call("system.general.ui_restart", paramsArr)
 	if err != nil {
-		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.scrub.run: %s", err.Error()))
+		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute system.general.ui_restart: %s", err.Error()))
 		return
 	}
 
@@ -106,7 +101,7 @@ func (r *ActionPoolScrubRunResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")
@@ -132,20 +127,20 @@ func (r *ActionPoolScrubRunResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	// Generate ID from timestamp
-	data.ActionID = types.StringValue(fmt.Sprintf("pool.scrub.run-%d", time.Now().Unix()))
+	data.ActionID = types.StringValue(fmt.Sprintf("system.general.ui_restart-%d", time.Now().Unix()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ActionPoolScrubRunResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *SystemGeneralUi_RestartResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Actions are immutable - just return current state
-	var data ActionPoolScrubRunResourceModel
+	var data SystemGeneralUi_RestartResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 }
 
-func (r *ActionPoolScrubRunResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *SystemGeneralUi_RestartResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.AddError("Update Not Supported", "Actions cannot be updated, only recreated")
 }
 
-func (r *ActionPoolScrubRunResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *SystemGeneralUi_RestartResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// No-op - actions cannot be undone
 }

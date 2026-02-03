@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_disk Data Source - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Storage - Disks"
 description: |-
   Returns instance matching `id`. If `id` is not found, Validation error is raised.
 ---

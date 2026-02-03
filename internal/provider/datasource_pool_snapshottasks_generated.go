@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,17 +27,17 @@ type PoolSnapshottasksDataSourceModel struct {
 }
 
 type PoolSnapshottasksItemModel struct {
-	ID            types.String `tfsdk:"id"`
-	Dataset       types.String `tfsdk:"dataset"`
-	Recursive     types.Bool   `tfsdk:"recursive"`
-	LifetimeValue types.Int64  `tfsdk:"lifetime_value"`
-	LifetimeUnit  types.String `tfsdk:"lifetime_unit"`
-	Enabled       types.Bool   `tfsdk:"enabled"`
-	NamingSchema  types.String `tfsdk:"naming_schema"`
-	AllowEmpty    types.Bool   `tfsdk:"allow_empty"`
-	Schedule      types.String `tfsdk:"schedule"`
-	State         types.String `tfsdk:"state"`
-	VmwareSync    types.Bool   `tfsdk:"vmware_sync"`
+	ID types.String `tfsdk:"id"`
+	Dataset types.String `tfsdk:"dataset"`
+	Recursive types.Bool `tfsdk:"recursive"`
+	LifetimeValue types.Int64 `tfsdk:"lifetime_value"`
+	LifetimeUnit types.String `tfsdk:"lifetime_unit"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	NamingSchema types.String `tfsdk:"naming_schema"`
+	AllowEmpty types.Bool `tfsdk:"allow_empty"`
+	Schedule types.String `tfsdk:"schedule"`
+	State types.String `tfsdk:"state"`
+	VmwareSync types.Bool `tfsdk:"vmware_sync"`
 }
 
 func (d *PoolSnapshottasksDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -49,51 +49,51 @@ func (d *PoolSnapshottasksDataSource) Schema(ctx context.Context, req datasource
 		Description: "Query pool_snapshottasks",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of pool_snapshottasks resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"dataset": schema.StringAttribute{
-							Computed:    true,
-							Description: "The dataset to take snapshots of.",
-						},
-						"recursive": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether to recursively snapshot child datasets.",
-						},
-						"lifetime_value": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Number of time units to retain snapshots. `lifetime_unit` gives the time unit.",
-						},
-						"lifetime_unit": schema.StringAttribute{
-							Computed:    true,
-							Description: "Unit of time for snapshot retention.",
-						},
-						"enabled": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether this periodic snapshot task is enabled.",
-						},
-						"naming_schema": schema.StringAttribute{
-							Computed:    true,
-							Description: "Naming pattern for generated snapshots using strftime format.",
-						},
-						"allow_empty": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether to take snapshots even if no data has changed.",
-						},
-						"schedule": schema.StringAttribute{
-							Computed:    true,
-							Description: "Cron schedule for when snapshots should be taken.",
-						},
-						"state": schema.StringAttribute{
-							Computed:    true,
-							Description: "Detailed state information for the task.",
-						},
-						"vmware_sync": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether VMware VMs are synced before taking snapshots.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"dataset": schema.StringAttribute{
+				Computed: true,
+				Description: "The dataset to take snapshots of.",
+			},
+			"recursive": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether to recursively snapshot child datasets.",
+			},
+			"lifetime_value": schema.Int64Attribute{
+				Computed: true,
+				Description: "Number of time units to retain snapshots. `lifetime_unit` gives the time unit.",
+			},
+			"lifetime_unit": schema.StringAttribute{
+				Computed: true,
+				Description: "Unit of time for snapshot retention.",
+			},
+			"enabled": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether this periodic snapshot task is enabled.",
+			},
+			"naming_schema": schema.StringAttribute{
+				Computed: true,
+				Description: "Naming pattern for generated snapshots using strftime format.",
+			},
+			"allow_empty": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether to take snapshots even if no data has changed.",
+			},
+			"schedule": schema.StringAttribute{
+				Computed: true,
+				Description: "Cron schedule for when snapshots should be taken.",
+			},
+			"state": schema.StringAttribute{
+				Computed: true,
+				Description: "Detailed state information for the task.",
+			},
+			"vmware_sync": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether VMware VMs are synced before taking snapshots.",
+			},
 					},
 				},
 			},
@@ -142,30 +142,22 @@ func (d *PoolSnapshottasksDataSource) Read(ctx context.Context, req datasource.R
 			itemModel.Dataset = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["recursive"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Recursive = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Recursive = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["lifetime_value"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.LifetimeValue = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.LifetimeValue = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["lifetime_unit"]; ok && v != nil {
 			itemModel.LifetimeUnit = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Enabled = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["naming_schema"]; ok && v != nil {
 			itemModel.NamingSchema = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["allow_empty"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.AllowEmpty = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.AllowEmpty = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["schedule"]; ok && v != nil {
 			itemModel.Schedule = types.StringValue(fmt.Sprintf("%v", v))
@@ -177,9 +169,7 @@ func (d *PoolSnapshottasksDataSource) Read(ctx context.Context, req datasource.R
 			itemModel.State = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["vmware_sync"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.VmwareSync = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.VmwareSync = types.BoolValue(bv) }
 		}
 		items = append(items, itemModel)
 	}
@@ -187,17 +177,17 @@ func (d *PoolSnapshottasksDataSource) Read(ctx context.Context, req datasource.R
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"allow_empty":    types.BoolType,
-			"dataset":        types.StringType,
-			"enabled":        types.BoolType,
-			"id":             types.StringType,
-			"lifetime_unit":  types.StringType,
+			"allow_empty": types.BoolType,
+			"dataset": types.StringType,
+			"enabled": types.BoolType,
+			"id": types.StringType,
+			"lifetime_unit": types.StringType,
 			"lifetime_value": types.Int64Type,
-			"naming_schema":  types.StringType,
-			"recursive":      types.BoolType,
-			"schedule":       types.StringType,
-			"state":          types.StringType,
-			"vmware_sync":    types.BoolType,
+			"naming_schema": types.StringType,
+			"recursive": types.BoolType,
+			"schedule": types.StringType,
+			"state": types.StringType,
+			"vmware_sync": types.BoolType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

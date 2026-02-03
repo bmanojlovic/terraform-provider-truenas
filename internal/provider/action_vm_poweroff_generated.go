@@ -87,11 +87,11 @@ func (r *ActionVmPoweroffResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// Build parameters
-	params := []interface{}{}
-	params = append(params, data.ID.ValueInt64())
+	paramsArr := []interface{}{}
+	paramsArr = append(paramsArr, data.ID.ValueInt64())
 
 	// Execute action
-	result, err := r.client.Call("vm.poweroff", params)
+	result, err := r.client.Call("vm.poweroff", paramsArr)
 	if err != nil {
 		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.poweroff: %s", err.Error()))
 		return

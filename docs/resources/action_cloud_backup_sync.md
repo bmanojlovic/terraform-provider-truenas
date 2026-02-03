@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_cloud_backup_sync Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Run the cloud backup job `id`.
 ---

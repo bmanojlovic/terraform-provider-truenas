@@ -90,9 +90,7 @@ func (r *ActionAppImagePullResource) Create(ctx context.Context, req resource.Cr
 	// Build parameters
 	params := []interface{}{}
 	var image_pullVal interface{}
-	if err := json.Unmarshal([]byte(data.ImagePull.ValueString()), &image_pullVal); err == nil {
-		params = append(params, image_pullVal)
-	}
+	if err := json.Unmarshal([]byte(data.ImagePull.ValueString()), &image_pullVal); err == nil { params = append(params, image_pullVal) }
 
 	// Execute action
 	result, err := r.client.Call("app.image.pull", params)
@@ -105,7 +103,7 @@ func (r *ActionAppImagePullResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

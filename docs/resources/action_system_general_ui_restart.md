@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_system_general_ui_restart Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - System"
 description: |-
   Restart HTTP server to use latest UI settings.  HTTP server will be restarted after `delay` seconds.
 ---

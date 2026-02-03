@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_pool_snapshot Resource - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Storage - Pools"
 description: |-
   Take a snapshot from a given dataset.
 ---

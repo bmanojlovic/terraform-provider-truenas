@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_action_ipmi_sel_elist Resource - terraform-provider-truenas"
-subcategory: "Actions"
+subcategory: "Actions - Other"
 description: |-
   Query IPMI System Event Log (SEL) extended list
 ---
