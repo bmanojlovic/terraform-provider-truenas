@@ -91,19 +91,19 @@ func (r *AppRegistryResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.Uri.IsNull() {
+	if !data.Uri.IsNull() && !data.Uri.IsUnknown() {
 		params["uri"] = data.Uri.ValueString()
 	}
 
@@ -125,6 +125,81 @@ func (r *AppRegistryResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("app.registry.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back app_registry: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["description"]; ok {
+			if v == nil {
+				data.Description = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Description = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Description = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["username"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Username = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Username = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["password"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -165,7 +240,7 @@ func (r *AppRegistryResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -177,7 +252,23 @@ func (r *AppRegistryResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["username"]; ok && v != nil {
+		if v, ok := resultMap["description"]; ok {
+			if v == nil {
+				data.Description = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Description = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Description = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["username"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Username = types.StringValue(val)
@@ -189,7 +280,7 @@ func (r *AppRegistryResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Username = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["password"]; ok && v != nil {
+		if v, ok := resultMap["password"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Password = types.StringValue(val)
@@ -227,19 +318,19 @@ func (r *AppRegistryResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.Uri.IsNull() {
+	if !data.Uri.IsNull() && !data.Uri.IsUnknown() {
 		params["uri"] = data.Uri.ValueString()
 	}
 
@@ -270,6 +361,10 @@ func (r *AppRegistryResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("app.registry.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete app_registry: %s", err))
 		return
 	}

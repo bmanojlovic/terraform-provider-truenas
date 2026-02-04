@@ -80,10 +80,10 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	params := map[string]interface{}{}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -91,7 +91,7 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -113,6 +113,56 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("reporting.exporters.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back reporting_exporters: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["enabled"]; ok {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -153,10 +203,10 @@ func (r *ReportingExportersResource) Read(ctx context.Context, req resource.Read
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["enabled"]; ok && v != nil {
+		if v, ok := resultMap["enabled"]; ok {
 			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["attributes"]; ok && v != nil {
+		if v, ok := resultMap["attributes"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Attributes = types.StringValue(val)
@@ -168,7 +218,7 @@ func (r *ReportingExportersResource) Read(ctx context.Context, req resource.Read
 				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -206,10 +256,10 @@ func (r *ReportingExportersResource) Update(ctx context.Context, req resource.Up
 	}
 
 	params := map[string]interface{}{}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -217,7 +267,7 @@ func (r *ReportingExportersResource) Update(ctx context.Context, req resource.Up
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -248,6 +298,10 @@ func (r *ReportingExportersResource) Delete(ctx context.Context, req resource.De
 
 	_, err = r.client.Call("reporting.exporters.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete reporting_exporters: %s", err))
 		return
 	}

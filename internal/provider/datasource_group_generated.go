@@ -140,7 +140,7 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-		if v, ok := resultMap["gid"]; ok && v != nil {
+		if v, ok := resultMap["gid"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Gid = types.Int64Value(int64(val))
@@ -150,7 +150,7 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				}
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -162,37 +162,41 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["builtin"]; ok && v != nil {
+		if v, ok := resultMap["builtin"]; ok {
 			if bv, ok := v.(bool); ok { data.Builtin = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["sudo_commands"]; ok && v != nil {
+		if v, ok := resultMap["sudo_commands"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.SudoCommands, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["sudo_commands_nopasswd"]; ok && v != nil {
+		if v, ok := resultMap["sudo_commands_nopasswd"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["smb"]; ok && v != nil {
+		if v, ok := resultMap["smb"]; ok {
 			if bv, ok := v.(bool); ok { data.Smb = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["userns_idmap"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.UsernsIdmap = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["userns_idmap"]; ok {
+			if v == nil {
+				data.UsernsIdmap = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.UsernsIdmap = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["group"]; ok && v != nil {
+		if v, ok := resultMap["group"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Group = types.StringValue(val)
@@ -204,36 +208,40 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				data.Group = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["local"]; ok && v != nil {
+		if v, ok := resultMap["local"]; ok {
 			if bv, ok := v.(bool); ok { data.Local = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["sid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Sid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Sid = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["sid"]; ok {
+			if v == nil {
+				data.Sid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Sid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Sid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Sid = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Sid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["roles"]; ok && v != nil {
+		if v, ok := resultMap["roles"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Roles, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["users"]; ok && v != nil {
+		if v, ok := resultMap["users"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Users, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["immutable"]; ok && v != nil {
+		if v, ok := resultMap["immutable"]; ok {
 			if bv, ok := v.(bool); ok { data.Immutable = types.BoolValue(bv) }
 		}
 

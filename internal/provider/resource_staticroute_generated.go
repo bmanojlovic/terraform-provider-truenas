@@ -79,13 +79,13 @@ func (r *StaticrouteResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Destination.IsNull() {
+	if !data.Destination.IsNull() && !data.Destination.IsUnknown() {
 		params["destination"] = data.Destination.ValueString()
 	}
-	if !data.Gateway.IsNull() {
+	if !data.Gateway.IsNull() && !data.Gateway.IsUnknown() {
 		params["gateway"] = data.Gateway.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
 
@@ -107,6 +107,53 @@ func (r *StaticrouteResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("staticroute.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back staticroute: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["destination"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Destination = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Destination = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Destination = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["gateway"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Gateway = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Gateway = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Gateway = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -147,7 +194,7 @@ func (r *StaticrouteResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["destination"]; ok && v != nil {
+		if v, ok := resultMap["destination"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Destination = types.StringValue(val)
@@ -159,7 +206,7 @@ func (r *StaticrouteResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Destination = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["gateway"]; ok && v != nil {
+		if v, ok := resultMap["gateway"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Gateway = types.StringValue(val)
@@ -197,13 +244,13 @@ func (r *StaticrouteResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Destination.IsNull() {
+	if !data.Destination.IsNull() && !data.Destination.IsUnknown() {
 		params["destination"] = data.Destination.ValueString()
 	}
-	if !data.Gateway.IsNull() {
+	if !data.Gateway.IsNull() && !data.Gateway.IsUnknown() {
 		params["gateway"] = data.Gateway.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
 
@@ -234,6 +281,10 @@ func (r *StaticrouteResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("staticroute.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete staticroute: %s", err))
 		return
 	}

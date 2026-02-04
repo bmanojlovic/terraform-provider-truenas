@@ -104,16 +104,16 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	params := map[string]interface{}{}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Stderr.IsNull() {
+	if !data.Stderr.IsNull() && !data.Stderr.IsUnknown() {
 		params["stderr"] = data.Stderr.ValueBool()
 	}
-	if !data.Stdout.IsNull() {
+	if !data.Stdout.IsNull() && !data.Stdout.IsUnknown() {
 		params["stdout"] = data.Stdout.ValueBool()
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -121,13 +121,13 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.Command.IsNull() {
+	if !data.Command.IsNull() && !data.Command.IsUnknown() {
 		params["command"] = data.Command.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
 
@@ -149,6 +149,53 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("cronjob.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back cronjob: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["command"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Command = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Command = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["user"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.User = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.User = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -189,7 +236,7 @@ func (r *CronjobResource) Read(ctx context.Context, req resource.ReadRequest, re
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["command"]; ok && v != nil {
+		if v, ok := resultMap["command"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Command = types.StringValue(val)
@@ -201,7 +248,7 @@ func (r *CronjobResource) Read(ctx context.Context, req resource.ReadRequest, re
 				data.Command = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["user"]; ok && v != nil {
+		if v, ok := resultMap["user"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.User = types.StringValue(val)
@@ -239,16 +286,16 @@ func (r *CronjobResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	params := map[string]interface{}{}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Stderr.IsNull() {
+	if !data.Stderr.IsNull() && !data.Stderr.IsUnknown() {
 		params["stderr"] = data.Stderr.ValueBool()
 	}
-	if !data.Stdout.IsNull() {
+	if !data.Stdout.IsNull() && !data.Stdout.IsUnknown() {
 		params["stdout"] = data.Stdout.ValueBool()
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -256,13 +303,13 @@ func (r *CronjobResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.Command.IsNull() {
+	if !data.Command.IsNull() && !data.Command.IsUnknown() {
 		params["command"] = data.Command.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
 
@@ -293,6 +340,10 @@ func (r *CronjobResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	_, err = r.client.Call("cronjob.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete cronjob: %s", err))
 		return
 	}

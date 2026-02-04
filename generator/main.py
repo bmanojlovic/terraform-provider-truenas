@@ -47,7 +47,7 @@ def load_spec():
     return data.get("methods", {}), data.get("_metadata", {})
 
 
-def gen_resource(base_name, methods, templates):
+def gen_resource(base_name, methods, templates, config):
     """Generate resource file from method specs."""
     create_spec = methods.get(f"{base_name}.create", {})
     update_spec = methods.get(f"{base_name}.update", {})
@@ -70,6 +70,9 @@ def gen_resource(base_name, methods, templates):
         update_props, _ = merge_anyof_schema(up_schema) if "anyOf" in up_schema else (up_schema.get("properties", {}), [])
         update_props = {k: v for k, v in update_props.items() if k != "id"}
     create_only = set(properties.keys()) - set(update_props.keys()) if update_props else set(properties.keys())
+    
+    # Keep create properties for read mapping (they have 'default' keys)
+    create_properties = properties.copy()
     properties = {**properties, **update_props}
 
     has_start = f"{base_name}.start" in methods and base_name != "app"
@@ -85,20 +88,35 @@ def gen_resource(base_name, methods, templates):
     desc = (method_spec.get("description") or f"TrueNAS {tf_name} resource").split("\n")[0][:200].replace('"', '\\"')
 
     # ID handling
+    # Resource-specific delete options from config
+    delete_opts = config.get('resources', {}).get('delete_options', {}).get(base_name, {})
+    if delete_opts:
+        # Convert Python bool to Go bool
+        opts_items = []
+        for k, v in delete_opts.items():
+            if isinstance(v, bool):
+                opts_items.append(f'"{k}": {str(v).lower()}')
+            else:
+                opts_items.append(f'"{k}": {v}')
+        opts_str = ', '.join(opts_items)
+        delete_opts_map = 'map[string]interface{}{' + opts_str + '}'
+    else:
+        delete_opts_map = 'map[string]interface{}{}'
+    
     if id_is_string:
         id_read = "\tid = data.ID.ValueString()"
         id_update = "\tid = state.ID.ValueString()"
-        id_delete = "\tid = []interface{}{data.ID.ValueString(), map[string]interface{}{}}" if delete_needs_opts else "\tid = data.ID.ValueString()"
+        id_delete = "\tid = []interface{}{data.ID.ValueString(), " + delete_opts_map + "}" if delete_needs_opts else "\tid = data.ID.ValueString()"
     else:
         id_read = '\tid, err = strconv.Atoi(data.ID.ValueString())\n\tif err != nil {\n\t\tresp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))\n\t\treturn\n\t}'
         id_update = '\tid, err = strconv.Atoi(state.ID.ValueString())\n\tif err != nil {\n\t\tresp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))\n\t\treturn\n\t}'
-        id_delete = id_read if not delete_needs_opts else '\tid, err = strconv.Atoi(data.ID.ValueString())\n\tif err != nil {\n\t\tresp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))\n\t\treturn\n\t}\n\tid = []interface{}{id, map[string]interface{}{}}'
+        id_delete = id_read if not delete_needs_opts else '\tid, err = strconv.Atoi(data.ID.ValueString())\n\tif err != nil {\n\t\tresp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))\n\t\treturn\n\t}\n\tid = []interface{}{id, ' + delete_opts_map + '}'
 
     # Lifecycle
     lifecycle = ""
     if has_start:
         start_call = f"data.ID.ValueString()" if id_is_string else f"func() int {{ id, _ := strconv.Atoi(data.ID.ValueString()); return id }}()"
-        lifecycle = f'\n\tstartOnCreate := true\n\tif !data.StartOnCreate.IsNull() {{ startOnCreate = data.StartOnCreate.ValueBool() }}\n\tif startOnCreate {{\n\t\t_, err = r.client.Call("{api_name}.start", {start_call})\n\t\tif err != nil {{ resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error())) }}\n\t}}'
+        lifecycle = f'\n\tstartOnCreate := false\n\tif !data.StartOnCreate.IsNull() {{ startOnCreate = data.StartOnCreate.ValueBool() }}\n\tif startOnCreate {{\n\t\t_, err = r.client.Call("{api_name}.start", {start_call})\n\t\tif err != nil {{ resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error())) }}\n\t}}'
 
     predelete = ""
     if has_stop:
@@ -107,12 +125,19 @@ def gen_resource(base_name, methods, templates):
 
     # Imports
     needs_strconv = not id_is_string or (has_start and not id_is_string) or (has_stop and not id_is_string)
-    has_list = any(get_tf_type(p) == "List" and (n not in create_only or n in ("name", "type")) and n in required for n, p in properties.items())
+    # Check if we need attr import (for List fields that are read)
+    # Only import if List fields are required or have default:null
+    has_list_to_read = any(
+        get_tf_type(p) == "List" 
+        for n, p in properties.items() 
+        if n not in ("provider", "id") and n not in create_only 
+        and (n in required or (p.get("default") is None and "default" in p))
+    )
     has_json = has_complex_objects(properties)
 
     imports = []
     if needs_strconv: imports.append('"strconv"')
-    if has_list and required: imports.append('"github.com/hashicorp/terraform-plugin-framework/attr"')
+    if has_list_to_read: imports.append('"github.com/hashicorp/terraform-plugin-framework/attr"')
     if has_json: imports.append('"encoding/json"')
     if has_stop: imports.append('"time"')
 
@@ -130,7 +155,7 @@ def gen_resource(base_name, methods, templates):
         schema_attrs=gen_schema_attrs(properties, required, has_start, create_only),
         create_params=gen_create_params(properties),
         update_params=gen_create_params(update_props or properties),
-        read_mapping=gen_read_mapping(properties, create_only=create_only, required=set(required)),
+        read_mapping=gen_read_mapping(create_properties, create_only=create_only, required=set(required)),  # Use create_properties
         lifecycle_code=lifecycle, predelete_code=predelete,
         id_read_code=id_read, id_update_code=id_update, id_delete_code=id_delete,
         extra_imports="\n\t".join(imports),
@@ -222,7 +247,7 @@ def gen_flat_action_resource(method_name, method_spec, templates, resource_bases
             if req:
                 param_lines.append(f'\tparams["{n}"] = data.{field}.{val_method}()')
             else:
-                param_lines.append(f'\tif !data.{field}.IsNull() {{ params["{n}"] = data.{field}.{val_method}() }}')
+                param_lines.append(f'\tif !data.{field}.IsNull() && !data.{field}.IsUnknown() {{ params["{n}"] = data.{field}.{val_method}() }}')
 
         for parent, props in nested.items():
             param_lines.append(f'\t{parent}Opts := map[string]interface{{}}{{}}')
@@ -674,7 +699,7 @@ def main():
     for base in resources:
         if base in skip:
             continue
-        code = gen_resource(base, methods, templates)
+        code = gen_resource(base, methods, templates, config)
         if code:
             (output_dir / f"resource_{base.replace('.', '_')}_generated.go").write_text(code)
             generated_resources.append(base)

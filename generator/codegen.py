@@ -14,7 +14,7 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None):
         lines.append('\t\t\t"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},')
 
     if has_start:
-        lines.append('\t\t\t"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: true)"},')
+        lines.append('\t\t\t"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},')
 
     for name, prop in properties.items():
         if name == "id":
@@ -88,7 +88,7 @@ def gen_create_params(properties):
         field = to_field_name(name)
         tf_type = get_tf_type(prop)
 
-        lines.append(f"\tif !data.{field}.IsNull() {{")
+        lines.append(f"\tif !data.{field}.IsNull() && !data.{field}.IsUnknown() {{")
 
         if tf_type == "Bool":
             lines.append(f'\t\tparams["{name}"] = data.{field}.ValueBool()')
@@ -145,8 +145,12 @@ def gen_read_mapping(properties, skip_id=False, create_only=None, required=None)
             return False
         if name in create_only and name not in ("name", "type"):
             return False
-        if required is not None and name not in required and name not in ("name", "type"):
-            return False
+        # Read required fields, or optional fields with default: null (computed values)
+        if required is not None:
+            prop = properties.get(name, {})
+            has_null_default = prop.get("default") is None and "default" in prop
+            if name not in required and name not in ("name", "type") and not has_null_default:
+                return False
         return True
 
     fields_to_read = [n for n in properties if should_read_field(n)]
@@ -176,45 +180,72 @@ def gen_read_mapping(properties, skip_id=False, create_only=None, required=None)
         prop = properties[name]
         field = to_field_name(name)
         tf_type = get_tf_type(prop)
+        
+        # Check if field is nullable (anyOf with null)
+        is_nullable = False
+        if isinstance(prop, dict):
+            any_of = prop.get("anyOf", [])
+            is_nullable = any(t.get("type") == "null" for t in any_of if isinstance(t, dict))
 
-        lines.append(f'\t\tif v, ok := resultMap["{name}"]; ok && v != nil {{')
+        lines.append(f'\t\tif v, ok := resultMap["{name}"]; ok {{')
+        
+        # Handle null values for nullable fields
+        if is_nullable:
+            lines.append(f'\t\t\tif v == nil {{')
+            if tf_type == "String":
+                lines.append(f'\t\t\t\tdata.{field} = types.StringNull()')
+            elif tf_type == "Int64":
+                lines.append(f'\t\t\t\tdata.{field} = types.Int64Null()')
+            elif tf_type == "Bool":
+                lines.append(f'\t\t\t\tdata.{field} = types.BoolNull()')
+            elif tf_type == "Float64":
+                lines.append(f'\t\t\t\tdata.{field} = types.Float64Null()')
+            lines.append(f'\t\t\t}} else {{')
 
         if tf_type == "Bool":
-            lines.append(f"\t\t\tif bv, ok := v.(bool); ok {{ data.{field} = types.BoolValue(bv) }}")
+            indent = "\t\t\t" if is_nullable else "\t\t"
+            lines.append(f"{indent}\tif bv, ok := v.(bool); ok {{ data.{field} = types.BoolValue(bv) }}")
         elif tf_type == "Int64":
+            indent = "\t\t\t" if is_nullable else "\t\t"
             lines.extend([
-                f"\t\t\tswitch val := v.(type) {{",
-                f"\t\t\tcase float64:",
-                f"\t\t\t\tdata.{field} = types.Int64Value(int64(val))",
-                f"\t\t\tcase map[string]interface{{}}:",
-                f'\t\t\t\tif parsed, ok := val["parsed"]; ok && parsed != nil {{',
-                f"\t\t\t\t\tif fv, ok := parsed.(float64); ok {{ data.{field} = types.Int64Value(int64(fv)) }}",
-                f"\t\t\t\t}}",
-                f"\t\t\t}}",
+                f"{indent}\tswitch val := v.(type) {{",
+                f"{indent}\tcase float64:",
+                f"{indent}\t\tdata.{field} = types.Int64Value(int64(val))",
+                f"{indent}\tcase map[string]interface{{}}:",
+                f'{indent}\t\tif parsed, ok := val["parsed"]; ok && parsed != nil {{',
+                f"{indent}\t\t\tif fv, ok := parsed.(float64); ok {{ data.{field} = types.Int64Value(int64(fv)) }}",
+                f"{indent}\t\t}}",
+                f"{indent}\t}}",
             ])
         elif tf_type == "Float64":
-            lines.append(f"\t\t\tif fv, ok := v.(float64); ok {{ data.{field} = types.Float64Value(fv) }}")
+            indent = "\t\t\t" if is_nullable else "\t\t"
+            lines.append(f"{indent}\tif fv, ok := v.(float64); ok {{ data.{field} = types.Float64Value(fv) }}")
         elif tf_type == "List":
+            indent = "\t\t\t" if is_nullable else "\t\t"
             lines.extend([
-                f"\t\t\tif arr, ok := v.([]interface{{}}); ok {{",
-                f"\t\t\t\tstrVals := make([]attr.Value, len(arr))",
-                f'\t\t\t\tfor i, item := range arr {{ strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }}',
-                f"\t\t\t\tdata.{field}, _ = types.ListValue(types.StringType, strVals)",
-                f"\t\t\t}}",
+                f"{indent}\tif arr, ok := v.([]interface{{}}); ok {{",
+                f"{indent}\t\tstrVals := make([]attr.Value, len(arr))",
+                f'{indent}\t\tfor i, item := range arr {{ strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }}',
+                f"{indent}\t\tdata.{field}, _ = types.ListValue(types.StringType, strVals)",
+                f"{indent}\t}}",
             ])
         else:
+            indent = "\t\t\t" if is_nullable else "\t\t"
             lines.extend([
-                f"\t\t\tswitch val := v.(type) {{",
-                f"\t\t\tcase string:",
-                f"\t\t\t\tdata.{field} = types.StringValue(val)",
-                f"\t\t\tcase map[string]interface{{}}:",
-                f'\t\t\t\tif strVal, ok := val["value"]; ok && strVal != nil {{',
-                f'\t\t\t\t\tdata.{field} = types.StringValue(fmt.Sprintf("%v", strVal))',
-                f"\t\t\t\t}}",
-                f"\t\t\tdefault:",
-                f'\t\t\t\tdata.{field} = types.StringValue(fmt.Sprintf("%v", v))',
-                f"\t\t\t}}",
+                f"{indent}\tswitch val := v.(type) {{",
+                f"{indent}\tcase string:",
+                f"{indent}\t\tdata.{field} = types.StringValue(val)",
+                f"{indent}\tcase map[string]interface{{}}:",
+                f'{indent}\t\tif strVal, ok := val["value"]; ok && strVal != nil {{',
+                f'{indent}\t\t\tdata.{field} = types.StringValue(fmt.Sprintf("%v", strVal))',
+                f"{indent}\t\t}}",
+                f"{indent}\tdefault:",
+                f'{indent}\t\tdata.{field} = types.StringValue(fmt.Sprintf("%v", v))',
+                f"{indent}\t}}",
             ])
+        
+        if is_nullable:
+            lines.append('\t\t\t}')
 
         lines.append("\t\t}")
 

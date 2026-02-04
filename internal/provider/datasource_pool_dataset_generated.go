@@ -326,7 +326,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-		if v, ok := resultMap["type"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Type = types.StringValue(val)
@@ -338,7 +338,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Type = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -350,7 +350,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["pool"]; ok && v != nil {
+		if v, ok := resultMap["pool"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Pool = types.StringValue(val)
@@ -362,32 +362,40 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Pool = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["encrypted"]; ok && v != nil {
+		if v, ok := resultMap["encrypted"]; ok {
 			if bv, ok := v.(bool); ok { data.Encrypted = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["encryption_root"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.EncryptionRoot = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.EncryptionRoot = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["encryption_root"]; ok {
+			if v == nil {
+				data.EncryptionRoot = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.EncryptionRoot = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.EncryptionRoot = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.EncryptionRoot = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.EncryptionRoot = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["key_loaded"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { data.KeyLoaded = types.BoolValue(bv) }
+		if v, ok := resultMap["key_loaded"]; ok {
+			if v == nil {
+				data.KeyLoaded = types.BoolNull()
+			} else {
+				if bv, ok := v.(bool); ok { data.KeyLoaded = types.BoolValue(bv) }
+			}
 		}
-		if v, ok := resultMap["children"]; ok && v != nil {
+		if v, ok := resultMap["children"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Children, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["user_properties"]; ok && v != nil {
+		if v, ok := resultMap["user_properties"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.UserProperties = types.StringValue(val)
@@ -399,10 +407,10 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.UserProperties = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["locked"]; ok && v != nil {
+		if v, ok := resultMap["locked"]; ok {
 			if bv, ok := v.(bool); ok { data.Locked = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["comments"]; ok && v != nil {
+		if v, ok := resultMap["comments"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Comments = types.StringValue(val)
@@ -414,7 +422,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Comments = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["quota_warning"]; ok && v != nil {
+		if v, ok := resultMap["quota_warning"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.QuotaWarning = types.StringValue(val)
@@ -426,7 +434,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.QuotaWarning = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["quota_critical"]; ok && v != nil {
+		if v, ok := resultMap["quota_critical"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.QuotaCritical = types.StringValue(val)
@@ -438,7 +446,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.QuotaCritical = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["refquota_warning"]; ok && v != nil {
+		if v, ok := resultMap["refquota_warning"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.RefquotaWarning = types.StringValue(val)
@@ -450,7 +458,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.RefquotaWarning = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["refquota_critical"]; ok && v != nil {
+		if v, ok := resultMap["refquota_critical"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.RefquotaCritical = types.StringValue(val)
@@ -462,7 +470,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.RefquotaCritical = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["managedby"]; ok && v != nil {
+		if v, ok := resultMap["managedby"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Managedby = types.StringValue(val)
@@ -474,7 +482,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Managedby = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["deduplication"]; ok && v != nil {
+		if v, ok := resultMap["deduplication"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Deduplication = types.StringValue(val)
@@ -486,7 +494,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Deduplication = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["aclmode"]; ok && v != nil {
+		if v, ok := resultMap["aclmode"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Aclmode = types.StringValue(val)
@@ -498,7 +506,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Aclmode = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["acltype"]; ok && v != nil {
+		if v, ok := resultMap["acltype"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Acltype = types.StringValue(val)
@@ -510,7 +518,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["xattr"]; ok && v != nil {
+		if v, ok := resultMap["xattr"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Xattr = types.StringValue(val)
@@ -522,7 +530,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Xattr = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["atime"]; ok && v != nil {
+		if v, ok := resultMap["atime"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Atime = types.StringValue(val)
@@ -534,7 +542,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Atime = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["casesensitivity"]; ok && v != nil {
+		if v, ok := resultMap["casesensitivity"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Casesensitivity = types.StringValue(val)
@@ -546,7 +554,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Casesensitivity = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["checksum"]; ok && v != nil {
+		if v, ok := resultMap["checksum"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Checksum = types.StringValue(val)
@@ -558,7 +566,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Checksum = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["exec"]; ok && v != nil {
+		if v, ok := resultMap["exec"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Exec = types.StringValue(val)
@@ -570,7 +578,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Exec = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["sync"]; ok && v != nil {
+		if v, ok := resultMap["sync"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Sync = types.StringValue(val)
@@ -582,7 +590,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Sync = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["compression"]; ok && v != nil {
+		if v, ok := resultMap["compression"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Compression = types.StringValue(val)
@@ -594,7 +602,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Compression = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["compressratio"]; ok && v != nil {
+		if v, ok := resultMap["compressratio"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Compressratio = types.StringValue(val)
@@ -606,7 +614,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Compressratio = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["origin"]; ok && v != nil {
+		if v, ok := resultMap["origin"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Origin = types.StringValue(val)
@@ -618,7 +626,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Origin = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["quota"]; ok && v != nil {
+		if v, ok := resultMap["quota"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Quota = types.StringValue(val)
@@ -630,7 +638,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Quota = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["refquota"]; ok && v != nil {
+		if v, ok := resultMap["refquota"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Refquota = types.StringValue(val)
@@ -642,7 +650,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Refquota = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["reservation"]; ok && v != nil {
+		if v, ok := resultMap["reservation"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Reservation = types.StringValue(val)
@@ -654,7 +662,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Reservation = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["refreservation"]; ok && v != nil {
+		if v, ok := resultMap["refreservation"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Refreservation = types.StringValue(val)
@@ -666,7 +674,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Refreservation = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["copies"]; ok && v != nil {
+		if v, ok := resultMap["copies"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Copies = types.StringValue(val)
@@ -678,7 +686,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Copies = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["snapdir"]; ok && v != nil {
+		if v, ok := resultMap["snapdir"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Snapdir = types.StringValue(val)
@@ -690,7 +698,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Snapdir = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["readonly"]; ok && v != nil {
+		if v, ok := resultMap["readonly"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Readonly = types.StringValue(val)
@@ -702,7 +710,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Readonly = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["recordsize"]; ok && v != nil {
+		if v, ok := resultMap["recordsize"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Recordsize = types.StringValue(val)
@@ -714,7 +722,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Recordsize = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["sparse"]; ok && v != nil {
+		if v, ok := resultMap["sparse"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Sparse = types.StringValue(val)
@@ -726,7 +734,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Sparse = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["volsize"]; ok && v != nil {
+		if v, ok := resultMap["volsize"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Volsize = types.StringValue(val)
@@ -738,7 +746,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Volsize = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["volblocksize"]; ok && v != nil {
+		if v, ok := resultMap["volblocksize"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Volblocksize = types.StringValue(val)
@@ -750,7 +758,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Volblocksize = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["key_format"]; ok && v != nil {
+		if v, ok := resultMap["key_format"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.KeyFormat = types.StringValue(val)
@@ -762,7 +770,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.KeyFormat = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["encryption_algorithm"]; ok && v != nil {
+		if v, ok := resultMap["encryption_algorithm"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.EncryptionAlgorithm = types.StringValue(val)
@@ -774,7 +782,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.EncryptionAlgorithm = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["used"]; ok && v != nil {
+		if v, ok := resultMap["used"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Used = types.StringValue(val)
@@ -786,7 +794,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Used = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["usedbychildren"]; ok && v != nil {
+		if v, ok := resultMap["usedbychildren"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Usedbychildren = types.StringValue(val)
@@ -798,7 +806,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Usedbychildren = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["usedbydataset"]; ok && v != nil {
+		if v, ok := resultMap["usedbydataset"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Usedbydataset = types.StringValue(val)
@@ -810,7 +818,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Usedbydataset = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["usedbyrefreservation"]; ok && v != nil {
+		if v, ok := resultMap["usedbyrefreservation"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Usedbyrefreservation = types.StringValue(val)
@@ -822,7 +830,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Usedbyrefreservation = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["usedbysnapshots"]; ok && v != nil {
+		if v, ok := resultMap["usedbysnapshots"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Usedbysnapshots = types.StringValue(val)
@@ -834,7 +842,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Usedbysnapshots = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["available"]; ok && v != nil {
+		if v, ok := resultMap["available"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Available = types.StringValue(val)
@@ -846,7 +854,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Available = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["special_small_block_size"]; ok && v != nil {
+		if v, ok := resultMap["special_small_block_size"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.SpecialSmallBlockSize = types.StringValue(val)
@@ -858,7 +866,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.SpecialSmallBlockSize = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["pbkdf2iters"]; ok && v != nil {
+		if v, ok := resultMap["pbkdf2iters"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Pbkdf2Iters = types.StringValue(val)
@@ -870,7 +878,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Pbkdf2Iters = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["creation"]; ok && v != nil {
+		if v, ok := resultMap["creation"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Creation = types.StringValue(val)
@@ -882,7 +890,7 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Creation = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["snapdev"]; ok && v != nil {
+		if v, ok := resultMap["snapdev"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Snapdev = types.StringValue(val)
@@ -894,16 +902,20 @@ func (d *PoolDatasetDataSource) Read(ctx context.Context, req datasource.ReadReq
 				data.Snapdev = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["mountpoint"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Mountpoint = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Mountpoint = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["mountpoint"]; ok {
+			if v == nil {
+				data.Mountpoint = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Mountpoint = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Mountpoint = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Mountpoint = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Mountpoint = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
 

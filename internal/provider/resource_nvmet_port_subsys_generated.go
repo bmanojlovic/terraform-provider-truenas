@@ -73,10 +73,10 @@ func (r *NvmetPortSubsysResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	params := map[string]interface{}{}
-	if !data.PortId.IsNull() {
+	if !data.PortId.IsNull() && !data.PortId.IsUnknown() {
 		params["port_id"] = data.PortId.ValueInt64()
 	}
-	if !data.SubsysId.IsNull() {
+	if !data.SubsysId.IsNull() && !data.SubsysId.IsUnknown() {
 		params["subsys_id"] = data.SubsysId.ValueInt64()
 	}
 
@@ -98,6 +98,49 @@ func (r *NvmetPortSubsysResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("nvmet.port_subsys.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back nvmet_port_subsys: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["port_id"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.PortId = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.PortId = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["subsys_id"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.SubsysId = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -138,7 +181,7 @@ func (r *NvmetPortSubsysResource) Read(ctx context.Context, req resource.ReadReq
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["port_id"]; ok && v != nil {
+		if v, ok := resultMap["port_id"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.PortId = types.Int64Value(int64(val))
@@ -148,7 +191,7 @@ func (r *NvmetPortSubsysResource) Read(ctx context.Context, req resource.ReadReq
 				}
 			}
 		}
-		if v, ok := resultMap["subsys_id"]; ok && v != nil {
+		if v, ok := resultMap["subsys_id"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.SubsysId = types.Int64Value(int64(val))
@@ -184,10 +227,10 @@ func (r *NvmetPortSubsysResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	params := map[string]interface{}{}
-	if !data.PortId.IsNull() {
+	if !data.PortId.IsNull() && !data.PortId.IsUnknown() {
 		params["port_id"] = data.PortId.ValueInt64()
 	}
-	if !data.SubsysId.IsNull() {
+	if !data.SubsysId.IsNull() && !data.SubsysId.IsUnknown() {
 		params["subsys_id"] = data.SubsysId.ValueInt64()
 	}
 
@@ -218,6 +261,10 @@ func (r *NvmetPortSubsysResource) Delete(ctx context.Context, req resource.Delet
 
 	_, err = r.client.Call("nvmet.port_subsys.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete nvmet_port_subsys: %s", err))
 		return
 	}

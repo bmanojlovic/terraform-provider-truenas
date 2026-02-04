@@ -92,7 +92,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-		if v, ok := resultMap["service"]; ok && v != nil {
+		if v, ok := resultMap["service"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Service = types.StringValue(val)
@@ -104,10 +104,10 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 				data.Service = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["enable"]; ok && v != nil {
+		if v, ok := resultMap["enable"]; ok {
 			if bv, ok := v.(bool); ok { data.Enable = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["state"]; ok && v != nil {
+		if v, ok := resultMap["state"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.State = types.StringValue(val)
@@ -119,7 +119,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 				data.State = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["pids"]; ok && v != nil {
+		if v, ok := resultMap["pids"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }

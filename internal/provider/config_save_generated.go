@@ -92,9 +92,9 @@ func (r *ConfigSaveResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Secretseed.IsNull() { params["secretseed"] = data.Secretseed.ValueBool() }
-	if !data.PoolKeys.IsNull() { params["pool_keys"] = data.PoolKeys.ValueBool() }
-	if !data.RootAuthorizedKeys.IsNull() { params["root_authorized_keys"] = data.RootAuthorizedKeys.ValueBool() }
+	if !data.Secretseed.IsNull() && !data.Secretseed.IsUnknown() { params["secretseed"] = data.Secretseed.ValueBool() }
+	if !data.PoolKeys.IsNull() && !data.PoolKeys.IsUnknown() { params["pool_keys"] = data.PoolKeys.ValueBool() }
+	if !data.RootAuthorizedKeys.IsNull() && !data.RootAuthorizedKeys.IsUnknown() { params["root_authorized_keys"] = data.RootAuthorizedKeys.ValueBool() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

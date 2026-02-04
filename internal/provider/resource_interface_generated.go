@@ -201,22 +201,22 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Ipv4Dhcp.IsNull() {
+	if !data.Ipv4Dhcp.IsNull() && !data.Ipv4Dhcp.IsUnknown() {
 		params["ipv4_dhcp"] = data.Ipv4Dhcp.ValueBool()
 	}
-	if !data.Ipv6Auto.IsNull() {
+	if !data.Ipv6Auto.IsNull() && !data.Ipv6Auto.IsUnknown() {
 		params["ipv6_auto"] = data.Ipv6Auto.ValueBool()
 	}
-	if !data.Aliases.IsNull() {
+	if !data.Aliases.IsNull() && !data.Aliases.IsUnknown() {
 		var aliasesList []string
 		data.Aliases.ElementsAs(ctx, &aliasesList, false)
 		var aliasesObjs []map[string]interface{}
@@ -230,16 +230,16 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		params["aliases"] = aliasesObjs
 	}
-	if !data.FailoverCritical.IsNull() {
+	if !data.FailoverCritical.IsNull() && !data.FailoverCritical.IsUnknown() {
 		params["failover_critical"] = data.FailoverCritical.ValueBool()
 	}
-	if !data.FailoverGroup.IsNull() {
+	if !data.FailoverGroup.IsNull() && !data.FailoverGroup.IsUnknown() {
 		params["failover_group"] = data.FailoverGroup.ValueInt64()
 	}
-	if !data.FailoverVhid.IsNull() {
+	if !data.FailoverVhid.IsNull() && !data.FailoverVhid.IsUnknown() {
 		params["failover_vhid"] = data.FailoverVhid.ValueInt64()
 	}
-	if !data.FailoverAliases.IsNull() {
+	if !data.FailoverAliases.IsNull() && !data.FailoverAliases.IsUnknown() {
 		var failover_aliasesList []string
 		data.FailoverAliases.ElementsAs(ctx, &failover_aliasesList, false)
 		var failover_aliasesObjs []map[string]interface{}
@@ -253,7 +253,7 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		params["failover_aliases"] = failover_aliasesObjs
 	}
-	if !data.FailoverVirtualAliases.IsNull() {
+	if !data.FailoverVirtualAliases.IsNull() && !data.FailoverVirtualAliases.IsUnknown() {
 		var failover_virtual_aliasesList []string
 		data.FailoverVirtualAliases.ElementsAs(ctx, &failover_virtual_aliasesList, false)
 		var failover_virtual_aliasesObjs []map[string]interface{}
@@ -267,41 +267,41 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		params["failover_virtual_aliases"] = failover_virtual_aliasesObjs
 	}
-	if !data.BridgeMembers.IsNull() {
+	if !data.BridgeMembers.IsNull() && !data.BridgeMembers.IsUnknown() {
 		var bridge_membersList []string
 		data.BridgeMembers.ElementsAs(ctx, &bridge_membersList, false)
 		params["bridge_members"] = bridge_membersList
 	}
-	if !data.EnableLearning.IsNull() {
+	if !data.EnableLearning.IsNull() && !data.EnableLearning.IsUnknown() {
 		params["enable_learning"] = data.EnableLearning.ValueBool()
 	}
-	if !data.Stp.IsNull() {
+	if !data.Stp.IsNull() && !data.Stp.IsUnknown() {
 		params["stp"] = data.Stp.ValueBool()
 	}
-	if !data.LagProtocol.IsNull() {
+	if !data.LagProtocol.IsNull() && !data.LagProtocol.IsUnknown() {
 		params["lag_protocol"] = data.LagProtocol.ValueString()
 	}
-	if !data.XmitHashPolicy.IsNull() {
+	if !data.XmitHashPolicy.IsNull() && !data.XmitHashPolicy.IsUnknown() {
 		params["xmit_hash_policy"] = data.XmitHashPolicy.ValueString()
 	}
-	if !data.LacpduRate.IsNull() {
+	if !data.LacpduRate.IsNull() && !data.LacpduRate.IsUnknown() {
 		params["lacpdu_rate"] = data.LacpduRate.ValueString()
 	}
-	if !data.LagPorts.IsNull() {
+	if !data.LagPorts.IsNull() && !data.LagPorts.IsUnknown() {
 		var lag_portsList []string
 		data.LagPorts.ElementsAs(ctx, &lag_portsList, false)
 		params["lag_ports"] = lag_portsList
 	}
-	if !data.VlanParentInterface.IsNull() {
+	if !data.VlanParentInterface.IsNull() && !data.VlanParentInterface.IsUnknown() {
 		params["vlan_parent_interface"] = data.VlanParentInterface.ValueString()
 	}
-	if !data.VlanTag.IsNull() {
+	if !data.VlanTag.IsNull() && !data.VlanTag.IsUnknown() {
 		params["vlan_tag"] = data.VlanTag.ValueInt64()
 	}
-	if !data.VlanPcp.IsNull() {
+	if !data.VlanPcp.IsNull() && !data.VlanPcp.IsUnknown() {
 		params["vlan_pcp"] = data.VlanPcp.ValueInt64()
 	}
-	if !data.Mtu.IsNull() {
+	if !data.Mtu.IsNull() && !data.Mtu.IsUnknown() {
 		params["mtu"] = data.Mtu.ValueInt64()
 	}
 
@@ -323,6 +323,87 @@ func (r *InterfaceResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("interface.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back interface: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["xmit_hash_policy"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.XmitHashPolicy = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.XmitHashPolicy = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.XmitHashPolicy = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["lacpdu_rate"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.LacpduRate = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.LacpduRate = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.LacpduRate = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["mtu"]; ok {
+			if v == nil {
+				data.Mtu = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Mtu = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Mtu = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -359,7 +440,7 @@ func (r *InterfaceResource) Read(ctx context.Context, req resource.ReadRequest, 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -371,7 +452,7 @@ func (r *InterfaceResource) Read(ctx context.Context, req resource.ReadRequest, 
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["type"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Type = types.StringValue(val)
@@ -381,6 +462,44 @@ func (r *InterfaceResource) Read(ctx context.Context, req resource.ReadRequest, 
 				}
 			default:
 				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["xmit_hash_policy"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.XmitHashPolicy = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.XmitHashPolicy = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.XmitHashPolicy = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["lacpdu_rate"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.LacpduRate = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.LacpduRate = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.LacpduRate = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["mtu"]; ok {
+			if v == nil {
+				data.Mtu = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Mtu = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Mtu = types.Int64Value(int64(fv)) }
+					}
+				}
 			}
 		}
 
@@ -405,19 +524,19 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Ipv4Dhcp.IsNull() {
+	if !data.Ipv4Dhcp.IsNull() && !data.Ipv4Dhcp.IsUnknown() {
 		params["ipv4_dhcp"] = data.Ipv4Dhcp.ValueBool()
 	}
-	if !data.Ipv6Auto.IsNull() {
+	if !data.Ipv6Auto.IsNull() && !data.Ipv6Auto.IsUnknown() {
 		params["ipv6_auto"] = data.Ipv6Auto.ValueBool()
 	}
-	if !data.Aliases.IsNull() {
+	if !data.Aliases.IsNull() && !data.Aliases.IsUnknown() {
 		var aliasesList []string
 		data.Aliases.ElementsAs(ctx, &aliasesList, false)
 		var aliasesObjs []map[string]interface{}
@@ -431,16 +550,16 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		params["aliases"] = aliasesObjs
 	}
-	if !data.FailoverCritical.IsNull() {
+	if !data.FailoverCritical.IsNull() && !data.FailoverCritical.IsUnknown() {
 		params["failover_critical"] = data.FailoverCritical.ValueBool()
 	}
-	if !data.FailoverGroup.IsNull() {
+	if !data.FailoverGroup.IsNull() && !data.FailoverGroup.IsUnknown() {
 		params["failover_group"] = data.FailoverGroup.ValueInt64()
 	}
-	if !data.FailoverVhid.IsNull() {
+	if !data.FailoverVhid.IsNull() && !data.FailoverVhid.IsUnknown() {
 		params["failover_vhid"] = data.FailoverVhid.ValueInt64()
 	}
-	if !data.FailoverAliases.IsNull() {
+	if !data.FailoverAliases.IsNull() && !data.FailoverAliases.IsUnknown() {
 		var failover_aliasesList []string
 		data.FailoverAliases.ElementsAs(ctx, &failover_aliasesList, false)
 		var failover_aliasesObjs []map[string]interface{}
@@ -454,7 +573,7 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		params["failover_aliases"] = failover_aliasesObjs
 	}
-	if !data.FailoverVirtualAliases.IsNull() {
+	if !data.FailoverVirtualAliases.IsNull() && !data.FailoverVirtualAliases.IsUnknown() {
 		var failover_virtual_aliasesList []string
 		data.FailoverVirtualAliases.ElementsAs(ctx, &failover_virtual_aliasesList, false)
 		var failover_virtual_aliasesObjs []map[string]interface{}
@@ -468,41 +587,41 @@ func (r *InterfaceResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		params["failover_virtual_aliases"] = failover_virtual_aliasesObjs
 	}
-	if !data.BridgeMembers.IsNull() {
+	if !data.BridgeMembers.IsNull() && !data.BridgeMembers.IsUnknown() {
 		var bridge_membersList []string
 		data.BridgeMembers.ElementsAs(ctx, &bridge_membersList, false)
 		params["bridge_members"] = bridge_membersList
 	}
-	if !data.EnableLearning.IsNull() {
+	if !data.EnableLearning.IsNull() && !data.EnableLearning.IsUnknown() {
 		params["enable_learning"] = data.EnableLearning.ValueBool()
 	}
-	if !data.Stp.IsNull() {
+	if !data.Stp.IsNull() && !data.Stp.IsUnknown() {
 		params["stp"] = data.Stp.ValueBool()
 	}
-	if !data.LagProtocol.IsNull() {
+	if !data.LagProtocol.IsNull() && !data.LagProtocol.IsUnknown() {
 		params["lag_protocol"] = data.LagProtocol.ValueString()
 	}
-	if !data.XmitHashPolicy.IsNull() {
+	if !data.XmitHashPolicy.IsNull() && !data.XmitHashPolicy.IsUnknown() {
 		params["xmit_hash_policy"] = data.XmitHashPolicy.ValueString()
 	}
-	if !data.LacpduRate.IsNull() {
+	if !data.LacpduRate.IsNull() && !data.LacpduRate.IsUnknown() {
 		params["lacpdu_rate"] = data.LacpduRate.ValueString()
 	}
-	if !data.LagPorts.IsNull() {
+	if !data.LagPorts.IsNull() && !data.LagPorts.IsUnknown() {
 		var lag_portsList []string
 		data.LagPorts.ElementsAs(ctx, &lag_portsList, false)
 		params["lag_ports"] = lag_portsList
 	}
-	if !data.VlanParentInterface.IsNull() {
+	if !data.VlanParentInterface.IsNull() && !data.VlanParentInterface.IsUnknown() {
 		params["vlan_parent_interface"] = data.VlanParentInterface.ValueString()
 	}
-	if !data.VlanTag.IsNull() {
+	if !data.VlanTag.IsNull() && !data.VlanTag.IsUnknown() {
 		params["vlan_tag"] = data.VlanTag.ValueInt64()
 	}
-	if !data.VlanPcp.IsNull() {
+	if !data.VlanPcp.IsNull() && !data.VlanPcp.IsUnknown() {
 		params["vlan_pcp"] = data.VlanPcp.ValueInt64()
 	}
-	if !data.Mtu.IsNull() {
+	if !data.Mtu.IsNull() && !data.Mtu.IsUnknown() {
 		params["mtu"] = data.Mtu.ValueInt64()
 	}
 
@@ -529,6 +648,10 @@ func (r *InterfaceResource) Delete(ctx context.Context, req resource.DeleteReque
 
 	_, err = r.client.Call("interface.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete interface: %s", err))
 		return
 	}

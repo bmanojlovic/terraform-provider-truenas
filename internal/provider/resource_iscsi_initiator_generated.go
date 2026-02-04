@@ -72,12 +72,12 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 	}
 
 	params := map[string]interface{}{}
-	if !data.Initiators.IsNull() {
+	if !data.Initiators.IsNull() && !data.Initiators.IsUnknown() {
 		var initiatorsList []string
 		data.Initiators.ElementsAs(ctx, &initiatorsList, false)
 		params["initiators"] = initiatorsList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -99,6 +99,29 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.initiator.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_initiator: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -165,12 +188,12 @@ func (r *IscsiInitiatorResource) Update(ctx context.Context, req resource.Update
 	}
 
 	params := map[string]interface{}{}
-	if !data.Initiators.IsNull() {
+	if !data.Initiators.IsNull() && !data.Initiators.IsUnknown() {
 		var initiatorsList []string
 		data.Initiators.ElementsAs(ctx, &initiatorsList, false)
 		params["initiators"] = initiatorsList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -201,6 +224,10 @@ func (r *IscsiInitiatorResource) Delete(ctx context.Context, req resource.Delete
 
 	_, err = r.client.Call("iscsi.initiator.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_initiator: %s", err))
 		return
 	}

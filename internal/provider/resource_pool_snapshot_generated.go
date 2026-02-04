@@ -126,21 +126,21 @@ func (r *PoolSnapshotResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	params := map[string]interface{}{}
-	if !data.Dataset.IsNull() {
+	if !data.Dataset.IsNull() && !data.Dataset.IsUnknown() {
 		params["dataset"] = data.Dataset.ValueString()
 	}
-	if !data.Recursive.IsNull() {
+	if !data.Recursive.IsNull() && !data.Recursive.IsUnknown() {
 		params["recursive"] = data.Recursive.ValueBool()
 	}
-	if !data.Exclude.IsNull() {
+	if !data.Exclude.IsNull() && !data.Exclude.IsUnknown() {
 		var excludeList []string
 		data.Exclude.ElementsAs(ctx, &excludeList, false)
 		params["exclude"] = excludeList
 	}
-	if !data.VmwareSync.IsNull() {
+	if !data.VmwareSync.IsNull() && !data.VmwareSync.IsUnknown() {
 		params["vmware_sync"] = data.VmwareSync.ValueBool()
 	}
-	if !data.Properties.IsNull() {
+	if !data.Properties.IsNull() && !data.Properties.IsUnknown() {
 		var propertiesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Properties.ValueString()), &propertiesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse properties: %s", err))
@@ -148,13 +148,13 @@ func (r *PoolSnapshotResource) Create(ctx context.Context, req resource.CreateRe
 		}
 		params["properties"] = propertiesObj
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.NamingSchema.IsNull() {
+	if !data.NamingSchema.IsNull() && !data.NamingSchema.IsUnknown() {
 		params["naming_schema"] = data.NamingSchema.ValueString()
 	}
-	if !data.UserPropertiesUpdate.IsNull() {
+	if !data.UserPropertiesUpdate.IsNull() && !data.UserPropertiesUpdate.IsUnknown() {
 		var user_properties_updateList []string
 		data.UserPropertiesUpdate.ElementsAs(ctx, &user_properties_updateList, false)
 		var user_properties_updateObjs []map[string]interface{}
@@ -168,7 +168,7 @@ func (r *PoolSnapshotResource) Create(ctx context.Context, req resource.CreateRe
 		}
 		params["user_properties_update"] = user_properties_updateObjs
 	}
-	if !data.UserPropertiesRemove.IsNull() {
+	if !data.UserPropertiesRemove.IsNull() && !data.UserPropertiesRemove.IsUnknown() {
 		var user_properties_removeList []string
 		data.UserPropertiesRemove.ElementsAs(ctx, &user_properties_removeList, false)
 		params["user_properties_remove"] = user_properties_removeList
@@ -192,6 +192,37 @@ func (r *PoolSnapshotResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("pool.snapshot.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back pool_snapshot: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -228,7 +259,7 @@ func (r *PoolSnapshotResource) Read(ctx context.Context, req resource.ReadReques
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -262,7 +293,7 @@ func (r *PoolSnapshotResource) Update(ctx context.Context, req resource.UpdateRe
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.UserPropertiesUpdate.IsNull() {
+	if !data.UserPropertiesUpdate.IsNull() && !data.UserPropertiesUpdate.IsUnknown() {
 		var user_properties_updateList []string
 		data.UserPropertiesUpdate.ElementsAs(ctx, &user_properties_updateList, false)
 		var user_properties_updateObjs []map[string]interface{}
@@ -276,7 +307,7 @@ func (r *PoolSnapshotResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 		params["user_properties_update"] = user_properties_updateObjs
 	}
-	if !data.UserPropertiesRemove.IsNull() {
+	if !data.UserPropertiesRemove.IsNull() && !data.UserPropertiesRemove.IsUnknown() {
 		var user_properties_removeList []string
 		data.UserPropertiesRemove.ElementsAs(ctx, &user_properties_removeList, false)
 		params["user_properties_remove"] = user_properties_removeList
@@ -305,6 +336,10 @@ func (r *PoolSnapshotResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	_, err = r.client.Call("pool.snapshot.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete pool_snapshot: %s", err))
 		return
 	}

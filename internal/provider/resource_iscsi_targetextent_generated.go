@@ -79,13 +79,13 @@ func (r *IscsiTargetextentResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	params := map[string]interface{}{}
-	if !data.Target.IsNull() {
+	if !data.Target.IsNull() && !data.Target.IsUnknown() {
 		params["target"] = data.Target.ValueInt64()
 	}
-	if !data.Lunid.IsNull() {
+	if !data.Lunid.IsNull() && !data.Lunid.IsUnknown() {
 		params["lunid"] = data.Lunid.ValueInt64()
 	}
-	if !data.Extent.IsNull() {
+	if !data.Extent.IsNull() && !data.Extent.IsUnknown() {
 		params["extent"] = data.Extent.ValueInt64()
 	}
 
@@ -107,6 +107,63 @@ func (r *IscsiTargetextentResource) Create(ctx context.Context, req resource.Cre
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.targetextent.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_targetextent: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["target"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.Target = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Target = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["lunid"]; ok {
+			if v == nil {
+				data.Lunid = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Lunid = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Lunid = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["extent"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.Extent = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Extent = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -147,7 +204,7 @@ func (r *IscsiTargetextentResource) Read(ctx context.Context, req resource.ReadR
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["target"]; ok && v != nil {
+		if v, ok := resultMap["target"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Target = types.Int64Value(int64(val))
@@ -157,7 +214,21 @@ func (r *IscsiTargetextentResource) Read(ctx context.Context, req resource.ReadR
 				}
 			}
 		}
-		if v, ok := resultMap["extent"]; ok && v != nil {
+		if v, ok := resultMap["lunid"]; ok {
+			if v == nil {
+				data.Lunid = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Lunid = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Lunid = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["extent"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Extent = types.Int64Value(int64(val))
@@ -193,13 +264,13 @@ func (r *IscsiTargetextentResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	params := map[string]interface{}{}
-	if !data.Target.IsNull() {
+	if !data.Target.IsNull() && !data.Target.IsUnknown() {
 		params["target"] = data.Target.ValueInt64()
 	}
-	if !data.Lunid.IsNull() {
+	if !data.Lunid.IsNull() && !data.Lunid.IsUnknown() {
 		params["lunid"] = data.Lunid.ValueInt64()
 	}
-	if !data.Extent.IsNull() {
+	if !data.Extent.IsNull() && !data.Extent.IsUnknown() {
 		params["extent"] = data.Extent.ValueInt64()
 	}
 
@@ -231,6 +302,10 @@ func (r *IscsiTargetextentResource) Delete(ctx context.Context, req resource.Del
 
 	_, err = r.client.Call("iscsi.targetextent.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_targetextent: %s", err))
 		return
 	}

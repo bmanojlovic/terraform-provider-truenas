@@ -97,22 +97,22 @@ func (r *IscsiAuthResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	params := map[string]interface{}{}
-	if !data.Tag.IsNull() {
+	if !data.Tag.IsNull() && !data.Tag.IsUnknown() {
 		params["tag"] = data.Tag.ValueInt64()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
-	if !data.Secret.IsNull() {
+	if !data.Secret.IsNull() && !data.Secret.IsUnknown() {
 		params["secret"] = data.Secret.ValueString()
 	}
-	if !data.Peeruser.IsNull() {
+	if !data.Peeruser.IsNull() && !data.Peeruser.IsUnknown() {
 		params["peeruser"] = data.Peeruser.ValueString()
 	}
-	if !data.Peersecret.IsNull() {
+	if !data.Peersecret.IsNull() && !data.Peersecret.IsUnknown() {
 		params["peersecret"] = data.Peersecret.ValueString()
 	}
-	if !data.DiscoveryAuth.IsNull() {
+	if !data.DiscoveryAuth.IsNull() && !data.DiscoveryAuth.IsUnknown() {
 		params["discovery_auth"] = data.DiscoveryAuth.ValueString()
 	}
 
@@ -134,6 +134,63 @@ func (r *IscsiAuthResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.auth.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_auth: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["tag"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.Tag = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Tag = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["user"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.User = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.User = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["secret"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Secret = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Secret = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Secret = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -174,7 +231,7 @@ func (r *IscsiAuthResource) Read(ctx context.Context, req resource.ReadRequest, 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["tag"]; ok && v != nil {
+		if v, ok := resultMap["tag"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Tag = types.Int64Value(int64(val))
@@ -184,7 +241,7 @@ func (r *IscsiAuthResource) Read(ctx context.Context, req resource.ReadRequest, 
 				}
 			}
 		}
-		if v, ok := resultMap["user"]; ok && v != nil {
+		if v, ok := resultMap["user"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.User = types.StringValue(val)
@@ -196,7 +253,7 @@ func (r *IscsiAuthResource) Read(ctx context.Context, req resource.ReadRequest, 
 				data.User = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["secret"]; ok && v != nil {
+		if v, ok := resultMap["secret"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Secret = types.StringValue(val)
@@ -234,22 +291,22 @@ func (r *IscsiAuthResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	params := map[string]interface{}{}
-	if !data.Tag.IsNull() {
+	if !data.Tag.IsNull() && !data.Tag.IsUnknown() {
 		params["tag"] = data.Tag.ValueInt64()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
-	if !data.Secret.IsNull() {
+	if !data.Secret.IsNull() && !data.Secret.IsUnknown() {
 		params["secret"] = data.Secret.ValueString()
 	}
-	if !data.Peeruser.IsNull() {
+	if !data.Peeruser.IsNull() && !data.Peeruser.IsUnknown() {
 		params["peeruser"] = data.Peeruser.ValueString()
 	}
-	if !data.Peersecret.IsNull() {
+	if !data.Peersecret.IsNull() && !data.Peersecret.IsUnknown() {
 		params["peersecret"] = data.Peersecret.ValueString()
 	}
-	if !data.DiscoveryAuth.IsNull() {
+	if !data.DiscoveryAuth.IsNull() && !data.DiscoveryAuth.IsUnknown() {
 		params["discovery_auth"] = data.DiscoveryAuth.ValueString()
 	}
 
@@ -280,6 +337,10 @@ func (r *IscsiAuthResource) Delete(ctx context.Context, req resource.DeleteReque
 
 	_, err = r.client.Call("iscsi.auth.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_auth: %s", err))
 		return
 	}

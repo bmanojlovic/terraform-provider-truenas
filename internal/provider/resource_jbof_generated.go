@@ -91,19 +91,19 @@ func (r *JbofResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.MgmtIp1.IsNull() {
+	if !data.MgmtIp1.IsNull() && !data.MgmtIp1.IsUnknown() {
 		params["mgmt_ip1"] = data.MgmtIp1.ValueString()
 	}
-	if !data.MgmtIp2.IsNull() {
+	if !data.MgmtIp2.IsNull() && !data.MgmtIp2.IsUnknown() {
 		params["mgmt_ip2"] = data.MgmtIp2.ValueString()
 	}
-	if !data.MgmtUsername.IsNull() {
+	if !data.MgmtUsername.IsNull() && !data.MgmtUsername.IsUnknown() {
 		params["mgmt_username"] = data.MgmtUsername.ValueString()
 	}
-	if !data.MgmtPassword.IsNull() {
+	if !data.MgmtPassword.IsNull() && !data.MgmtPassword.IsUnknown() {
 		params["mgmt_password"] = data.MgmtPassword.ValueString()
 	}
 
@@ -125,6 +125,65 @@ func (r *JbofResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("jbof.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back jbof: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["mgmt_ip1"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.MgmtIp1 = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["mgmt_username"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.MgmtUsername = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["mgmt_password"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.MgmtPassword = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -165,7 +224,7 @@ func (r *JbofResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_ip1"]; ok && v != nil {
+		if v, ok := resultMap["mgmt_ip1"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.MgmtIp1 = types.StringValue(val)
@@ -177,7 +236,7 @@ func (r *JbofResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["mgmt_username"]; ok && v != nil {
+		if v, ok := resultMap["mgmt_username"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.MgmtUsername = types.StringValue(val)
@@ -189,7 +248,7 @@ func (r *JbofResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["mgmt_password"]; ok && v != nil {
+		if v, ok := resultMap["mgmt_password"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.MgmtPassword = types.StringValue(val)
@@ -227,19 +286,19 @@ func (r *JbofResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.MgmtIp1.IsNull() {
+	if !data.MgmtIp1.IsNull() && !data.MgmtIp1.IsUnknown() {
 		params["mgmt_ip1"] = data.MgmtIp1.ValueString()
 	}
-	if !data.MgmtIp2.IsNull() {
+	if !data.MgmtIp2.IsNull() && !data.MgmtIp2.IsUnknown() {
 		params["mgmt_ip2"] = data.MgmtIp2.ValueString()
 	}
-	if !data.MgmtUsername.IsNull() {
+	if !data.MgmtUsername.IsNull() && !data.MgmtUsername.IsUnknown() {
 		params["mgmt_username"] = data.MgmtUsername.ValueString()
 	}
-	if !data.MgmtPassword.IsNull() {
+	if !data.MgmtPassword.IsNull() && !data.MgmtPassword.IsUnknown() {
 		params["mgmt_password"] = data.MgmtPassword.ValueString()
 	}
 
@@ -271,6 +330,10 @@ func (r *JbofResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	_, err = r.client.Call("jbof.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete jbof: %s", err))
 		return
 	}

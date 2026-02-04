@@ -76,12 +76,12 @@ def gen_resource_docs(base_name, properties, required, description, methods, any
             val = {"String": '"example"', "Int64": "1", "Bool": "true", "Float64": "1.0", "List": '["item"]'}.get(tf_type, '"value"')
             example_lines.append(f"  {n} = {val}")
     if has_start and len(example_lines) < 8:
-        example_lines.append("  start_on_create = true")
+        example_lines.append("  start_on_create = false  # Explicit start control (cloud-like)")
 
     # Args
     req_args, opt_args = [], []
     if has_start:
-        opt_args.append("- `start_on_create` (Bool) - Start immediately after creation. Default: `true`")
+        opt_args.append("- `start_on_create` (Bool) - Start immediately after creation. Default: `false`")
 
     # Collect all enum values for discriminator field from anyOf variants
     all_enum_values = {}

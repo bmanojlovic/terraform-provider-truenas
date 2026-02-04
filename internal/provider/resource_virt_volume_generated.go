@@ -88,16 +88,16 @@ func (r *VirtVolumeResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.ContentType.IsNull() {
+	if !data.ContentType.IsNull() && !data.ContentType.IsUnknown() {
 		params["content_type"] = data.ContentType.ValueString()
 	}
-	if !data.Size.IsNull() {
+	if !data.Size.IsNull() && !data.Size.IsUnknown() {
 		params["size"] = data.Size.ValueInt64()
 	}
-	if !data.StoragePool.IsNull() {
+	if !data.StoragePool.IsNull() && !data.StoragePool.IsUnknown() {
 		params["storage_pool"] = data.StoragePool.ValueString()
 	}
 
@@ -119,6 +119,37 @@ func (r *VirtVolumeResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("virt.volume.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back virt_volume: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -155,7 +186,7 @@ func (r *VirtVolumeResource) Read(ctx context.Context, req resource.ReadRequest,
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -189,7 +220,7 @@ func (r *VirtVolumeResource) Update(ctx context.Context, req resource.UpdateRequ
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Size.IsNull() {
+	if !data.Size.IsNull() && !data.Size.IsUnknown() {
 		params["size"] = data.Size.ValueInt64()
 	}
 
@@ -216,6 +247,10 @@ func (r *VirtVolumeResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	_, err = r.client.Call("virt.volume.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete virt_volume: %s", err))
 		return
 	}

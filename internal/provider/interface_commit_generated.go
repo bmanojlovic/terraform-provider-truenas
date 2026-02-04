@@ -90,8 +90,8 @@ func (r *InterfaceCommitResource) Create(ctx context.Context, req resource.Creat
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Rollback.IsNull() { params["rollback"] = data.Rollback.ValueBool() }
-	if !data.CheckinTimeout.IsNull() { params["checkin_timeout"] = data.CheckinTimeout.ValueInt64() }
+	if !data.Rollback.IsNull() && !data.Rollback.IsUnknown() { params["rollback"] = data.Rollback.ValueBool() }
+	if !data.CheckinTimeout.IsNull() && !data.CheckinTimeout.IsUnknown() { params["checkin_timeout"] = data.CheckinTimeout.ValueInt64() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

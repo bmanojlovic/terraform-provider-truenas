@@ -143,51 +143,51 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	params := map[string]interface{}{}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Aliases.IsNull() {
+	if !data.Aliases.IsNull() && !data.Aliases.IsUnknown() {
 		var aliasesList []string
 		data.Aliases.ElementsAs(ctx, &aliasesList, false)
 		params["aliases"] = aliasesList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.Networks.IsNull() {
+	if !data.Networks.IsNull() && !data.Networks.IsUnknown() {
 		var networksList []string
 		data.Networks.ElementsAs(ctx, &networksList, false)
 		params["networks"] = networksList
 	}
-	if !data.Hosts.IsNull() {
+	if !data.Hosts.IsNull() && !data.Hosts.IsUnknown() {
 		var hostsList []string
 		data.Hosts.ElementsAs(ctx, &hostsList, false)
 		params["hosts"] = hostsList
 	}
-	if !data.Ro.IsNull() {
+	if !data.Ro.IsNull() && !data.Ro.IsUnknown() {
 		params["ro"] = data.Ro.ValueBool()
 	}
-	if !data.MaprootUser.IsNull() {
+	if !data.MaprootUser.IsNull() && !data.MaprootUser.IsUnknown() {
 		params["maproot_user"] = data.MaprootUser.ValueString()
 	}
-	if !data.MaprootGroup.IsNull() {
+	if !data.MaprootGroup.IsNull() && !data.MaprootGroup.IsUnknown() {
 		params["maproot_group"] = data.MaprootGroup.ValueString()
 	}
-	if !data.MapallUser.IsNull() {
+	if !data.MapallUser.IsNull() && !data.MapallUser.IsUnknown() {
 		params["mapall_user"] = data.MapallUser.ValueString()
 	}
-	if !data.MapallGroup.IsNull() {
+	if !data.MapallGroup.IsNull() && !data.MapallGroup.IsUnknown() {
 		params["mapall_group"] = data.MapallGroup.ValueString()
 	}
-	if !data.Security.IsNull() {
+	if !data.Security.IsNull() && !data.Security.IsUnknown() {
 		var securityList []string
 		data.Security.ElementsAs(ctx, &securityList, false)
 		params["security"] = securityList
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ExposeSnapshots.IsNull() {
+	if !data.ExposeSnapshots.IsNull() && !data.ExposeSnapshots.IsUnknown() {
 		params["expose_snapshots"] = data.ExposeSnapshots.ValueBool()
 	}
 
@@ -209,6 +209,105 @@ func (r *SharingNfsResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("sharing.nfs.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back sharing_nfs: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["path"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["maproot_user"]; ok {
+			if v == nil {
+				data.MaprootUser = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MaprootUser = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MaprootUser = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MaprootUser = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["maproot_group"]; ok {
+			if v == nil {
+				data.MaprootGroup = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MaprootGroup = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MaprootGroup = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MaprootGroup = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["mapall_user"]; ok {
+			if v == nil {
+				data.MapallUser = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MapallUser = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MapallUser = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MapallUser = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["mapall_group"]; ok {
+			if v == nil {
+				data.MapallGroup = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MapallGroup = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MapallGroup = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MapallGroup = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -249,7 +348,7 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["path"]; ok && v != nil {
+		if v, ok := resultMap["path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Path = types.StringValue(val)
@@ -259,6 +358,70 @@ func (r *SharingNfsResource) Read(ctx context.Context, req resource.ReadRequest,
 				}
 			default:
 				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["maproot_user"]; ok {
+			if v == nil {
+				data.MaprootUser = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MaprootUser = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MaprootUser = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MaprootUser = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["maproot_group"]; ok {
+			if v == nil {
+				data.MaprootGroup = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MaprootGroup = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MaprootGroup = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MaprootGroup = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["mapall_user"]; ok {
+			if v == nil {
+				data.MapallUser = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MapallUser = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MapallUser = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MapallUser = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["mapall_group"]; ok {
+			if v == nil {
+				data.MapallGroup = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MapallGroup = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MapallGroup = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MapallGroup = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -287,51 +450,51 @@ func (r *SharingNfsResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	params := map[string]interface{}{}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Aliases.IsNull() {
+	if !data.Aliases.IsNull() && !data.Aliases.IsUnknown() {
 		var aliasesList []string
 		data.Aliases.ElementsAs(ctx, &aliasesList, false)
 		params["aliases"] = aliasesList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.Networks.IsNull() {
+	if !data.Networks.IsNull() && !data.Networks.IsUnknown() {
 		var networksList []string
 		data.Networks.ElementsAs(ctx, &networksList, false)
 		params["networks"] = networksList
 	}
-	if !data.Hosts.IsNull() {
+	if !data.Hosts.IsNull() && !data.Hosts.IsUnknown() {
 		var hostsList []string
 		data.Hosts.ElementsAs(ctx, &hostsList, false)
 		params["hosts"] = hostsList
 	}
-	if !data.Ro.IsNull() {
+	if !data.Ro.IsNull() && !data.Ro.IsUnknown() {
 		params["ro"] = data.Ro.ValueBool()
 	}
-	if !data.MaprootUser.IsNull() {
+	if !data.MaprootUser.IsNull() && !data.MaprootUser.IsUnknown() {
 		params["maproot_user"] = data.MaprootUser.ValueString()
 	}
-	if !data.MaprootGroup.IsNull() {
+	if !data.MaprootGroup.IsNull() && !data.MaprootGroup.IsUnknown() {
 		params["maproot_group"] = data.MaprootGroup.ValueString()
 	}
-	if !data.MapallUser.IsNull() {
+	if !data.MapallUser.IsNull() && !data.MapallUser.IsUnknown() {
 		params["mapall_user"] = data.MapallUser.ValueString()
 	}
-	if !data.MapallGroup.IsNull() {
+	if !data.MapallGroup.IsNull() && !data.MapallGroup.IsUnknown() {
 		params["mapall_group"] = data.MapallGroup.ValueString()
 	}
-	if !data.Security.IsNull() {
+	if !data.Security.IsNull() && !data.Security.IsUnknown() {
 		var securityList []string
 		data.Security.ElementsAs(ctx, &securityList, false)
 		params["security"] = securityList
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ExposeSnapshots.IsNull() {
+	if !data.ExposeSnapshots.IsNull() && !data.ExposeSnapshots.IsUnknown() {
 		params["expose_snapshots"] = data.ExposeSnapshots.ValueBool()
 	}
 
@@ -362,6 +525,10 @@ func (r *SharingNfsResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	_, err = r.client.Call("sharing.nfs.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete sharing_nfs: %s", err))
 		return
 	}

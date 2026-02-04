@@ -207,37 +207,37 @@ func (r *RsynctaskResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	params := map[string]interface{}{}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
-	if !data.Mode.IsNull() {
+	if !data.Mode.IsNull() && !data.Mode.IsUnknown() {
 		params["mode"] = data.Mode.ValueString()
 	}
-	if !data.Remotehost.IsNull() {
+	if !data.Remotehost.IsNull() && !data.Remotehost.IsUnknown() {
 		params["remotehost"] = data.Remotehost.ValueString()
 	}
-	if !data.Remoteport.IsNull() {
+	if !data.Remoteport.IsNull() && !data.Remoteport.IsUnknown() {
 		params["remoteport"] = data.Remoteport.ValueInt64()
 	}
-	if !data.Remotemodule.IsNull() {
+	if !data.Remotemodule.IsNull() && !data.Remotemodule.IsUnknown() {
 		params["remotemodule"] = data.Remotemodule.ValueString()
 	}
-	if !data.SshCredentials.IsNull() {
+	if !data.SshCredentials.IsNull() && !data.SshCredentials.IsUnknown() {
 		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
-	if !data.Remotepath.IsNull() {
+	if !data.Remotepath.IsNull() && !data.Remotepath.IsUnknown() {
 		params["remotepath"] = data.Remotepath.ValueString()
 	}
-	if !data.Direction.IsNull() {
+	if !data.Direction.IsNull() && !data.Direction.IsUnknown() {
 		params["direction"] = data.Direction.ValueString()
 	}
-	if !data.Desc.IsNull() {
+	if !data.Desc.IsNull() && !data.Desc.IsUnknown() {
 		params["desc"] = data.Desc.ValueString()
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -245,45 +245,45 @@ func (r *RsynctaskResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.Recursive.IsNull() {
+	if !data.Recursive.IsNull() && !data.Recursive.IsUnknown() {
 		params["recursive"] = data.Recursive.ValueBool()
 	}
-	if !data.Times.IsNull() {
+	if !data.Times.IsNull() && !data.Times.IsUnknown() {
 		params["times"] = data.Times.ValueBool()
 	}
-	if !data.Compress.IsNull() {
+	if !data.Compress.IsNull() && !data.Compress.IsUnknown() {
 		params["compress"] = data.Compress.ValueBool()
 	}
-	if !data.Archive.IsNull() {
+	if !data.Archive.IsNull() && !data.Archive.IsUnknown() {
 		params["archive"] = data.Archive.ValueBool()
 	}
-	if !data.Delete.IsNull() {
+	if !data.Delete.IsNull() && !data.Delete.IsUnknown() {
 		params["delete"] = data.Delete.ValueBool()
 	}
-	if !data.Quiet.IsNull() {
+	if !data.Quiet.IsNull() && !data.Quiet.IsUnknown() {
 		params["quiet"] = data.Quiet.ValueBool()
 	}
-	if !data.Preserveperm.IsNull() {
+	if !data.Preserveperm.IsNull() && !data.Preserveperm.IsUnknown() {
 		params["preserveperm"] = data.Preserveperm.ValueBool()
 	}
-	if !data.Preserveattr.IsNull() {
+	if !data.Preserveattr.IsNull() && !data.Preserveattr.IsUnknown() {
 		params["preserveattr"] = data.Preserveattr.ValueBool()
 	}
-	if !data.Delayupdates.IsNull() {
+	if !data.Delayupdates.IsNull() && !data.Delayupdates.IsUnknown() {
 		params["delayupdates"] = data.Delayupdates.ValueBool()
 	}
-	if !data.Extra.IsNull() {
+	if !data.Extra.IsNull() && !data.Extra.IsUnknown() {
 		var extraList []string
 		data.Extra.ElementsAs(ctx, &extraList, false)
 		params["extra"] = extraList
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ValidateRpath.IsNull() {
+	if !data.ValidateRpath.IsNull() && !data.ValidateRpath.IsUnknown() {
 		params["validate_rpath"] = data.ValidateRpath.ValueBool()
 	}
-	if !data.SshKeyscan.IsNull() {
+	if !data.SshKeyscan.IsNull() && !data.SshKeyscan.IsUnknown() {
 		params["ssh_keyscan"] = data.SshKeyscan.ValueBool()
 	}
 
@@ -305,6 +305,113 @@ func (r *RsynctaskResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("rsynctask.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back rsynctask: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["path"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["user"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.User = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.User = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["remotehost"]; ok {
+			if v == nil {
+				data.Remotehost = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Remotehost = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Remotehost = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Remotehost = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["remoteport"]; ok {
+			if v == nil {
+				data.Remoteport = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Remoteport = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Remoteport = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["remotemodule"]; ok {
+			if v == nil {
+				data.Remotemodule = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Remotemodule = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Remotemodule = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Remotemodule = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["ssh_credentials"]; ok {
+			if v == nil {
+				data.SshCredentials = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.SshCredentials = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.SshCredentials = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -345,7 +452,7 @@ func (r *RsynctaskResource) Read(ctx context.Context, req resource.ReadRequest, 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["path"]; ok && v != nil {
+		if v, ok := resultMap["path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Path = types.StringValue(val)
@@ -357,7 +464,7 @@ func (r *RsynctaskResource) Read(ctx context.Context, req resource.ReadRequest, 
 				data.Path = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["user"]; ok && v != nil {
+		if v, ok := resultMap["user"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.User = types.StringValue(val)
@@ -367,6 +474,66 @@ func (r *RsynctaskResource) Read(ctx context.Context, req resource.ReadRequest, 
 				}
 			default:
 				data.User = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["remotehost"]; ok {
+			if v == nil {
+				data.Remotehost = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Remotehost = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Remotehost = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Remotehost = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["remoteport"]; ok {
+			if v == nil {
+				data.Remoteport = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Remoteport = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Remoteport = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["remotemodule"]; ok {
+			if v == nil {
+				data.Remotemodule = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Remotemodule = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Remotemodule = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Remotemodule = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["ssh_credentials"]; ok {
+			if v == nil {
+				data.SshCredentials = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.SshCredentials = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.SshCredentials = types.Int64Value(int64(fv)) }
+					}
+				}
 			}
 		}
 
@@ -395,37 +562,37 @@ func (r *RsynctaskResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	params := map[string]interface{}{}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.User.IsNull() {
+	if !data.User.IsNull() && !data.User.IsUnknown() {
 		params["user"] = data.User.ValueString()
 	}
-	if !data.Mode.IsNull() {
+	if !data.Mode.IsNull() && !data.Mode.IsUnknown() {
 		params["mode"] = data.Mode.ValueString()
 	}
-	if !data.Remotehost.IsNull() {
+	if !data.Remotehost.IsNull() && !data.Remotehost.IsUnknown() {
 		params["remotehost"] = data.Remotehost.ValueString()
 	}
-	if !data.Remoteport.IsNull() {
+	if !data.Remoteport.IsNull() && !data.Remoteport.IsUnknown() {
 		params["remoteport"] = data.Remoteport.ValueInt64()
 	}
-	if !data.Remotemodule.IsNull() {
+	if !data.Remotemodule.IsNull() && !data.Remotemodule.IsUnknown() {
 		params["remotemodule"] = data.Remotemodule.ValueString()
 	}
-	if !data.SshCredentials.IsNull() {
+	if !data.SshCredentials.IsNull() && !data.SshCredentials.IsUnknown() {
 		params["ssh_credentials"] = data.SshCredentials.ValueInt64()
 	}
-	if !data.Remotepath.IsNull() {
+	if !data.Remotepath.IsNull() && !data.Remotepath.IsUnknown() {
 		params["remotepath"] = data.Remotepath.ValueString()
 	}
-	if !data.Direction.IsNull() {
+	if !data.Direction.IsNull() && !data.Direction.IsUnknown() {
 		params["direction"] = data.Direction.ValueString()
 	}
-	if !data.Desc.IsNull() {
+	if !data.Desc.IsNull() && !data.Desc.IsUnknown() {
 		params["desc"] = data.Desc.ValueString()
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -433,45 +600,45 @@ func (r *RsynctaskResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.Recursive.IsNull() {
+	if !data.Recursive.IsNull() && !data.Recursive.IsUnknown() {
 		params["recursive"] = data.Recursive.ValueBool()
 	}
-	if !data.Times.IsNull() {
+	if !data.Times.IsNull() && !data.Times.IsUnknown() {
 		params["times"] = data.Times.ValueBool()
 	}
-	if !data.Compress.IsNull() {
+	if !data.Compress.IsNull() && !data.Compress.IsUnknown() {
 		params["compress"] = data.Compress.ValueBool()
 	}
-	if !data.Archive.IsNull() {
+	if !data.Archive.IsNull() && !data.Archive.IsUnknown() {
 		params["archive"] = data.Archive.ValueBool()
 	}
-	if !data.Delete.IsNull() {
+	if !data.Delete.IsNull() && !data.Delete.IsUnknown() {
 		params["delete"] = data.Delete.ValueBool()
 	}
-	if !data.Quiet.IsNull() {
+	if !data.Quiet.IsNull() && !data.Quiet.IsUnknown() {
 		params["quiet"] = data.Quiet.ValueBool()
 	}
-	if !data.Preserveperm.IsNull() {
+	if !data.Preserveperm.IsNull() && !data.Preserveperm.IsUnknown() {
 		params["preserveperm"] = data.Preserveperm.ValueBool()
 	}
-	if !data.Preserveattr.IsNull() {
+	if !data.Preserveattr.IsNull() && !data.Preserveattr.IsUnknown() {
 		params["preserveattr"] = data.Preserveattr.ValueBool()
 	}
-	if !data.Delayupdates.IsNull() {
+	if !data.Delayupdates.IsNull() && !data.Delayupdates.IsUnknown() {
 		params["delayupdates"] = data.Delayupdates.ValueBool()
 	}
-	if !data.Extra.IsNull() {
+	if !data.Extra.IsNull() && !data.Extra.IsUnknown() {
 		var extraList []string
 		data.Extra.ElementsAs(ctx, &extraList, false)
 		params["extra"] = extraList
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ValidateRpath.IsNull() {
+	if !data.ValidateRpath.IsNull() && !data.ValidateRpath.IsUnknown() {
 		params["validate_rpath"] = data.ValidateRpath.ValueBool()
 	}
-	if !data.SshKeyscan.IsNull() {
+	if !data.SshKeyscan.IsNull() && !data.SshKeyscan.IsUnknown() {
 		params["ssh_keyscan"] = data.SshKeyscan.ValueBool()
 	}
 
@@ -502,6 +669,10 @@ func (r *RsynctaskResource) Delete(ctx context.Context, req resource.DeleteReque
 
 	_, err = r.client.Call("rsynctask.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete rsynctask: %s", err))
 		return
 	}

@@ -97,22 +97,22 @@ func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.Create
 	}
 
 	params := map[string]interface{}{}
-	if !data.Nsid.IsNull() {
+	if !data.Nsid.IsNull() && !data.Nsid.IsUnknown() {
 		params["nsid"] = data.Nsid.ValueInt64()
 	}
-	if !data.DeviceType.IsNull() {
+	if !data.DeviceType.IsNull() && !data.DeviceType.IsUnknown() {
 		params["device_type"] = data.DeviceType.ValueString()
 	}
-	if !data.DevicePath.IsNull() {
+	if !data.DevicePath.IsNull() && !data.DevicePath.IsUnknown() {
 		params["device_path"] = data.DevicePath.ValueString()
 	}
-	if !data.Filesize.IsNull() {
+	if !data.Filesize.IsNull() && !data.Filesize.IsUnknown() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.SubsysId.IsNull() {
+	if !data.SubsysId.IsNull() && !data.SubsysId.IsUnknown() {
 		params["subsys_id"] = data.SubsysId.ValueInt64()
 	}
 
@@ -134,6 +134,91 @@ func (r *NvmetNamespaceResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("nvmet.namespace.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back nvmet_namespace: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["nsid"]; ok {
+			if v == nil {
+				data.Nsid = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Nsid = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Nsid = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["device_type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.DeviceType = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DeviceType = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.DeviceType = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["device_path"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.DevicePath = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DevicePath = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["filesize"]; ok {
+			if v == nil {
+				data.Filesize = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Filesize = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Filesize = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["subsys_id"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.SubsysId = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -174,7 +259,21 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["device_type"]; ok && v != nil {
+		if v, ok := resultMap["nsid"]; ok {
+			if v == nil {
+				data.Nsid = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Nsid = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Nsid = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["device_type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.DeviceType = types.StringValue(val)
@@ -186,7 +285,7 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 				data.DeviceType = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["device_path"]; ok && v != nil {
+		if v, ok := resultMap["device_path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.DevicePath = types.StringValue(val)
@@ -198,7 +297,21 @@ func (r *NvmetNamespaceResource) Read(ctx context.Context, req resource.ReadRequ
 				data.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["subsys_id"]; ok && v != nil {
+		if v, ok := resultMap["filesize"]; ok {
+			if v == nil {
+				data.Filesize = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Filesize = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Filesize = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["subsys_id"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.SubsysId = types.Int64Value(int64(val))
@@ -234,22 +347,22 @@ func (r *NvmetNamespaceResource) Update(ctx context.Context, req resource.Update
 	}
 
 	params := map[string]interface{}{}
-	if !data.Nsid.IsNull() {
+	if !data.Nsid.IsNull() && !data.Nsid.IsUnknown() {
 		params["nsid"] = data.Nsid.ValueInt64()
 	}
-	if !data.DeviceType.IsNull() {
+	if !data.DeviceType.IsNull() && !data.DeviceType.IsUnknown() {
 		params["device_type"] = data.DeviceType.ValueString()
 	}
-	if !data.DevicePath.IsNull() {
+	if !data.DevicePath.IsNull() && !data.DevicePath.IsUnknown() {
 		params["device_path"] = data.DevicePath.ValueString()
 	}
-	if !data.Filesize.IsNull() {
+	if !data.Filesize.IsNull() && !data.Filesize.IsUnknown() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.SubsysId.IsNull() {
+	if !data.SubsysId.IsNull() && !data.SubsysId.IsUnknown() {
 		params["subsys_id"] = data.SubsysId.ValueInt64()
 	}
 
@@ -281,6 +394,10 @@ func (r *NvmetNamespaceResource) Delete(ctx context.Context, req resource.Delete
 
 	_, err = r.client.Call("nvmet.namespace.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete nvmet_namespace: %s", err))
 		return
 	}

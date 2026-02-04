@@ -82,6 +82,17 @@ func (r *{resource_name}Resource) Create(ctx context.Context, req resource.Creat
 		return
 	}}
 {lifecycle_code}
+
+	// Read back to populate computed fields
+	var id interface{{}}
+{id_read_code}
+	result, err = r.client.Call("{api_name}.get_instance", id)
+	if err != nil {{
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back {name}: %s", err))
+		return
+	}}
+{read_mapping}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }}
 
@@ -156,6 +167,10 @@ func (r *{resource_name}Resource) Delete(ctx context.Context, req resource.Delet
 {predelete_code}
 	_, err = r.client.{delete_call}("{api_name}.delete", id)
 	if err != nil {{
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {{
+			return
+		}}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete {name}: %s", err))
 		return
 	}}

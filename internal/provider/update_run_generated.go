@@ -96,11 +96,11 @@ func (r *UpdateRunResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.DatasetName.IsNull() { params["dataset_name"] = data.DatasetName.ValueString() }
-	if !data.Resume.IsNull() { params["resume"] = data.Resume.ValueBool() }
-	if !data.Train.IsNull() { params["train"] = data.Train.ValueString() }
-	if !data.Version.IsNull() { params["version"] = data.Version.ValueString() }
-	if !data.Reboot.IsNull() { params["reboot"] = data.Reboot.ValueBool() }
+	if !data.DatasetName.IsNull() && !data.DatasetName.IsUnknown() { params["dataset_name"] = data.DatasetName.ValueString() }
+	if !data.Resume.IsNull() && !data.Resume.IsUnknown() { params["resume"] = data.Resume.ValueBool() }
+	if !data.Train.IsNull() && !data.Train.IsUnknown() { params["train"] = data.Train.ValueString() }
+	if !data.Version.IsNull() && !data.Version.IsUnknown() { params["version"] = data.Version.ValueString() }
+	if !data.Reboot.IsNull() && !data.Reboot.IsUnknown() { params["reboot"] = data.Reboot.ValueBool() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

@@ -222,7 +222,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-		if v, ok := resultMap["uid"]; ok && v != nil {
+		if v, ok := resultMap["uid"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Uid = types.Int64Value(int64(val))
@@ -232,7 +232,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				}
 			}
 		}
-		if v, ok := resultMap["username"]; ok && v != nil {
+		if v, ok := resultMap["username"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Username = types.StringValue(val)
@@ -244,31 +244,39 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Username = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["unixhash"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Unixhash = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Unixhash = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["unixhash"]; ok {
+			if v == nil {
+				data.Unixhash = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Unixhash = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Unixhash = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Unixhash = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Unixhash = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["smbhash"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Smbhash = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Smbhash = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["smbhash"]; ok {
+			if v == nil {
+				data.Smbhash = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Smbhash = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Smbhash = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Smbhash = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Smbhash = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["home"]; ok && v != nil {
+		if v, ok := resultMap["home"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Home = types.StringValue(val)
@@ -280,7 +288,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Home = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["shell"]; ok && v != nil {
+		if v, ok := resultMap["shell"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Shell = types.StringValue(val)
@@ -292,7 +300,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Shell = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["full_name"]; ok && v != nil {
+		if v, ok := resultMap["full_name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.FullName = types.StringValue(val)
@@ -304,13 +312,13 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["builtin"]; ok && v != nil {
+		if v, ok := resultMap["builtin"]; ok {
 			if bv, ok := v.(bool); ok { data.Builtin = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["smb"]; ok && v != nil {
+		if v, ok := resultMap["smb"]; ok {
 			if bv, ok := v.(bool); ok { data.Smb = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["userns_idmap"]; ok && v != nil {
+		if v, ok := resultMap["userns_idmap"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.UsernsIdmap = types.Int64Value(int64(val))
@@ -320,7 +328,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				}
 			}
 		}
-		if v, ok := resultMap["group"]; ok && v != nil {
+		if v, ok := resultMap["group"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Group = types.StringValue(val)
@@ -332,121 +340,144 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Group = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["groups"]; ok && v != nil {
+		if v, ok := resultMap["groups"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Groups, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["password_disabled"]; ok && v != nil {
+		if v, ok := resultMap["password_disabled"]; ok {
 			if bv, ok := v.(bool); ok { data.PasswordDisabled = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["ssh_password_enabled"]; ok && v != nil {
+		if v, ok := resultMap["ssh_password_enabled"]; ok {
 			if bv, ok := v.(bool); ok { data.SshPasswordEnabled = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["sshpubkey"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Sshpubkey = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["sshpubkey"]; ok {
+			if v == nil {
+				data.Sshpubkey = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Sshpubkey = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["locked"]; ok && v != nil {
+		if v, ok := resultMap["locked"]; ok {
 			if bv, ok := v.(bool); ok { data.Locked = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["sudo_commands"]; ok && v != nil {
+		if v, ok := resultMap["sudo_commands"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.SudoCommands, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["sudo_commands_nopasswd"]; ok && v != nil {
+		if v, ok := resultMap["sudo_commands_nopasswd"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["email"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Email = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["email"]; ok {
+			if v == nil {
+				data.Email = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Email = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Email = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Email = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["local"]; ok && v != nil {
+		if v, ok := resultMap["local"]; ok {
 			if bv, ok := v.(bool); ok { data.Local = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["immutable"]; ok && v != nil {
+		if v, ok := resultMap["immutable"]; ok {
 			if bv, ok := v.(bool); ok { data.Immutable = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["twofactor_auth_configured"]; ok && v != nil {
+		if v, ok := resultMap["twofactor_auth_configured"]; ok {
 			if bv, ok := v.(bool); ok { data.TwofactorAuthConfigured = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["sid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Sid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Sid = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Sid = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["last_password_change"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.LastPasswordChange = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.LastPasswordChange = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.LastPasswordChange = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["password_age"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.PasswordAge = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.PasswordAge = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["sid"]; ok {
+			if v == nil {
+				data.Sid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Sid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Sid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Sid = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["password_history"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.PasswordHistory, _ = types.ListValue(types.StringType, strVals)
+		if v, ok := resultMap["last_password_change"]; ok {
+			if v == nil {
+				data.LastPasswordChange = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.LastPasswordChange = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.LastPasswordChange = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.LastPasswordChange = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
-		if v, ok := resultMap["password_change_required"]; ok && v != nil {
+		if v, ok := resultMap["password_age"]; ok {
+			if v == nil {
+				data.PasswordAge = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.PasswordAge = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.PasswordAge = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["password_history"]; ok {
+			if v == nil {
+			} else {
+				if arr, ok := v.([]interface{}); ok {
+					strVals := make([]attr.Value, len(arr))
+					for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+					data.PasswordHistory, _ = types.ListValue(types.StringType, strVals)
+				}
+			}
+		}
+		if v, ok := resultMap["password_change_required"]; ok {
 			if bv, ok := v.(bool); ok { data.PasswordChangeRequired = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["roles"]; ok && v != nil {
+		if v, ok := resultMap["roles"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Roles, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["api_keys"]; ok && v != nil {
+		if v, ok := resultMap["api_keys"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }

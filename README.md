@@ -48,7 +48,28 @@ resource "truenas_vm" "example" {
   memory      = 2048  # 2GB in megabytes
   autostart   = false
 }
+
+# Attach devices while VM is stopped
+resource "truenas_vm_device" "disk" {
+  vm = truenas_vm.example.id
+  attributes = jsonencode({
+    dtype        = "DISK"
+    create_zvol  = true
+    zvol_name    = "pool/vm-disk"
+    zvol_volsize = 10 * 1024 * 1024 * 1024  # 10GB in bytes
+    type         = "VIRTIO"
+  })
+  order = 1000
+}
+
+# Start VM after all devices are attached
+resource "truenas_action_vm_start" "example" {
+  id = tonumber(truenas_vm.example.id)
+  depends_on = [truenas_vm_device.disk]
+}
 ```
+
+**Note**: Unlike cloud providers (AWS/GCP), VMs don't auto-start by default (`start_on_create = false`). This allows devices to be attached while the VM is stopped, which is required by TrueNAS. Use `truenas_action_vm_start` or set `start_on_create = true` to start the VM.
 
 ## Available Resources
 

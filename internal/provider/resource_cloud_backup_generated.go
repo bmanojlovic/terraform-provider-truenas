@@ -175,16 +175,16 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Credentials.IsNull() {
+	if !data.Credentials.IsNull() && !data.Credentials.IsUnknown() {
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -192,7 +192,7 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -200,47 +200,47 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.PreScript.IsNull() {
+	if !data.PreScript.IsNull() && !data.PreScript.IsUnknown() {
 		params["pre_script"] = data.PreScript.ValueString()
 	}
-	if !data.PostScript.IsNull() {
+	if !data.PostScript.IsNull() && !data.PostScript.IsUnknown() {
 		params["post_script"] = data.PostScript.ValueString()
 	}
-	if !data.Snapshot.IsNull() {
+	if !data.Snapshot.IsNull() && !data.Snapshot.IsUnknown() {
 		params["snapshot"] = data.Snapshot.ValueBool()
 	}
-	if !data.Include.IsNull() {
+	if !data.Include.IsNull() && !data.Include.IsUnknown() {
 		var includeList []string
 		data.Include.ElementsAs(ctx, &includeList, false)
 		params["include"] = includeList
 	}
-	if !data.Exclude.IsNull() {
+	if !data.Exclude.IsNull() && !data.Exclude.IsUnknown() {
 		var excludeList []string
 		data.Exclude.ElementsAs(ctx, &excludeList, false)
 		params["exclude"] = excludeList
 	}
-	if !data.Args.IsNull() {
+	if !data.Args.IsNull() && !data.Args.IsUnknown() {
 		params["args"] = data.Args.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.KeepLast.IsNull() {
+	if !data.KeepLast.IsNull() && !data.KeepLast.IsUnknown() {
 		params["keep_last"] = data.KeepLast.ValueInt64()
 	}
-	if !data.TransferSetting.IsNull() {
+	if !data.TransferSetting.IsNull() && !data.TransferSetting.IsUnknown() {
 		params["transfer_setting"] = data.TransferSetting.ValueString()
 	}
-	if !data.AbsolutePaths.IsNull() {
+	if !data.AbsolutePaths.IsNull() && !data.AbsolutePaths.IsUnknown() {
 		params["absolute_paths"] = data.AbsolutePaths.ValueBool()
 	}
-	if !data.CachePath.IsNull() {
+	if !data.CachePath.IsNull() && !data.CachePath.IsUnknown() {
 		params["cache_path"] = data.CachePath.ValueString()
 	}
-	if !data.RateLimit.IsNull() {
+	if !data.RateLimit.IsNull() && !data.RateLimit.IsUnknown() {
 		params["rate_limit"] = data.RateLimit.ValueInt64()
 	}
 
@@ -262,6 +262,115 @@ func (r *CloudBackupResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("cloud_backup.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back cloud_backup: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["path"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["credentials"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.Credentials = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Credentials = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["password"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["keep_last"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.KeepLast = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.KeepLast = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["cache_path"]; ok {
+			if v == nil {
+				data.CachePath = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.CachePath = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.CachePath = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.CachePath = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["rate_limit"]; ok {
+			if v == nil {
+				data.RateLimit = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.RateLimit = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.RateLimit = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -302,7 +411,7 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["path"]; ok && v != nil {
+		if v, ok := resultMap["path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Path = types.StringValue(val)
@@ -314,7 +423,7 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Path = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["credentials"]; ok && v != nil {
+		if v, ok := resultMap["credentials"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Credentials = types.Int64Value(int64(val))
@@ -324,7 +433,7 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 				}
 			}
 		}
-		if v, ok := resultMap["attributes"]; ok && v != nil {
+		if v, ok := resultMap["attributes"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Attributes = types.StringValue(val)
@@ -336,7 +445,7 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["password"]; ok && v != nil {
+		if v, ok := resultMap["password"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Password = types.StringValue(val)
@@ -348,13 +457,43 @@ func (r *CloudBackupResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Password = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["keep_last"]; ok && v != nil {
+		if v, ok := resultMap["keep_last"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.KeepLast = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
 					if fv, ok := parsed.(float64); ok { data.KeepLast = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["cache_path"]; ok {
+			if v == nil {
+				data.CachePath = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.CachePath = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.CachePath = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.CachePath = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["rate_limit"]; ok {
+			if v == nil {
+				data.RateLimit = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.RateLimit = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.RateLimit = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
@@ -384,16 +523,16 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Credentials.IsNull() {
+	if !data.Credentials.IsNull() && !data.Credentials.IsUnknown() {
 		params["credentials"] = data.Credentials.ValueInt64()
 	}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -401,7 +540,7 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Schedule.IsNull() {
+	if !data.Schedule.IsNull() && !data.Schedule.IsUnknown() {
 		var scheduleObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Schedule.ValueString()), &scheduleObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse schedule: %s", err))
@@ -409,44 +548,44 @@ func (r *CloudBackupResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		params["schedule"] = scheduleObj
 	}
-	if !data.PreScript.IsNull() {
+	if !data.PreScript.IsNull() && !data.PreScript.IsUnknown() {
 		params["pre_script"] = data.PreScript.ValueString()
 	}
-	if !data.PostScript.IsNull() {
+	if !data.PostScript.IsNull() && !data.PostScript.IsUnknown() {
 		params["post_script"] = data.PostScript.ValueString()
 	}
-	if !data.Snapshot.IsNull() {
+	if !data.Snapshot.IsNull() && !data.Snapshot.IsUnknown() {
 		params["snapshot"] = data.Snapshot.ValueBool()
 	}
-	if !data.Include.IsNull() {
+	if !data.Include.IsNull() && !data.Include.IsUnknown() {
 		var includeList []string
 		data.Include.ElementsAs(ctx, &includeList, false)
 		params["include"] = includeList
 	}
-	if !data.Exclude.IsNull() {
+	if !data.Exclude.IsNull() && !data.Exclude.IsUnknown() {
 		var excludeList []string
 		data.Exclude.ElementsAs(ctx, &excludeList, false)
 		params["exclude"] = excludeList
 	}
-	if !data.Args.IsNull() {
+	if !data.Args.IsNull() && !data.Args.IsUnknown() {
 		params["args"] = data.Args.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.KeepLast.IsNull() {
+	if !data.KeepLast.IsNull() && !data.KeepLast.IsUnknown() {
 		params["keep_last"] = data.KeepLast.ValueInt64()
 	}
-	if !data.TransferSetting.IsNull() {
+	if !data.TransferSetting.IsNull() && !data.TransferSetting.IsUnknown() {
 		params["transfer_setting"] = data.TransferSetting.ValueString()
 	}
-	if !data.CachePath.IsNull() {
+	if !data.CachePath.IsNull() && !data.CachePath.IsUnknown() {
 		params["cache_path"] = data.CachePath.ValueString()
 	}
-	if !data.RateLimit.IsNull() {
+	if !data.RateLimit.IsNull() && !data.RateLimit.IsUnknown() {
 		params["rate_limit"] = data.RateLimit.ValueInt64()
 	}
 
@@ -477,6 +616,10 @@ func (r *CloudBackupResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("cloud_backup.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete cloud_backup: %s", err))
 		return
 	}

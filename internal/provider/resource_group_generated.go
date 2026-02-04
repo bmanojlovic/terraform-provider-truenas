@@ -109,29 +109,29 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	params := map[string]interface{}{}
-	if !data.Gid.IsNull() {
+	if !data.Gid.IsNull() && !data.Gid.IsUnknown() {
 		params["gid"] = data.Gid.ValueInt64()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Users.IsNull() {
+	if !data.Users.IsNull() && !data.Users.IsUnknown() {
 		var usersList []string
 		data.Users.ElementsAs(ctx, &usersList, false)
 		params["users"] = usersList
@@ -155,6 +155,55 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("group.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back group: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["userns_idmap"]; ok {
+			if v == nil {
+				data.UsernsIdmap = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.UsernsIdmap = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -195,7 +244,7 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -205,6 +254,20 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 				}
 			default:
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["userns_idmap"]; ok {
+			if v == nil {
+				data.UsernsIdmap = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.UsernsIdmap = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+					}
+				}
 			}
 		}
 
@@ -233,26 +296,26 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Users.IsNull() {
+	if !data.Users.IsNull() && !data.Users.IsUnknown() {
 		var usersList []string
 		data.Users.ElementsAs(ctx, &usersList, false)
 		params["users"] = usersList
@@ -286,6 +349,10 @@ func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	_, err = r.client.Call("group.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete group: %s", err))
 		return
 	}

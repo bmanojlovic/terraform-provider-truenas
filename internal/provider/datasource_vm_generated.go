@@ -227,7 +227,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		return
 	}
 
-		if v, ok := resultMap["command_line_args"]; ok && v != nil {
+		if v, ok := resultMap["command_line_args"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.CommandLineArgs = types.StringValue(val)
@@ -239,7 +239,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.CommandLineArgs = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["cpu_mode"]; ok && v != nil {
+		if v, ok := resultMap["cpu_mode"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.CpuMode = types.StringValue(val)
@@ -251,19 +251,23 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.CpuMode = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["cpu_model"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.CpuModel = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["cpu_model"]; ok {
+			if v == nil {
+				data.CpuModel = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.CpuModel = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -275,7 +279,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["description"]; ok && v != nil {
+		if v, ok := resultMap["description"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Description = types.StringValue(val)
@@ -287,7 +291,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.Description = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["vcpus"]; ok && v != nil {
+		if v, ok := resultMap["vcpus"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Vcpus = types.Int64Value(int64(val))
@@ -297,7 +301,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				}
 			}
 		}
-		if v, ok := resultMap["cores"]; ok && v != nil {
+		if v, ok := resultMap["cores"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Cores = types.Int64Value(int64(val))
@@ -307,7 +311,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				}
 			}
 		}
-		if v, ok := resultMap["threads"]; ok && v != nil {
+		if v, ok := resultMap["threads"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Threads = types.Int64Value(int64(val))
@@ -317,43 +321,51 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				}
 			}
 		}
-		if v, ok := resultMap["cpuset"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Cpuset = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["cpuset"]; ok {
+			if v == nil {
+				data.Cpuset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpuset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["nodeset"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Nodeset = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["nodeset"]; ok {
+			if v == nil {
+				data.Nodeset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Nodeset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["enable_cpu_topology_extension"]; ok && v != nil {
+		if v, ok := resultMap["enable_cpu_topology_extension"]; ok {
 			if bv, ok := v.(bool); ok { data.EnableCpuTopologyExtension = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["pin_vcpus"]; ok && v != nil {
+		if v, ok := resultMap["pin_vcpus"]; ok {
 			if bv, ok := v.(bool); ok { data.PinVcpus = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["suspend_on_snapshot"]; ok && v != nil {
+		if v, ok := resultMap["suspend_on_snapshot"]; ok {
 			if bv, ok := v.(bool); ok { data.SuspendOnSnapshot = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["trusted_platform_module"]; ok && v != nil {
+		if v, ok := resultMap["trusted_platform_module"]; ok {
 			if bv, ok := v.(bool); ok { data.TrustedPlatformModule = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["memory"]; ok && v != nil {
+		if v, ok := resultMap["memory"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Memory = types.Int64Value(int64(val))
@@ -363,20 +375,24 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				}
 			}
 		}
-		if v, ok := resultMap["min_memory"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.MinMemory = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.MinMemory = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["min_memory"]; ok {
+			if v == nil {
+				data.MinMemory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.MinMemory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.MinMemory = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["hyperv_enlightenments"]; ok && v != nil {
+		if v, ok := resultMap["hyperv_enlightenments"]; ok {
 			if bv, ok := v.(bool); ok { data.HypervEnlightenments = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["bootloader"]; ok && v != nil {
+		if v, ok := resultMap["bootloader"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Bootloader = types.StringValue(val)
@@ -388,7 +404,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.Bootloader = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["bootloader_ovmf"]; ok && v != nil {
+		if v, ok := resultMap["bootloader_ovmf"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.BootloaderOvmf = types.StringValue(val)
@@ -400,16 +416,16 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.BootloaderOvmf = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["autostart"]; ok && v != nil {
+		if v, ok := resultMap["autostart"]; ok {
 			if bv, ok := v.(bool); ok { data.Autostart = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["hide_from_msr"]; ok && v != nil {
+		if v, ok := resultMap["hide_from_msr"]; ok {
 			if bv, ok := v.(bool); ok { data.HideFromMsr = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["ensure_display_device"]; ok && v != nil {
+		if v, ok := resultMap["ensure_display_device"]; ok {
 			if bv, ok := v.(bool); ok { data.EnsureDisplayDevice = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["time"]; ok && v != nil {
+		if v, ok := resultMap["time"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Time = types.StringValue(val)
@@ -421,7 +437,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.Time = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["shutdown_timeout"]; ok && v != nil {
+		if v, ok := resultMap["shutdown_timeout"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.ShutdownTimeout = types.Int64Value(int64(val))
@@ -431,53 +447,65 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				}
 			}
 		}
-		if v, ok := resultMap["arch_type"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.ArchType = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["arch_type"]; ok {
+			if v == nil {
+				data.ArchType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ArchType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["machine_type"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.MachineType = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["machine_type"]; ok {
+			if v == nil {
+				data.MachineType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MachineType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["uuid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Uuid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["uuid"]; ok {
+			if v == nil {
+				data.Uuid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Uuid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["devices"]; ok && v != nil {
+		if v, ok := resultMap["devices"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Devices, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["display_available"]; ok && v != nil {
+		if v, ok := resultMap["display_available"]; ok {
 			if bv, ok := v.(bool); ok { data.DisplayAvailable = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["status"]; ok && v != nil {
+		if v, ok := resultMap["status"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Status = types.StringValue(val)
@@ -489,7 +517,7 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 				data.Status = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["enable_secure_boot"]; ok && v != nil {
+		if v, ok := resultMap["enable_secure_boot"]; ok {
 			if bv, ok := v.(bool); ok { data.EnableSecureBoot = types.BoolValue(bv) }
 		}
 

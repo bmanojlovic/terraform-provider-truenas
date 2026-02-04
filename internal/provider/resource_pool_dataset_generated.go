@@ -302,67 +302,67 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Comments.IsNull() {
+	if !data.Comments.IsNull() && !data.Comments.IsUnknown() {
 		params["comments"] = data.Comments.ValueString()
 	}
-	if !data.Sync.IsNull() {
+	if !data.Sync.IsNull() && !data.Sync.IsUnknown() {
 		params["sync"] = data.Sync.ValueString()
 	}
-	if !data.Snapdev.IsNull() {
+	if !data.Snapdev.IsNull() && !data.Snapdev.IsUnknown() {
 		params["snapdev"] = data.Snapdev.ValueString()
 	}
-	if !data.Compression.IsNull() {
+	if !data.Compression.IsNull() && !data.Compression.IsUnknown() {
 		params["compression"] = data.Compression.ValueString()
 	}
-	if !data.Exec.IsNull() {
+	if !data.Exec.IsNull() && !data.Exec.IsUnknown() {
 		params["exec"] = data.Exec.ValueString()
 	}
-	if !data.Managedby.IsNull() {
+	if !data.Managedby.IsNull() && !data.Managedby.IsUnknown() {
 		params["managedby"] = data.Managedby.ValueString()
 	}
-	if !data.QuotaWarning.IsNull() {
+	if !data.QuotaWarning.IsNull() && !data.QuotaWarning.IsUnknown() {
 		params["quota_warning"] = data.QuotaWarning.ValueInt64()
 	}
-	if !data.QuotaCritical.IsNull() {
+	if !data.QuotaCritical.IsNull() && !data.QuotaCritical.IsUnknown() {
 		params["quota_critical"] = data.QuotaCritical.ValueInt64()
 	}
-	if !data.RefquotaWarning.IsNull() {
+	if !data.RefquotaWarning.IsNull() && !data.RefquotaWarning.IsUnknown() {
 		params["refquota_warning"] = data.RefquotaWarning.ValueInt64()
 	}
-	if !data.RefquotaCritical.IsNull() {
+	if !data.RefquotaCritical.IsNull() && !data.RefquotaCritical.IsUnknown() {
 		params["refquota_critical"] = data.RefquotaCritical.ValueInt64()
 	}
-	if !data.Reservation.IsNull() {
+	if !data.Reservation.IsNull() && !data.Reservation.IsUnknown() {
 		params["reservation"] = data.Reservation.ValueInt64()
 	}
-	if !data.Refreservation.IsNull() {
+	if !data.Refreservation.IsNull() && !data.Refreservation.IsUnknown() {
 		params["refreservation"] = data.Refreservation.ValueInt64()
 	}
-	if !data.SpecialSmallBlockSize.IsNull() {
+	if !data.SpecialSmallBlockSize.IsNull() && !data.SpecialSmallBlockSize.IsUnknown() {
 		params["special_small_block_size"] = data.SpecialSmallBlockSize.ValueInt64()
 	}
-	if !data.Copies.IsNull() {
+	if !data.Copies.IsNull() && !data.Copies.IsUnknown() {
 		params["copies"] = data.Copies.ValueInt64()
 	}
-	if !data.Snapdir.IsNull() {
+	if !data.Snapdir.IsNull() && !data.Snapdir.IsUnknown() {
 		params["snapdir"] = data.Snapdir.ValueString()
 	}
-	if !data.Deduplication.IsNull() {
+	if !data.Deduplication.IsNull() && !data.Deduplication.IsUnknown() {
 		params["deduplication"] = data.Deduplication.ValueString()
 	}
-	if !data.Checksum.IsNull() {
+	if !data.Checksum.IsNull() && !data.Checksum.IsUnknown() {
 		params["checksum"] = data.Checksum.ValueString()
 	}
-	if !data.Readonly.IsNull() {
+	if !data.Readonly.IsNull() && !data.Readonly.IsUnknown() {
 		params["readonly"] = data.Readonly.ValueString()
 	}
-	if !data.ShareType.IsNull() {
+	if !data.ShareType.IsNull() && !data.ShareType.IsUnknown() {
 		params["share_type"] = data.ShareType.ValueString()
 	}
-	if !data.EncryptionOptions.IsNull() {
+	if !data.EncryptionOptions.IsNull() && !data.EncryptionOptions.IsUnknown() {
 		var encryption_optionsObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.EncryptionOptions.ValueString()), &encryption_optionsObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse encryption_options: %s", err))
@@ -370,13 +370,13 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["encryption_options"] = encryption_optionsObj
 	}
-	if !data.Encryption.IsNull() {
+	if !data.Encryption.IsNull() && !data.Encryption.IsUnknown() {
 		params["encryption"] = data.Encryption.ValueBool()
 	}
-	if !data.InheritEncryption.IsNull() {
+	if !data.InheritEncryption.IsNull() && !data.InheritEncryption.IsUnknown() {
 		params["inherit_encryption"] = data.InheritEncryption.ValueBool()
 	}
-	if !data.UserProperties.IsNull() {
+	if !data.UserProperties.IsNull() && !data.UserProperties.IsUnknown() {
 		var user_propertiesList []string
 		data.UserProperties.ElementsAs(ctx, &user_propertiesList, false)
 		var user_propertiesObjs []map[string]interface{}
@@ -390,46 +390,46 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["user_properties"] = user_propertiesObjs
 	}
-	if !data.CreateAncestors.IsNull() {
+	if !data.CreateAncestors.IsNull() && !data.CreateAncestors.IsUnknown() {
 		params["create_ancestors"] = data.CreateAncestors.ValueBool()
 	}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Aclmode.IsNull() {
+	if !data.Aclmode.IsNull() && !data.Aclmode.IsUnknown() {
 		params["aclmode"] = data.Aclmode.ValueString()
 	}
-	if !data.Acltype.IsNull() {
+	if !data.Acltype.IsNull() && !data.Acltype.IsUnknown() {
 		params["acltype"] = data.Acltype.ValueString()
 	}
-	if !data.Atime.IsNull() {
+	if !data.Atime.IsNull() && !data.Atime.IsUnknown() {
 		params["atime"] = data.Atime.ValueString()
 	}
-	if !data.Casesensitivity.IsNull() {
+	if !data.Casesensitivity.IsNull() && !data.Casesensitivity.IsUnknown() {
 		params["casesensitivity"] = data.Casesensitivity.ValueString()
 	}
-	if !data.Quota.IsNull() {
+	if !data.Quota.IsNull() && !data.Quota.IsUnknown() {
 		params["quota"] = data.Quota.ValueInt64()
 	}
-	if !data.Refquota.IsNull() {
+	if !data.Refquota.IsNull() && !data.Refquota.IsUnknown() {
 		params["refquota"] = data.Refquota.ValueInt64()
 	}
-	if !data.Recordsize.IsNull() {
+	if !data.Recordsize.IsNull() && !data.Recordsize.IsUnknown() {
 		params["recordsize"] = data.Recordsize.ValueString()
 	}
-	if !data.ForceSize.IsNull() {
+	if !data.ForceSize.IsNull() && !data.ForceSize.IsUnknown() {
 		params["force_size"] = data.ForceSize.ValueBool()
 	}
-	if !data.Sparse.IsNull() {
+	if !data.Sparse.IsNull() && !data.Sparse.IsUnknown() {
 		params["sparse"] = data.Sparse.ValueBool()
 	}
-	if !data.Volsize.IsNull() {
+	if !data.Volsize.IsNull() && !data.Volsize.IsUnknown() {
 		params["volsize"] = data.Volsize.ValueInt64()
 	}
-	if !data.Volblocksize.IsNull() {
+	if !data.Volblocksize.IsNull() && !data.Volblocksize.IsUnknown() {
 		params["volblocksize"] = data.Volblocksize.ValueString()
 	}
-	if !data.UserPropertiesUpdate.IsNull() {
+	if !data.UserPropertiesUpdate.IsNull() && !data.UserPropertiesUpdate.IsUnknown() {
 		var user_properties_updateList []string
 		data.UserPropertiesUpdate.ElementsAs(ctx, &user_properties_updateList, false)
 		var user_properties_updateObjs []map[string]interface{}
@@ -462,6 +462,49 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("pool.dataset.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back pool_dataset: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -498,7 +541,7 @@ func (r *PoolDatasetResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -510,7 +553,7 @@ func (r *PoolDatasetResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["type"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Type = types.StringValue(val)
@@ -544,61 +587,61 @@ func (r *PoolDatasetResource) Update(ctx context.Context, req resource.UpdateReq
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Comments.IsNull() {
+	if !data.Comments.IsNull() && !data.Comments.IsUnknown() {
 		params["comments"] = data.Comments.ValueString()
 	}
-	if !data.Sync.IsNull() {
+	if !data.Sync.IsNull() && !data.Sync.IsUnknown() {
 		params["sync"] = data.Sync.ValueString()
 	}
-	if !data.Snapdev.IsNull() {
+	if !data.Snapdev.IsNull() && !data.Snapdev.IsUnknown() {
 		params["snapdev"] = data.Snapdev.ValueString()
 	}
-	if !data.Compression.IsNull() {
+	if !data.Compression.IsNull() && !data.Compression.IsUnknown() {
 		params["compression"] = data.Compression.ValueString()
 	}
-	if !data.Exec.IsNull() {
+	if !data.Exec.IsNull() && !data.Exec.IsUnknown() {
 		params["exec"] = data.Exec.ValueString()
 	}
-	if !data.Managedby.IsNull() {
+	if !data.Managedby.IsNull() && !data.Managedby.IsUnknown() {
 		params["managedby"] = data.Managedby.ValueString()
 	}
-	if !data.QuotaWarning.IsNull() {
+	if !data.QuotaWarning.IsNull() && !data.QuotaWarning.IsUnknown() {
 		params["quota_warning"] = data.QuotaWarning.ValueInt64()
 	}
-	if !data.QuotaCritical.IsNull() {
+	if !data.QuotaCritical.IsNull() && !data.QuotaCritical.IsUnknown() {
 		params["quota_critical"] = data.QuotaCritical.ValueInt64()
 	}
-	if !data.RefquotaWarning.IsNull() {
+	if !data.RefquotaWarning.IsNull() && !data.RefquotaWarning.IsUnknown() {
 		params["refquota_warning"] = data.RefquotaWarning.ValueInt64()
 	}
-	if !data.RefquotaCritical.IsNull() {
+	if !data.RefquotaCritical.IsNull() && !data.RefquotaCritical.IsUnknown() {
 		params["refquota_critical"] = data.RefquotaCritical.ValueInt64()
 	}
-	if !data.Reservation.IsNull() {
+	if !data.Reservation.IsNull() && !data.Reservation.IsUnknown() {
 		params["reservation"] = data.Reservation.ValueInt64()
 	}
-	if !data.Refreservation.IsNull() {
+	if !data.Refreservation.IsNull() && !data.Refreservation.IsUnknown() {
 		params["refreservation"] = data.Refreservation.ValueInt64()
 	}
-	if !data.SpecialSmallBlockSize.IsNull() {
+	if !data.SpecialSmallBlockSize.IsNull() && !data.SpecialSmallBlockSize.IsUnknown() {
 		params["special_small_block_size"] = data.SpecialSmallBlockSize.ValueInt64()
 	}
-	if !data.Copies.IsNull() {
+	if !data.Copies.IsNull() && !data.Copies.IsUnknown() {
 		params["copies"] = data.Copies.ValueInt64()
 	}
-	if !data.Snapdir.IsNull() {
+	if !data.Snapdir.IsNull() && !data.Snapdir.IsUnknown() {
 		params["snapdir"] = data.Snapdir.ValueString()
 	}
-	if !data.Deduplication.IsNull() {
+	if !data.Deduplication.IsNull() && !data.Deduplication.IsUnknown() {
 		params["deduplication"] = data.Deduplication.ValueString()
 	}
-	if !data.Checksum.IsNull() {
+	if !data.Checksum.IsNull() && !data.Checksum.IsUnknown() {
 		params["checksum"] = data.Checksum.ValueString()
 	}
-	if !data.Readonly.IsNull() {
+	if !data.Readonly.IsNull() && !data.Readonly.IsUnknown() {
 		params["readonly"] = data.Readonly.ValueString()
 	}
-	if !data.UserProperties.IsNull() {
+	if !data.UserProperties.IsNull() && !data.UserProperties.IsUnknown() {
 		var user_propertiesList []string
 		data.UserProperties.ElementsAs(ctx, &user_propertiesList, false)
 		var user_propertiesObjs []map[string]interface{}
@@ -612,34 +655,34 @@ func (r *PoolDatasetResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		params["user_properties"] = user_propertiesObjs
 	}
-	if !data.CreateAncestors.IsNull() {
+	if !data.CreateAncestors.IsNull() && !data.CreateAncestors.IsUnknown() {
 		params["create_ancestors"] = data.CreateAncestors.ValueBool()
 	}
-	if !data.ForceSize.IsNull() {
+	if !data.ForceSize.IsNull() && !data.ForceSize.IsUnknown() {
 		params["force_size"] = data.ForceSize.ValueBool()
 	}
-	if !data.Volsize.IsNull() {
+	if !data.Volsize.IsNull() && !data.Volsize.IsUnknown() {
 		params["volsize"] = data.Volsize.ValueInt64()
 	}
-	if !data.Aclmode.IsNull() {
+	if !data.Aclmode.IsNull() && !data.Aclmode.IsUnknown() {
 		params["aclmode"] = data.Aclmode.ValueString()
 	}
-	if !data.Acltype.IsNull() {
+	if !data.Acltype.IsNull() && !data.Acltype.IsUnknown() {
 		params["acltype"] = data.Acltype.ValueString()
 	}
-	if !data.Atime.IsNull() {
+	if !data.Atime.IsNull() && !data.Atime.IsUnknown() {
 		params["atime"] = data.Atime.ValueString()
 	}
-	if !data.Quota.IsNull() {
+	if !data.Quota.IsNull() && !data.Quota.IsUnknown() {
 		params["quota"] = data.Quota.ValueInt64()
 	}
-	if !data.Refquota.IsNull() {
+	if !data.Refquota.IsNull() && !data.Refquota.IsUnknown() {
 		params["refquota"] = data.Refquota.ValueInt64()
 	}
-	if !data.Recordsize.IsNull() {
+	if !data.Recordsize.IsNull() && !data.Recordsize.IsUnknown() {
 		params["recordsize"] = data.Recordsize.ValueString()
 	}
-	if !data.UserPropertiesUpdate.IsNull() {
+	if !data.UserPropertiesUpdate.IsNull() && !data.UserPropertiesUpdate.IsUnknown() {
 		var user_properties_updateList []string
 		data.UserPropertiesUpdate.ElementsAs(ctx, &user_properties_updateList, false)
 		var user_properties_updateObjs []map[string]interface{}
@@ -677,6 +720,10 @@ func (r *PoolDatasetResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("pool.dataset.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete pool_dataset: %s", err))
 		return
 	}

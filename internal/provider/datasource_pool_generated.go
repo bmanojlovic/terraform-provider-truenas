@@ -190,7 +190,7 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -202,7 +202,7 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["guid"]; ok && v != nil {
+		if v, ok := resultMap["guid"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Guid = types.StringValue(val)
@@ -214,7 +214,7 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Guid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["status"]; ok && v != nil {
+		if v, ok := resultMap["status"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Status = types.StringValue(val)
@@ -226,7 +226,7 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Status = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["path"]; ok && v != nil {
+		if v, ok := resultMap["path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Path = types.StringValue(val)
@@ -238,186 +238,246 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Path = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["scan"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Scan = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Scan = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["scan"]; ok {
+			if v == nil {
+				data.Scan = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Scan = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Scan = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Scan = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Scan = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["expand"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Expand = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Expand = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["expand"]; ok {
+			if v == nil {
+				data.Expand = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Expand = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Expand = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Expand = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Expand = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["is_upgraded"]; ok && v != nil {
+		if v, ok := resultMap["is_upgraded"]; ok {
 			if bv, ok := v.(bool); ok { data.IsUpgraded = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["healthy"]; ok && v != nil {
+		if v, ok := resultMap["healthy"]; ok {
 			if bv, ok := v.(bool); ok { data.Healthy = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["warning"]; ok && v != nil {
+		if v, ok := resultMap["warning"]; ok {
 			if bv, ok := v.(bool); ok { data.Warning = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["status_code"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.StatusCode = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.StatusCode = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.StatusCode = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["status_detail"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.StatusDetail = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.StatusDetail = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.StatusDetail = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["size"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Size = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Size = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["status_code"]; ok {
+			if v == nil {
+				data.StatusCode = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.StatusCode = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.StatusCode = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.StatusCode = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["allocated"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Allocated = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Allocated = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["status_detail"]; ok {
+			if v == nil {
+				data.StatusDetail = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.StatusDetail = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.StatusDetail = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.StatusDetail = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["free"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Free = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Free = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["size"]; ok {
+			if v == nil {
+				data.Size = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Size = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Size = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["freeing"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Freeing = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Freeing = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["allocated"]; ok {
+			if v == nil {
+				data.Allocated = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Allocated = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Allocated = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["dedup_table_size"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.DedupTableSize = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.DedupTableSize = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["free"]; ok {
+			if v == nil {
+				data.Free = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Free = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Free = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["dedup_table_quota"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.DedupTableQuota = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.DedupTableQuota = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["freeing"]; ok {
+			if v == nil {
+				data.Freeing = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Freeing = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Freeing = types.Int64Value(int64(fv)) }
+					}
 				}
-			default:
-				data.DedupTableQuota = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["fragmentation"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Fragmentation = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Fragmentation = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["dedup_table_size"]; ok {
+			if v == nil {
+				data.DedupTableSize = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.DedupTableSize = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.DedupTableSize = types.Int64Value(int64(fv)) }
+					}
 				}
-			default:
-				data.Fragmentation = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["size_str"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.SizeStr = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.SizeStr = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["dedup_table_quota"]; ok {
+			if v == nil {
+				data.DedupTableQuota = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.DedupTableQuota = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.DedupTableQuota = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.DedupTableQuota = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.SizeStr = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["allocated_str"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.AllocatedStr = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.AllocatedStr = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["fragmentation"]; ok {
+			if v == nil {
+				data.Fragmentation = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Fragmentation = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Fragmentation = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Fragmentation = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.AllocatedStr = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["free_str"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.FreeStr = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.FreeStr = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["size_str"]; ok {
+			if v == nil {
+				data.SizeStr = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.SizeStr = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.SizeStr = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.SizeStr = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.FreeStr = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["freeing_str"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.FreeingStr = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.FreeingStr = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["allocated_str"]; ok {
+			if v == nil {
+				data.AllocatedStr = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.AllocatedStr = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.AllocatedStr = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.AllocatedStr = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.FreeingStr = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["autotrim"]; ok && v != nil {
+		if v, ok := resultMap["free_str"]; ok {
+			if v == nil {
+				data.FreeStr = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.FreeStr = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.FreeStr = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.FreeStr = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["freeing_str"]; ok {
+			if v == nil {
+				data.FreeingStr = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.FreeingStr = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.FreeingStr = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.FreeingStr = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["autotrim"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Autotrim = types.StringValue(val)
@@ -429,16 +489,20 @@ func (d *PoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Autotrim = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["topology"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Topology = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Topology = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["topology"]; ok {
+			if v == nil {
+				data.Topology = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Topology = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Topology = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Topology = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Topology = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
 

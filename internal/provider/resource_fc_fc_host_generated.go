@@ -85,16 +85,16 @@ func (r *FcFcHostResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	params := map[string]interface{}{}
-	if !data.Alias.IsNull() {
+	if !data.Alias.IsNull() && !data.Alias.IsUnknown() {
 		params["alias"] = data.Alias.ValueString()
 	}
-	if !data.Wwpn.IsNull() {
+	if !data.Wwpn.IsNull() && !data.Wwpn.IsUnknown() {
 		params["wwpn"] = data.Wwpn.ValueString()
 	}
-	if !data.WwpnB.IsNull() {
+	if !data.WwpnB.IsNull() && !data.WwpnB.IsUnknown() {
 		params["wwpn_b"] = data.WwpnB.ValueString()
 	}
-	if !data.Npiv.IsNull() {
+	if !data.Npiv.IsNull() && !data.Npiv.IsUnknown() {
 		params["npiv"] = data.Npiv.ValueInt64()
 	}
 
@@ -116,6 +116,73 @@ func (r *FcFcHostResource) Create(ctx context.Context, req resource.CreateReques
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("fc.fc_host.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back fc_fc_host: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["alias"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Alias = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Alias = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Alias = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["wwpn"]; ok {
+			if v == nil {
+				data.Wwpn = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Wwpn = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Wwpn = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Wwpn = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["wwpn_b"]; ok {
+			if v == nil {
+				data.WwpnB = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.WwpnB = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.WwpnB = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.WwpnB = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -156,7 +223,7 @@ func (r *FcFcHostResource) Read(ctx context.Context, req resource.ReadRequest, r
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["alias"]; ok && v != nil {
+		if v, ok := resultMap["alias"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Alias = types.StringValue(val)
@@ -166,6 +233,38 @@ func (r *FcFcHostResource) Read(ctx context.Context, req resource.ReadRequest, r
 				}
 			default:
 				data.Alias = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["wwpn"]; ok {
+			if v == nil {
+				data.Wwpn = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Wwpn = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Wwpn = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Wwpn = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["wwpn_b"]; ok {
+			if v == nil {
+				data.WwpnB = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.WwpnB = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.WwpnB = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.WwpnB = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -194,16 +293,16 @@ func (r *FcFcHostResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	params := map[string]interface{}{}
-	if !data.Alias.IsNull() {
+	if !data.Alias.IsNull() && !data.Alias.IsUnknown() {
 		params["alias"] = data.Alias.ValueString()
 	}
-	if !data.Wwpn.IsNull() {
+	if !data.Wwpn.IsNull() && !data.Wwpn.IsUnknown() {
 		params["wwpn"] = data.Wwpn.ValueString()
 	}
-	if !data.WwpnB.IsNull() {
+	if !data.WwpnB.IsNull() && !data.WwpnB.IsUnknown() {
 		params["wwpn_b"] = data.WwpnB.ValueString()
 	}
-	if !data.Npiv.IsNull() {
+	if !data.Npiv.IsNull() && !data.Npiv.IsUnknown() {
 		params["npiv"] = data.Npiv.ValueInt64()
 	}
 
@@ -234,6 +333,10 @@ func (r *FcFcHostResource) Delete(ctx context.Context, req resource.DeleteReques
 
 	_, err = r.client.Call("fc.fc_host.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete fc_fc_host: %s", err))
 		return
 	}

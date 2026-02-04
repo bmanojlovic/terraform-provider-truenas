@@ -157,52 +157,52 @@ func (r *IscsiExtentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Disk.IsNull() {
+	if !data.Disk.IsNull() && !data.Disk.IsUnknown() {
 		params["disk"] = data.Disk.ValueString()
 	}
-	if !data.Serial.IsNull() {
+	if !data.Serial.IsNull() && !data.Serial.IsUnknown() {
 		params["serial"] = data.Serial.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Filesize.IsNull() {
+	if !data.Filesize.IsNull() && !data.Filesize.IsUnknown() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
-	if !data.Blocksize.IsNull() {
+	if !data.Blocksize.IsNull() && !data.Blocksize.IsUnknown() {
 		params["blocksize"] = data.Blocksize.ValueInt64()
 	}
-	if !data.Pblocksize.IsNull() {
+	if !data.Pblocksize.IsNull() && !data.Pblocksize.IsUnknown() {
 		params["pblocksize"] = data.Pblocksize.ValueBool()
 	}
-	if !data.AvailThreshold.IsNull() {
+	if !data.AvailThreshold.IsNull() && !data.AvailThreshold.IsUnknown() {
 		params["avail_threshold"] = data.AvailThreshold.ValueInt64()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.InsecureTpc.IsNull() {
+	if !data.InsecureTpc.IsNull() && !data.InsecureTpc.IsUnknown() {
 		params["insecure_tpc"] = data.InsecureTpc.ValueBool()
 	}
-	if !data.Xen.IsNull() {
+	if !data.Xen.IsNull() && !data.Xen.IsUnknown() {
 		params["xen"] = data.Xen.ValueBool()
 	}
-	if !data.Rpm.IsNull() {
+	if !data.Rpm.IsNull() && !data.Rpm.IsUnknown() {
 		params["rpm"] = data.Rpm.ValueString()
 	}
-	if !data.Ro.IsNull() {
+	if !data.Ro.IsNull() && !data.Ro.IsUnknown() {
 		params["ro"] = data.Ro.ValueBool()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ProductId.IsNull() {
+	if !data.ProductId.IsNull() && !data.ProductId.IsUnknown() {
 		params["product_id"] = data.ProductId.ValueString()
 	}
 
@@ -224,6 +224,131 @@ func (r *IscsiExtentResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.extent.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_extent: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["disk"]; ok {
+			if v == nil {
+				data.Disk = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Disk = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Disk = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Disk = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["serial"]; ok {
+			if v == nil {
+				data.Serial = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Serial = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Serial = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Serial = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["path"]; ok {
+			if v == nil {
+				data.Path = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Path = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Path = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["avail_threshold"]; ok {
+			if v == nil {
+				data.AvailThreshold = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.AvailThreshold = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.AvailThreshold = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["product_id"]; ok {
+			if v == nil {
+				data.ProductId = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ProductId = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ProductId = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ProductId = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -264,7 +389,7 @@ func (r *IscsiExtentResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -276,7 +401,7 @@ func (r *IscsiExtentResource) Read(ctx context.Context, req resource.ReadRequest
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["type"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Type = types.StringValue(val)
@@ -286,6 +411,84 @@ func (r *IscsiExtentResource) Read(ctx context.Context, req resource.ReadRequest
 				}
 			default:
 				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["disk"]; ok {
+			if v == nil {
+				data.Disk = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Disk = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Disk = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Disk = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["serial"]; ok {
+			if v == nil {
+				data.Serial = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Serial = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Serial = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Serial = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["path"]; ok {
+			if v == nil {
+				data.Path = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Path = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Path = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["avail_threshold"]; ok {
+			if v == nil {
+				data.AvailThreshold = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.AvailThreshold = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.AvailThreshold = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["product_id"]; ok {
+			if v == nil {
+				data.ProductId = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ProductId = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ProductId = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ProductId = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -314,52 +517,52 @@ func (r *IscsiExtentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Disk.IsNull() {
+	if !data.Disk.IsNull() && !data.Disk.IsUnknown() {
 		params["disk"] = data.Disk.ValueString()
 	}
-	if !data.Serial.IsNull() {
+	if !data.Serial.IsNull() && !data.Serial.IsUnknown() {
 		params["serial"] = data.Serial.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Filesize.IsNull() {
+	if !data.Filesize.IsNull() && !data.Filesize.IsUnknown() {
 		params["filesize"] = data.Filesize.ValueInt64()
 	}
-	if !data.Blocksize.IsNull() {
+	if !data.Blocksize.IsNull() && !data.Blocksize.IsUnknown() {
 		params["blocksize"] = data.Blocksize.ValueInt64()
 	}
-	if !data.Pblocksize.IsNull() {
+	if !data.Pblocksize.IsNull() && !data.Pblocksize.IsUnknown() {
 		params["pblocksize"] = data.Pblocksize.ValueBool()
 	}
-	if !data.AvailThreshold.IsNull() {
+	if !data.AvailThreshold.IsNull() && !data.AvailThreshold.IsUnknown() {
 		params["avail_threshold"] = data.AvailThreshold.ValueInt64()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.InsecureTpc.IsNull() {
+	if !data.InsecureTpc.IsNull() && !data.InsecureTpc.IsUnknown() {
 		params["insecure_tpc"] = data.InsecureTpc.ValueBool()
 	}
-	if !data.Xen.IsNull() {
+	if !data.Xen.IsNull() && !data.Xen.IsUnknown() {
 		params["xen"] = data.Xen.ValueBool()
 	}
-	if !data.Rpm.IsNull() {
+	if !data.Rpm.IsNull() && !data.Rpm.IsUnknown() {
 		params["rpm"] = data.Rpm.ValueString()
 	}
-	if !data.Ro.IsNull() {
+	if !data.Ro.IsNull() && !data.Ro.IsUnknown() {
 		params["ro"] = data.Ro.ValueBool()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.ProductId.IsNull() {
+	if !data.ProductId.IsNull() && !data.ProductId.IsUnknown() {
 		params["product_id"] = data.ProductId.ValueString()
 	}
 
@@ -391,6 +594,10 @@ func (r *IscsiExtentResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("iscsi.extent.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_extent: %s", err))
 		return
 	}

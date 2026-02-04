@@ -122,31 +122,31 @@ func (r *SharingSmbResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	params := map[string]interface{}{}
-	if !data.Purpose.IsNull() {
+	if !data.Purpose.IsNull() && !data.Purpose.IsUnknown() {
 		params["purpose"] = data.Purpose.ValueString()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.Readonly.IsNull() {
+	if !data.Readonly.IsNull() && !data.Readonly.IsUnknown() {
 		params["readonly"] = data.Readonly.ValueBool()
 	}
-	if !data.Browsable.IsNull() {
+	if !data.Browsable.IsNull() && !data.Browsable.IsUnknown() {
 		params["browsable"] = data.Browsable.ValueBool()
 	}
-	if !data.AccessBasedShareEnumeration.IsNull() {
+	if !data.AccessBasedShareEnumeration.IsNull() && !data.AccessBasedShareEnumeration.IsUnknown() {
 		params["access_based_share_enumeration"] = data.AccessBasedShareEnumeration.ValueBool()
 	}
-	if !data.Audit.IsNull() {
+	if !data.Audit.IsNull() && !data.Audit.IsUnknown() {
 		var auditObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Audit.ValueString()), &auditObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse audit: %s", err))
@@ -154,7 +154,7 @@ func (r *SharingSmbResource) Create(ctx context.Context, req resource.CreateRequ
 		}
 		params["audit"] = auditObj
 	}
-	if !data.Options.IsNull() {
+	if !data.Options.IsNull() && !data.Options.IsUnknown() {
 		params["options"] = data.Options.ValueString()
 	}
 
@@ -176,6 +176,69 @@ func (r *SharingSmbResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("sharing.smb.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back sharing_smb: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["path"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Path = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Path = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["options"]; ok {
+			if v == nil {
+				data.Options = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Options = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Options = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Options = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -216,7 +279,7 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -228,7 +291,7 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["path"]; ok && v != nil {
+		if v, ok := resultMap["path"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Path = types.StringValue(val)
@@ -238,6 +301,22 @@ func (r *SharingSmbResource) Read(ctx context.Context, req resource.ReadRequest,
 				}
 			default:
 				data.Path = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["options"]; ok {
+			if v == nil {
+				data.Options = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Options = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Options = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Options = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -266,31 +345,31 @@ func (r *SharingSmbResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	params := map[string]interface{}{}
-	if !data.Purpose.IsNull() {
+	if !data.Purpose.IsNull() && !data.Purpose.IsUnknown() {
 		params["purpose"] = data.Purpose.ValueString()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Path.IsNull() {
+	if !data.Path.IsNull() && !data.Path.IsUnknown() {
 		params["path"] = data.Path.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
-	if !data.Readonly.IsNull() {
+	if !data.Readonly.IsNull() && !data.Readonly.IsUnknown() {
 		params["readonly"] = data.Readonly.ValueBool()
 	}
-	if !data.Browsable.IsNull() {
+	if !data.Browsable.IsNull() && !data.Browsable.IsUnknown() {
 		params["browsable"] = data.Browsable.ValueBool()
 	}
-	if !data.AccessBasedShareEnumeration.IsNull() {
+	if !data.AccessBasedShareEnumeration.IsNull() && !data.AccessBasedShareEnumeration.IsUnknown() {
 		params["access_based_share_enumeration"] = data.AccessBasedShareEnumeration.ValueBool()
 	}
-	if !data.Audit.IsNull() {
+	if !data.Audit.IsNull() && !data.Audit.IsUnknown() {
 		var auditObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Audit.ValueString()), &auditObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse audit: %s", err))
@@ -298,7 +377,7 @@ func (r *SharingSmbResource) Update(ctx context.Context, req resource.UpdateRequ
 		}
 		params["audit"] = auditObj
 	}
-	if !data.Options.IsNull() {
+	if !data.Options.IsNull() && !data.Options.IsUnknown() {
 		params["options"] = data.Options.ValueString()
 	}
 
@@ -329,6 +408,10 @@ func (r *SharingSmbResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	_, err = r.client.Call("sharing.smb.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete sharing_smb: %s", err))
 		return
 	}

@@ -93,8 +93,8 @@ func (r *PoolDdt_PruneResource) Create(ctx context.Context, req resource.CreateR
 	// Build parameters
 	params := map[string]interface{}{}
 	params["pool_name"] = data.PoolName.ValueString()
-	if !data.Percentage.IsNull() { params["percentage"] = data.Percentage.ValueInt64() }
-	if !data.Days.IsNull() { params["days"] = data.Days.ValueInt64() }
+	if !data.Percentage.IsNull() && !data.Percentage.IsUnknown() { params["percentage"] = data.Percentage.ValueInt64() }
+	if !data.Days.IsNull() && !data.Days.IsUnknown() { params["days"] = data.Days.ValueInt64() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

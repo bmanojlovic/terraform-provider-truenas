@@ -74,7 +74,7 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 	}
 
 	params := map[string]interface{}{}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -82,7 +82,7 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -104,6 +104,53 @@ func (r *AcmeDnsAuthenticatorResource) Create(ctx context.Context, req resource.
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("acme.dns.authenticator.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back acme_dns_authenticator: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -144,7 +191,7 @@ func (r *AcmeDnsAuthenticatorResource) Read(ctx context.Context, req resource.Re
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["attributes"]; ok && v != nil {
+		if v, ok := resultMap["attributes"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Attributes = types.StringValue(val)
@@ -156,7 +203,7 @@ func (r *AcmeDnsAuthenticatorResource) Read(ctx context.Context, req resource.Re
 				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -194,7 +241,7 @@ func (r *AcmeDnsAuthenticatorResource) Update(ctx context.Context, req resource.
 	}
 
 	params := map[string]interface{}{}
-	if !data.Attributes.IsNull() {
+	if !data.Attributes.IsNull() && !data.Attributes.IsUnknown() {
 		var attributesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Attributes.ValueString()), &attributesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse attributes: %s", err))
@@ -202,7 +249,7 @@ func (r *AcmeDnsAuthenticatorResource) Update(ctx context.Context, req resource.
 		}
 		params["attributes"] = attributesObj
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -233,6 +280,10 @@ func (r *AcmeDnsAuthenticatorResource) Delete(ctx context.Context, req resource.
 
 	_, err = r.client.Call("acme.dns.authenticator.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete acme_dns_authenticator: %s", err))
 		return
 	}

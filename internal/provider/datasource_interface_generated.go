@@ -153,7 +153,7 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -165,10 +165,10 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["fake"]; ok && v != nil {
+		if v, ok := resultMap["fake"]; ok {
 			if bv, ok := v.(bool); ok { data.Fake = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["type"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Type = types.StringValue(val)
@@ -180,7 +180,7 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 				data.Type = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["state"]; ok && v != nil {
+		if v, ok := resultMap["state"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.State = types.StringValue(val)
@@ -192,20 +192,20 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 				data.State = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["aliases"]; ok && v != nil {
+		if v, ok := resultMap["aliases"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.Aliases, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["ipv4_dhcp"]; ok && v != nil {
+		if v, ok := resultMap["ipv4_dhcp"]; ok {
 			if bv, ok := v.(bool); ok { data.Ipv4Dhcp = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["ipv6_auto"]; ok && v != nil {
+		if v, ok := resultMap["ipv6_auto"]; ok {
 			if bv, ok := v.(bool); ok { data.Ipv6Auto = types.BoolValue(bv) }
 		}
-		if v, ok := resultMap["description"]; ok && v != nil {
+		if v, ok := resultMap["description"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Description = types.StringValue(val)
@@ -217,49 +217,65 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 				data.Description = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["mtu"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Mtu = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Mtu = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["mtu"]; ok {
+			if v == nil {
+				data.Mtu = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Mtu = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Mtu = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["vlan_parent_interface"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.VlanParentInterface = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.VlanParentInterface = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.VlanParentInterface = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["vlan_tag"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.VlanTag = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.VlanTag = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["vlan_parent_interface"]; ok {
+			if v == nil {
+				data.VlanParentInterface = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.VlanParentInterface = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.VlanParentInterface = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.VlanParentInterface = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["vlan_pcp"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.VlanPcp = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.VlanPcp = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["vlan_tag"]; ok {
+			if v == nil {
+				data.VlanTag = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.VlanTag = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.VlanTag = types.Int64Value(int64(fv)) }
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["lag_protocol"]; ok && v != nil {
+		if v, ok := resultMap["vlan_pcp"]; ok {
+			if v == nil {
+				data.VlanPcp = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.VlanPcp = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.VlanPcp = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["lag_protocol"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.LagProtocol = types.StringValue(val)
@@ -271,21 +287,21 @@ func (d *InterfaceDataSource) Read(ctx context.Context, req datasource.ReadReque
 				data.LagProtocol = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["lag_ports"]; ok && v != nil {
+		if v, ok := resultMap["lag_ports"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.LagPorts, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["bridge_members"]; ok && v != nil {
+		if v, ok := resultMap["bridge_members"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
 				data.BridgeMembers, _ = types.ListValue(types.StringType, strVals)
 			}
 		}
-		if v, ok := resultMap["enable_learning"]; ok && v != nil {
+		if v, ok := resultMap["enable_learning"]; ok {
 			if bv, ok := v.(bool); ok { data.EnableLearning = types.BoolValue(bv) }
 		}
 

@@ -238,66 +238,66 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.CreateType.IsNull() {
+	if !data.CreateType.IsNull() && !data.CreateType.IsUnknown() {
 		params["create_type"] = data.CreateType.ValueString()
 	}
-	if !data.AddToTrustedStore.IsNull() {
+	if !data.AddToTrustedStore.IsNull() && !data.AddToTrustedStore.IsUnknown() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
-	if !data.Certificate.IsNull() {
+	if !data.Certificate.IsNull() && !data.Certificate.IsUnknown() {
 		params["certificate"] = data.Certificate.ValueString()
 	}
-	if !data.Privatekey.IsNull() {
+	if !data.Privatekey.IsNull() && !data.Privatekey.IsUnknown() {
 		params["privatekey"] = data.Privatekey.ValueString()
 	}
-	if !data.Csr.IsNull() {
+	if !data.Csr.IsNull() && !data.Csr.IsUnknown() {
 		params["CSR"] = data.Csr.ValueString()
 	}
-	if !data.KeyLength.IsNull() {
+	if !data.KeyLength.IsNull() && !data.KeyLength.IsUnknown() {
 		params["key_length"] = data.KeyLength.ValueInt64()
 	}
-	if !data.KeyType.IsNull() {
+	if !data.KeyType.IsNull() && !data.KeyType.IsUnknown() {
 		params["key_type"] = data.KeyType.ValueString()
 	}
-	if !data.EcCurve.IsNull() {
+	if !data.EcCurve.IsNull() && !data.EcCurve.IsUnknown() {
 		params["ec_curve"] = data.EcCurve.ValueString()
 	}
-	if !data.Passphrase.IsNull() {
+	if !data.Passphrase.IsNull() && !data.Passphrase.IsUnknown() {
 		params["passphrase"] = data.Passphrase.ValueString()
 	}
-	if !data.City.IsNull() {
+	if !data.City.IsNull() && !data.City.IsUnknown() {
 		params["city"] = data.City.ValueString()
 	}
-	if !data.Common.IsNull() {
+	if !data.Common.IsNull() && !data.Common.IsUnknown() {
 		params["common"] = data.Common.ValueString()
 	}
-	if !data.Country.IsNull() {
+	if !data.Country.IsNull() && !data.Country.IsUnknown() {
 		params["country"] = data.Country.ValueString()
 	}
-	if !data.Email.IsNull() {
+	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		params["email"] = data.Email.ValueString()
 	}
-	if !data.Organization.IsNull() {
+	if !data.Organization.IsNull() && !data.Organization.IsUnknown() {
 		params["organization"] = data.Organization.ValueString()
 	}
-	if !data.OrganizationalUnit.IsNull() {
+	if !data.OrganizationalUnit.IsNull() && !data.OrganizationalUnit.IsUnknown() {
 		params["organizational_unit"] = data.OrganizationalUnit.ValueString()
 	}
-	if !data.State.IsNull() {
+	if !data.State.IsNull() && !data.State.IsUnknown() {
 		params["state"] = data.State.ValueString()
 	}
-	if !data.DigestAlgorithm.IsNull() {
+	if !data.DigestAlgorithm.IsNull() && !data.DigestAlgorithm.IsUnknown() {
 		params["digest_algorithm"] = data.DigestAlgorithm.ValueString()
 	}
-	if !data.San.IsNull() {
+	if !data.San.IsNull() && !data.San.IsUnknown() {
 		var sanList []string
 		data.San.ElementsAs(ctx, &sanList, false)
 		params["san"] = sanList
 	}
-	if !data.CertExtensions.IsNull() {
+	if !data.CertExtensions.IsNull() && !data.CertExtensions.IsUnknown() {
 		var cert_extensionsObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CertExtensions.ValueString()), &cert_extensionsObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse cert_extensions: %s", err))
@@ -305,16 +305,16 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["cert_extensions"] = cert_extensionsObj
 	}
-	if !data.AcmeDirectoryUri.IsNull() {
+	if !data.AcmeDirectoryUri.IsNull() && !data.AcmeDirectoryUri.IsUnknown() {
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
-	if !data.CsrId.IsNull() {
+	if !data.CsrId.IsNull() && !data.CsrId.IsUnknown() {
 		params["csr_id"] = data.CsrId.ValueInt64()
 	}
-	if !data.Tos.IsNull() {
+	if !data.Tos.IsNull() && !data.Tos.IsUnknown() {
 		params["tos"] = data.Tos.ValueBool()
 	}
-	if !data.DnsMapping.IsNull() {
+	if !data.DnsMapping.IsNull() && !data.DnsMapping.IsUnknown() {
 		var dns_mappingObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.DnsMapping.ValueString()), &dns_mappingObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse dns_mapping: %s", err))
@@ -322,7 +322,7 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["dns_mapping"] = dns_mappingObj
 	}
-	if !data.RenewDays.IsNull() {
+	if !data.RenewDays.IsNull() && !data.RenewDays.IsUnknown() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
 
@@ -344,6 +344,41 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("certificate.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back certificate: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -384,7 +419,7 @@ func (r *CertificateResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -422,13 +457,13 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.RenewDays.IsNull() {
+	if !data.RenewDays.IsNull() && !data.RenewDays.IsUnknown() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
-	if !data.AddToTrustedStore.IsNull() {
+	if !data.AddToTrustedStore.IsNull() && !data.AddToTrustedStore.IsUnknown() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -460,6 +495,10 @@ func (r *CertificateResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.CallWithJob("certificate.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete certificate: %s", err))
 		return
 	}

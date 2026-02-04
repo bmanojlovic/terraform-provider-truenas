@@ -118,10 +118,10 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	params := map[string]interface{}{}
-	if !data.CustomApp.IsNull() {
+	if !data.CustomApp.IsNull() && !data.CustomApp.IsUnknown() {
 		params["custom_app"] = data.CustomApp.ValueBool()
 	}
-	if !data.Values.IsNull() {
+	if !data.Values.IsNull() && !data.Values.IsUnknown() {
 		var valuesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
@@ -129,7 +129,7 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		}
 		params["values"] = valuesObj
 	}
-	if !data.CustomComposeConfig.IsNull() {
+	if !data.CustomComposeConfig.IsNull() && !data.CustomComposeConfig.IsUnknown() {
 		var custom_compose_configObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
@@ -137,19 +137,19 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		}
 		params["custom_compose_config"] = custom_compose_configObj
 	}
-	if !data.CustomComposeConfigString.IsNull() {
+	if !data.CustomComposeConfigString.IsNull() && !data.CustomComposeConfigString.IsUnknown() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
 	}
-	if !data.CatalogApp.IsNull() {
+	if !data.CatalogApp.IsNull() && !data.CatalogApp.IsUnknown() {
 		params["catalog_app"] = data.CatalogApp.ValueString()
 	}
-	if !data.AppName.IsNull() {
+	if !data.AppName.IsNull() && !data.AppName.IsUnknown() {
 		params["app_name"] = data.AppName.ValueString()
 	}
-	if !data.Train.IsNull() {
+	if !data.Train.IsNull() && !data.Train.IsUnknown() {
 		params["train"] = data.Train.ValueString()
 	}
-	if !data.Version.IsNull() {
+	if !data.Version.IsNull() && !data.Version.IsUnknown() {
 		params["version"] = data.Version.ValueString()
 	}
 
@@ -171,6 +171,25 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("app.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back app: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -229,7 +248,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Values.IsNull() {
+	if !data.Values.IsNull() && !data.Values.IsUnknown() {
 		var valuesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
@@ -237,7 +256,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 		params["values"] = valuesObj
 	}
-	if !data.CustomComposeConfig.IsNull() {
+	if !data.CustomComposeConfig.IsNull() && !data.CustomComposeConfig.IsUnknown() {
 		var custom_compose_configObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
@@ -245,7 +264,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 		params["custom_compose_config"] = custom_compose_configObj
 	}
-	if !data.CustomComposeConfigString.IsNull() {
+	if !data.CustomComposeConfigString.IsNull() && !data.CustomComposeConfigString.IsUnknown() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
 	}
 
@@ -275,6 +294,10 @@ func (r *AppResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	_, err = r.client.CallWithJob("app.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete app: %s", err))
 		return
 	}

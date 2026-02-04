@@ -88,7 +88,7 @@ func (r *ConfigResetResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Reboot.IsNull() { params["reboot"] = data.Reboot.ValueBool() }
+	if !data.Reboot.IsNull() && !data.Reboot.IsUnknown() { params["reboot"] = data.Reboot.ValueBool() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

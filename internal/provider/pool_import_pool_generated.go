@@ -91,7 +91,7 @@ func (r *PoolImport_PoolResource) Create(ctx context.Context, req resource.Creat
 	// Build parameters
 	params := map[string]interface{}{}
 	params["guid"] = data.Guid.ValueString()
-	if !data.Name.IsNull() { params["name"] = data.Name.ValueString() }
+	if !data.Name.IsNull() && !data.Name.IsUnknown() { params["name"] = data.Name.ValueString() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

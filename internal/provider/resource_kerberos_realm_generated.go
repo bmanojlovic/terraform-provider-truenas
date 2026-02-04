@@ -94,23 +94,23 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	params := map[string]interface{}{}
-	if !data.Realm.IsNull() {
+	if !data.Realm.IsNull() && !data.Realm.IsUnknown() {
 		params["realm"] = data.Realm.ValueString()
 	}
-	if !data.PrimaryKdc.IsNull() {
+	if !data.PrimaryKdc.IsNull() && !data.PrimaryKdc.IsUnknown() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
-	if !data.Kdc.IsNull() {
+	if !data.Kdc.IsNull() && !data.Kdc.IsUnknown() {
 		var kdcList []string
 		data.Kdc.ElementsAs(ctx, &kdcList, false)
 		params["kdc"] = kdcList
 	}
-	if !data.AdminServer.IsNull() {
+	if !data.AdminServer.IsNull() && !data.AdminServer.IsUnknown() {
 		var admin_serverList []string
 		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
 		params["admin_server"] = admin_serverList
 	}
-	if !data.KpasswdServer.IsNull() {
+	if !data.KpasswdServer.IsNull() && !data.KpasswdServer.IsUnknown() {
 		var kpasswd_serverList []string
 		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
 		params["kpasswd_server"] = kpasswd_serverList
@@ -134,6 +134,57 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("kerberos.realm.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back kerberos_realm: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["realm"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Realm = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Realm = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Realm = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["primary_kdc"]; ok {
+			if v == nil {
+				data.PrimaryKdc = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.PrimaryKdc = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -174,7 +225,7 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["realm"]; ok && v != nil {
+		if v, ok := resultMap["realm"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Realm = types.StringValue(val)
@@ -184,6 +235,22 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 				}
 			default:
 				data.Realm = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["primary_kdc"]; ok {
+			if v == nil {
+				data.PrimaryKdc = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.PrimaryKdc = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -212,23 +279,23 @@ func (r *KerberosRealmResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	params := map[string]interface{}{}
-	if !data.Realm.IsNull() {
+	if !data.Realm.IsNull() && !data.Realm.IsUnknown() {
 		params["realm"] = data.Realm.ValueString()
 	}
-	if !data.PrimaryKdc.IsNull() {
+	if !data.PrimaryKdc.IsNull() && !data.PrimaryKdc.IsUnknown() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
-	if !data.Kdc.IsNull() {
+	if !data.Kdc.IsNull() && !data.Kdc.IsUnknown() {
 		var kdcList []string
 		data.Kdc.ElementsAs(ctx, &kdcList, false)
 		params["kdc"] = kdcList
 	}
-	if !data.AdminServer.IsNull() {
+	if !data.AdminServer.IsNull() && !data.AdminServer.IsUnknown() {
 		var admin_serverList []string
 		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
 		params["admin_server"] = admin_serverList
 	}
-	if !data.KpasswdServer.IsNull() {
+	if !data.KpasswdServer.IsNull() && !data.KpasswdServer.IsUnknown() {
 		var kpasswd_serverList []string
 		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
 		params["kpasswd_server"] = kpasswd_serverList
@@ -261,6 +328,10 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 
 	_, err = r.client.Call("kerberos.realm.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete kerberos_realm: %s", err))
 		return
 	}

@@ -90,8 +90,8 @@ func (r *FailoverRebootOther_NodeResource) Create(ctx context.Context, req resou
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Reason.IsNull() { params["reason"] = data.Reason.ValueString() }
-	if !data.Graceful.IsNull() { params["graceful"] = data.Graceful.ValueBool() }
+	if !data.Reason.IsNull() && !data.Reason.IsUnknown() { params["reason"] = data.Reason.ValueString() }
+	if !data.Graceful.IsNull() && !data.Graceful.IsUnknown() { params["graceful"] = data.Graceful.ValueBool() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

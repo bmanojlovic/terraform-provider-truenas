@@ -90,8 +90,8 @@ func (r *UpdateFileResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Resume.IsNull() { params["resume"] = data.Resume.ValueBool() }
-	if !data.Destination.IsNull() { params["destination"] = data.Destination.ValueString() }
+	if !data.Resume.IsNull() && !data.Resume.IsUnknown() { params["resume"] = data.Resume.ValueBool() }
+	if !data.Destination.IsNull() && !data.Destination.IsUnknown() { params["destination"] = data.Destination.ValueString() }
 	paramsArr := []interface{}{params}
 
 	// Execute action

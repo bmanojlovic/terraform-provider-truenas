@@ -60,7 +60,7 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 		MarkdownDescription: "Create a new virtualized instance.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
-			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: true)"},
+			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},
 			"name": schema.StringAttribute{
 				Required: true,
 				Optional: false,
@@ -186,31 +186,31 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.SourceType.IsNull() {
+	if !data.SourceType.IsNull() && !data.SourceType.IsUnknown() {
 		params["source_type"] = data.SourceType.ValueString()
 	}
-	if !data.StoragePool.IsNull() {
+	if !data.StoragePool.IsNull() && !data.StoragePool.IsUnknown() {
 		params["storage_pool"] = data.StoragePool.ValueString()
 	}
-	if !data.Image.IsNull() {
+	if !data.Image.IsNull() && !data.Image.IsUnknown() {
 		params["image"] = data.Image.ValueString()
 	}
-	if !data.RootDiskSize.IsNull() {
+	if !data.RootDiskSize.IsNull() && !data.RootDiskSize.IsUnknown() {
 		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
 	}
-	if !data.RootDiskIoBus.IsNull() {
+	if !data.RootDiskIoBus.IsNull() && !data.RootDiskIoBus.IsUnknown() {
 		params["root_disk_io_bus"] = data.RootDiskIoBus.ValueString()
 	}
-	if !data.Remote.IsNull() {
+	if !data.Remote.IsNull() && !data.Remote.IsUnknown() {
 		params["remote"] = data.Remote.ValueString()
 	}
-	if !data.InstanceType.IsNull() {
+	if !data.InstanceType.IsNull() && !data.InstanceType.IsUnknown() {
 		params["instance_type"] = data.InstanceType.ValueString()
 	}
-	if !data.Environment.IsNull() {
+	if !data.Environment.IsNull() && !data.Environment.IsUnknown() {
 		var environmentObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Environment.ValueString()), &environmentObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse environment: %s", err))
@@ -218,36 +218,36 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		}
 		params["environment"] = environmentObj
 	}
-	if !data.Autostart.IsNull() {
+	if !data.Autostart.IsNull() && !data.Autostart.IsUnknown() {
 		params["autostart"] = data.Autostart.ValueBool()
 	}
-	if !data.Cpu.IsNull() {
+	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
 		params["cpu"] = data.Cpu.ValueString()
 	}
-	if !data.Devices.IsNull() {
+	if !data.Devices.IsNull() && !data.Devices.IsUnknown() {
 		var devicesList []string
 		data.Devices.ElementsAs(ctx, &devicesList, false)
 		params["devices"] = devicesList
 	}
-	if !data.Memory.IsNull() {
+	if !data.Memory.IsNull() && !data.Memory.IsUnknown() {
 		params["memory"] = data.Memory.ValueInt64()
 	}
-	if !data.PrivilegedMode.IsNull() {
+	if !data.PrivilegedMode.IsNull() && !data.PrivilegedMode.IsUnknown() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
-	if !data.VncPort.IsNull() {
+	if !data.VncPort.IsNull() && !data.VncPort.IsUnknown() {
 		params["vnc_port"] = data.VncPort.ValueInt64()
 	}
-	if !data.EnableVnc.IsNull() {
+	if !data.EnableVnc.IsNull() && !data.EnableVnc.IsUnknown() {
 		params["enable_vnc"] = data.EnableVnc.ValueBool()
 	}
-	if !data.VncPassword.IsNull() {
+	if !data.VncPassword.IsNull() && !data.VncPassword.IsUnknown() {
 		params["vnc_password"] = data.VncPassword.ValueString()
 	}
-	if !data.SecureBoot.IsNull() {
+	if !data.SecureBoot.IsNull() && !data.SecureBoot.IsUnknown() {
 		params["secure_boot"] = data.SecureBoot.ValueBool()
 	}
-	if !data.ImageOs.IsNull() {
+	if !data.ImageOs.IsNull() && !data.ImageOs.IsUnknown() {
 		params["image_os"] = data.ImageOs.ValueString()
 	}
 
@@ -270,12 +270,89 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	startOnCreate := true
+	startOnCreate := false
 	if !data.StartOnCreate.IsNull() { startOnCreate = data.StartOnCreate.ValueBool() }
 	if startOnCreate {
 		_, err = r.client.Call("virt.instance.start", data.ID.ValueString())
 		if err != nil { resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error())) }
 	}
+
+	// Read back to populate computed fields
+	var id interface{}
+	id = data.ID.ValueString()
+	result, err = r.client.Call("virt.instance.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back virt_instance: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["environment"]; ok {
+			if v == nil {
+				data.Environment = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Environment = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["cpu"]; ok {
+			if v == nil {
+				data.Cpu = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpu = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			if v == nil {
+				data.Memory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Memory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -311,7 +388,7 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -321,6 +398,52 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 				}
 			default:
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["environment"]; ok {
+			if v == nil {
+				data.Environment = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Environment = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["cpu"]; ok {
+			if v == nil {
+				data.Cpu = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpu = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			if v == nil {
+				data.Memory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Memory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+					}
+				}
 			}
 		}
 
@@ -345,7 +468,7 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Environment.IsNull() {
+	if !data.Environment.IsNull() && !data.Environment.IsUnknown() {
 		var environmentObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Environment.ValueString()), &environmentObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse environment: %s", err))
@@ -353,37 +476,37 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 		params["environment"] = environmentObj
 	}
-	if !data.Autostart.IsNull() {
+	if !data.Autostart.IsNull() && !data.Autostart.IsUnknown() {
 		params["autostart"] = data.Autostart.ValueBool()
 	}
-	if !data.Cpu.IsNull() {
+	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
 		params["cpu"] = data.Cpu.ValueString()
 	}
-	if !data.Memory.IsNull() {
+	if !data.Memory.IsNull() && !data.Memory.IsUnknown() {
 		params["memory"] = data.Memory.ValueInt64()
 	}
-	if !data.VncPort.IsNull() {
+	if !data.VncPort.IsNull() && !data.VncPort.IsUnknown() {
 		params["vnc_port"] = data.VncPort.ValueInt64()
 	}
-	if !data.EnableVnc.IsNull() {
+	if !data.EnableVnc.IsNull() && !data.EnableVnc.IsUnknown() {
 		params["enable_vnc"] = data.EnableVnc.ValueBool()
 	}
-	if !data.VncPassword.IsNull() {
+	if !data.VncPassword.IsNull() && !data.VncPassword.IsUnknown() {
 		params["vnc_password"] = data.VncPassword.ValueString()
 	}
-	if !data.SecureBoot.IsNull() {
+	if !data.SecureBoot.IsNull() && !data.SecureBoot.IsUnknown() {
 		params["secure_boot"] = data.SecureBoot.ValueBool()
 	}
-	if !data.RootDiskSize.IsNull() {
+	if !data.RootDiskSize.IsNull() && !data.RootDiskSize.IsUnknown() {
 		params["root_disk_size"] = data.RootDiskSize.ValueInt64()
 	}
-	if !data.RootDiskIoBus.IsNull() {
+	if !data.RootDiskIoBus.IsNull() && !data.RootDiskIoBus.IsUnknown() {
 		params["root_disk_io_bus"] = data.RootDiskIoBus.ValueString()
 	}
-	if !data.ImageOs.IsNull() {
+	if !data.ImageOs.IsNull() && !data.ImageOs.IsUnknown() {
 		params["image_os"] = data.ImageOs.ValueString()
 	}
-	if !data.PrivilegedMode.IsNull() {
+	if !data.PrivilegedMode.IsNull() && !data.PrivilegedMode.IsUnknown() {
 		params["privileged_mode"] = data.PrivilegedMode.ValueBool()
 	}
 
@@ -413,6 +536,10 @@ func (r *VirtInstanceResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	_, err = r.client.CallWithJob("virt.instance.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete virt_instance: %s", err))
 		return
 	}

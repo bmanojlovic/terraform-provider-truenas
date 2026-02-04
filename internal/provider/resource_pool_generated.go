@@ -129,25 +129,25 @@ func (r *PoolResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Encryption.IsNull() {
+	if !data.Encryption.IsNull() && !data.Encryption.IsUnknown() {
 		params["encryption"] = data.Encryption.ValueBool()
 	}
-	if !data.DedupTableQuota.IsNull() {
+	if !data.DedupTableQuota.IsNull() && !data.DedupTableQuota.IsUnknown() {
 		params["dedup_table_quota"] = data.DedupTableQuota.ValueString()
 	}
-	if !data.DedupTableQuotaValue.IsNull() {
+	if !data.DedupTableQuotaValue.IsNull() && !data.DedupTableQuotaValue.IsUnknown() {
 		params["dedup_table_quota_value"] = data.DedupTableQuotaValue.ValueInt64()
 	}
-	if !data.Deduplication.IsNull() {
+	if !data.Deduplication.IsNull() && !data.Deduplication.IsUnknown() {
 		params["deduplication"] = data.Deduplication.ValueString()
 	}
-	if !data.Checksum.IsNull() {
+	if !data.Checksum.IsNull() && !data.Checksum.IsUnknown() {
 		params["checksum"] = data.Checksum.ValueString()
 	}
-	if !data.EncryptionOptions.IsNull() {
+	if !data.EncryptionOptions.IsNull() && !data.EncryptionOptions.IsUnknown() {
 		var encryption_optionsObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.EncryptionOptions.ValueString()), &encryption_optionsObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse encryption_options: %s", err))
@@ -155,7 +155,7 @@ func (r *PoolResource) Create(ctx context.Context, req resource.CreateRequest, r
 		}
 		params["encryption_options"] = encryption_optionsObj
 	}
-	if !data.Topology.IsNull() {
+	if !data.Topology.IsNull() && !data.Topology.IsUnknown() {
 		var topologyObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Topology.ValueString()), &topologyObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse topology: %s", err))
@@ -163,10 +163,10 @@ func (r *PoolResource) Create(ctx context.Context, req resource.CreateRequest, r
 		}
 		params["topology"] = topologyObj
 	}
-	if !data.AllowDuplicateSerials.IsNull() {
+	if !data.AllowDuplicateSerials.IsNull() && !data.AllowDuplicateSerials.IsUnknown() {
 		params["allow_duplicate_serials"] = data.AllowDuplicateSerials.ValueBool()
 	}
-	if !data.Autotrim.IsNull() {
+	if !data.Autotrim.IsNull() && !data.Autotrim.IsUnknown() {
 		params["autotrim"] = data.Autotrim.ValueString()
 	}
 
@@ -188,6 +188,67 @@ func (r *PoolResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("pool.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back pool: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["dedup_table_quota_value"]; ok {
+			if v == nil {
+				data.DedupTableQuotaValue = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.DedupTableQuotaValue = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.DedupTableQuotaValue = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["topology"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Topology = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Topology = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Topology = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -228,7 +289,7 @@ func (r *PoolResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -240,7 +301,21 @@ func (r *PoolResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["topology"]; ok && v != nil {
+		if v, ok := resultMap["dedup_table_quota_value"]; ok {
+			if v == nil {
+				data.DedupTableQuotaValue = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.DedupTableQuotaValue = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.DedupTableQuotaValue = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["topology"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Topology = types.StringValue(val)
@@ -278,13 +353,13 @@ func (r *PoolResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.DedupTableQuota.IsNull() {
+	if !data.DedupTableQuota.IsNull() && !data.DedupTableQuota.IsUnknown() {
 		params["dedup_table_quota"] = data.DedupTableQuota.ValueString()
 	}
-	if !data.DedupTableQuotaValue.IsNull() {
+	if !data.DedupTableQuotaValue.IsNull() && !data.DedupTableQuotaValue.IsUnknown() {
 		params["dedup_table_quota_value"] = data.DedupTableQuotaValue.ValueInt64()
 	}
-	if !data.Topology.IsNull() {
+	if !data.Topology.IsNull() && !data.Topology.IsUnknown() {
 		var topologyObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Topology.ValueString()), &topologyObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse topology: %s", err))
@@ -292,10 +367,10 @@ func (r *PoolResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		}
 		params["topology"] = topologyObj
 	}
-	if !data.AllowDuplicateSerials.IsNull() {
+	if !data.AllowDuplicateSerials.IsNull() && !data.AllowDuplicateSerials.IsUnknown() {
 		params["allow_duplicate_serials"] = data.AllowDuplicateSerials.ValueBool()
 	}
-	if !data.Autotrim.IsNull() {
+	if !data.Autotrim.IsNull() && !data.Autotrim.IsUnknown() {
 		params["autotrim"] = data.Autotrim.ValueString()
 	}
 
@@ -326,6 +401,10 @@ func (r *PoolResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	_, err = r.client.Call("pool.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete pool: %s", err))
 		return
 	}

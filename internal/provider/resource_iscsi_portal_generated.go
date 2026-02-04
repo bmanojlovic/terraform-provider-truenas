@@ -76,7 +76,7 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Listen.IsNull() {
+	if !data.Listen.IsNull() && !data.Listen.IsUnknown() {
 		var listenList []string
 		data.Listen.ElementsAs(ctx, &listenList, false)
 		var listenObjs []map[string]interface{}
@@ -90,7 +90,7 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["listen"] = listenObjs
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -112,6 +112,36 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.portal.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_portal: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["listen"]; ok {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Listen, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -152,7 +182,7 @@ func (r *IscsiPortalResource) Read(ctx context.Context, req resource.ReadRequest
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["listen"]; ok && v != nil {
+		if v, ok := resultMap["listen"]; ok {
 			if arr, ok := v.([]interface{}); ok {
 				strVals := make([]attr.Value, len(arr))
 				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
@@ -185,7 +215,7 @@ func (r *IscsiPortalResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Listen.IsNull() {
+	if !data.Listen.IsNull() && !data.Listen.IsUnknown() {
 		var listenList []string
 		data.Listen.ElementsAs(ctx, &listenList, false)
 		var listenObjs []map[string]interface{}
@@ -199,7 +229,7 @@ func (r *IscsiPortalResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		params["listen"] = listenObjs
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -230,6 +260,10 @@ func (r *IscsiPortalResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("iscsi.portal.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_portal: %s", err))
 		return
 	}

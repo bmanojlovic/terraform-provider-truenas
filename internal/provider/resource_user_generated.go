@@ -195,73 +195,73 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.Uid.IsNull() {
+	if !data.Uid.IsNull() && !data.Uid.IsUnknown() {
 		params["uid"] = data.Uid.ValueInt64()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Home.IsNull() {
+	if !data.Home.IsNull() && !data.Home.IsUnknown() {
 		params["home"] = data.Home.ValueString()
 	}
-	if !data.Shell.IsNull() {
+	if !data.Shell.IsNull() && !data.Shell.IsUnknown() {
 		params["shell"] = data.Shell.ValueString()
 	}
-	if !data.FullName.IsNull() {
+	if !data.FullName.IsNull() && !data.FullName.IsUnknown() {
 		params["full_name"] = data.FullName.ValueString()
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Group.IsNull() {
+	if !data.Group.IsNull() && !data.Group.IsUnknown() {
 		params["group"] = data.Group.ValueInt64()
 	}
-	if !data.Groups.IsNull() {
+	if !data.Groups.IsNull() && !data.Groups.IsUnknown() {
 		var groupsList []string
 		data.Groups.ElementsAs(ctx, &groupsList, false)
 		params["groups"] = groupsList
 	}
-	if !data.PasswordDisabled.IsNull() {
+	if !data.PasswordDisabled.IsNull() && !data.PasswordDisabled.IsUnknown() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()
 	}
-	if !data.SshPasswordEnabled.IsNull() {
+	if !data.SshPasswordEnabled.IsNull() && !data.SshPasswordEnabled.IsUnknown() {
 		params["ssh_password_enabled"] = data.SshPasswordEnabled.ValueBool()
 	}
-	if !data.Sshpubkey.IsNull() {
+	if !data.Sshpubkey.IsNull() && !data.Sshpubkey.IsUnknown() {
 		params["sshpubkey"] = data.Sshpubkey.ValueString()
 	}
-	if !data.Locked.IsNull() {
+	if !data.Locked.IsNull() && !data.Locked.IsUnknown() {
 		params["locked"] = data.Locked.ValueBool()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Email.IsNull() {
+	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		params["email"] = data.Email.ValueString()
 	}
-	if !data.GroupCreate.IsNull() {
+	if !data.GroupCreate.IsNull() && !data.GroupCreate.IsUnknown() {
 		params["group_create"] = data.GroupCreate.ValueBool()
 	}
-	if !data.HomeCreate.IsNull() {
+	if !data.HomeCreate.IsNull() && !data.HomeCreate.IsUnknown() {
 		params["home_create"] = data.HomeCreate.ValueBool()
 	}
-	if !data.HomeMode.IsNull() {
+	if !data.HomeMode.IsNull() && !data.HomeMode.IsUnknown() {
 		params["home_mode"] = data.HomeMode.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.RandomPassword.IsNull() {
+	if !data.RandomPassword.IsNull() && !data.RandomPassword.IsUnknown() {
 		params["random_password"] = data.RandomPassword.ValueBool()
 	}
 
@@ -283,6 +283,125 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("user.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back user: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["username"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Username = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Username = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["full_name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.FullName = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["userns_idmap"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.UsernsIdmap = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["group"]; ok {
+			if v == nil {
+				data.Group = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Group = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["sshpubkey"]; ok {
+			if v == nil {
+				data.Sshpubkey = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Sshpubkey = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["email"]; ok {
+			if v == nil {
+				data.Email = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Email = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Email = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["password"]; ok {
+			if v == nil {
+				data.Password = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Password = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Password = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -323,7 +442,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["username"]; ok && v != nil {
+		if v, ok := resultMap["username"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Username = types.StringValue(val)
@@ -335,7 +454,7 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				data.Username = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["full_name"]; ok && v != nil {
+		if v, ok := resultMap["full_name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.FullName = types.StringValue(val)
@@ -345,6 +464,78 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				}
 			default:
 				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["userns_idmap"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.UsernsIdmap = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["group"]; ok {
+			if v == nil {
+				data.Group = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Group = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["sshpubkey"]; ok {
+			if v == nil {
+				data.Sshpubkey = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Sshpubkey = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["email"]; ok {
+			if v == nil {
+				data.Email = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Email = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Email = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["password"]; ok {
+			if v == nil {
+				data.Password = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Password = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Password = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -373,67 +564,67 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	params := map[string]interface{}{}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Home.IsNull() {
+	if !data.Home.IsNull() && !data.Home.IsUnknown() {
 		params["home"] = data.Home.ValueString()
 	}
-	if !data.Shell.IsNull() {
+	if !data.Shell.IsNull() && !data.Shell.IsUnknown() {
 		params["shell"] = data.Shell.ValueString()
 	}
-	if !data.FullName.IsNull() {
+	if !data.FullName.IsNull() && !data.FullName.IsUnknown() {
 		params["full_name"] = data.FullName.ValueString()
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Group.IsNull() {
+	if !data.Group.IsNull() && !data.Group.IsUnknown() {
 		params["group"] = data.Group.ValueInt64()
 	}
-	if !data.Groups.IsNull() {
+	if !data.Groups.IsNull() && !data.Groups.IsUnknown() {
 		var groupsList []string
 		data.Groups.ElementsAs(ctx, &groupsList, false)
 		params["groups"] = groupsList
 	}
-	if !data.PasswordDisabled.IsNull() {
+	if !data.PasswordDisabled.IsNull() && !data.PasswordDisabled.IsUnknown() {
 		params["password_disabled"] = data.PasswordDisabled.ValueBool()
 	}
-	if !data.SshPasswordEnabled.IsNull() {
+	if !data.SshPasswordEnabled.IsNull() && !data.SshPasswordEnabled.IsUnknown() {
 		params["ssh_password_enabled"] = data.SshPasswordEnabled.ValueBool()
 	}
-	if !data.Sshpubkey.IsNull() {
+	if !data.Sshpubkey.IsNull() && !data.Sshpubkey.IsUnknown() {
 		params["sshpubkey"] = data.Sshpubkey.ValueString()
 	}
-	if !data.Locked.IsNull() {
+	if !data.Locked.IsNull() && !data.Locked.IsUnknown() {
 		params["locked"] = data.Locked.ValueBool()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Email.IsNull() {
+	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		params["email"] = data.Email.ValueString()
 	}
-	if !data.HomeCreate.IsNull() {
+	if !data.HomeCreate.IsNull() && !data.HomeCreate.IsUnknown() {
 		params["home_create"] = data.HomeCreate.ValueBool()
 	}
-	if !data.HomeMode.IsNull() {
+	if !data.HomeMode.IsNull() && !data.HomeMode.IsUnknown() {
 		params["home_mode"] = data.HomeMode.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.RandomPassword.IsNull() {
+	if !data.RandomPassword.IsNull() && !data.RandomPassword.IsUnknown() {
 		params["random_password"] = data.RandomPassword.ValueBool()
 	}
 
@@ -465,6 +656,10 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	_, err = r.client.Call("user.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete user: %s", err))
 		return
 	}

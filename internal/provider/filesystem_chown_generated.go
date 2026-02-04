@@ -101,10 +101,10 @@ func (r *FilesystemChownResource) Create(ctx context.Context, req resource.Creat
 	// Build parameters
 	params := map[string]interface{}{}
 	params["path"] = data.Path.ValueString()
-	if !data.Uid.IsNull() { params["uid"] = data.Uid.ValueInt64() }
-	if !data.User.IsNull() { params["user"] = data.User.ValueString() }
-	if !data.Gid.IsNull() { params["gid"] = data.Gid.ValueInt64() }
-	if !data.Group.IsNull() { params["group"] = data.Group.ValueString() }
+	if !data.Uid.IsNull() && !data.Uid.IsUnknown() { params["uid"] = data.Uid.ValueInt64() }
+	if !data.User.IsNull() && !data.User.IsUnknown() { params["user"] = data.User.ValueString() }
+	if !data.Gid.IsNull() && !data.Gid.IsUnknown() { params["gid"] = data.Gid.ValueInt64() }
+	if !data.Group.IsNull() && !data.Group.IsUnknown() { params["group"] = data.Group.ValueString() }
 	optionsOpts := map[string]interface{}{}
 	if !data.OptionsRecursive.IsNull() { optionsOpts["recursive"] = data.OptionsRecursive.ValueBool() }
 	if !data.OptionsTraverse.IsNull() { optionsOpts["traverse"] = data.OptionsTraverse.ValueBool() }

@@ -88,16 +88,16 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.ExpiresAt.IsNull() {
+	if !data.ExpiresAt.IsNull() && !data.ExpiresAt.IsUnknown() {
 		params["expires_at"] = data.ExpiresAt.ValueString()
 	}
-	if !data.Reset.IsNull() {
+	if !data.Reset.IsNull() && !data.Reset.IsUnknown() {
 		params["reset"] = data.Reset.ValueBool()
 	}
 
@@ -119,6 +119,57 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
 	}
+
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("api_key.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back api_key: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["expires_at"]; ok {
+			if v == nil {
+				data.ExpiresAt = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ExpiresAt = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -159,7 +210,7 @@ func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -169,6 +220,22 @@ func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 				}
 			default:
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["expires_at"]; ok {
+			if v == nil {
+				data.ExpiresAt = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ExpiresAt = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				}
 			}
 		}
 
@@ -197,13 +264,13 @@ func (r *ApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.ExpiresAt.IsNull() {
+	if !data.ExpiresAt.IsNull() && !data.ExpiresAt.IsUnknown() {
 		params["expires_at"] = data.ExpiresAt.ValueString()
 	}
-	if !data.Reset.IsNull() {
+	if !data.Reset.IsNull() && !data.Reset.IsUnknown() {
 		params["reset"] = data.Reset.ValueBool()
 	}
 
@@ -234,6 +301,10 @@ func (r *ApiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	_, err = r.client.Call("api_key.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete api_key: %s", err))
 		return
 	}

@@ -179,7 +179,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-		if v, ok := resultMap["identifier"]; ok && v != nil {
+		if v, ok := resultMap["identifier"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Identifier = types.StringValue(val)
@@ -191,7 +191,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Identifier = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -203,7 +203,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["subsystem"]; ok && v != nil {
+		if v, ok := resultMap["subsystem"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Subsystem = types.StringValue(val)
@@ -215,7 +215,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Subsystem = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["number"]; ok && v != nil {
+		if v, ok := resultMap["number"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Number = types.Int64Value(int64(val))
@@ -225,7 +225,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				}
 			}
 		}
-		if v, ok := resultMap["serial"]; ok && v != nil {
+		if v, ok := resultMap["serial"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Serial = types.StringValue(val)
@@ -237,29 +237,37 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Serial = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["lunid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Lunid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Lunid = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Lunid = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["size"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Size = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Size = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["lunid"]; ok {
+			if v == nil {
+				data.Lunid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Lunid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Lunid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Lunid = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["description"]; ok && v != nil {
+		if v, ok := resultMap["size"]; ok {
+			if v == nil {
+				data.Size = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Size = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Size = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["description"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Description = types.StringValue(val)
@@ -271,7 +279,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Description = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["transfermode"]; ok && v != nil {
+		if v, ok := resultMap["transfermode"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Transfermode = types.StringValue(val)
@@ -283,7 +291,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Transfermode = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["hddstandby"]; ok && v != nil {
+		if v, ok := resultMap["hddstandby"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Hddstandby = types.StringValue(val)
@@ -295,7 +303,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Hddstandby = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["advpowermgmt"]; ok && v != nil {
+		if v, ok := resultMap["advpowermgmt"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Advpowermgmt = types.StringValue(val)
@@ -307,65 +315,85 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Advpowermgmt = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["expiretime"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Expiretime = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Expiretime = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Expiretime = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["model"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Model = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Model = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Model = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["rotationrate"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Rotationrate = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Rotationrate = types.Int64Value(int64(fv)) }
+		if v, ok := resultMap["expiretime"]; ok {
+			if v == nil {
+				data.Expiretime = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Expiretime = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Expiretime = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Expiretime = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["type"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["model"]; ok {
+			if v == nil {
+				data.Model = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Model = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Model = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Model = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["zfs_guid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.ZfsGuid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.ZfsGuid = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["rotationrate"]; ok {
+			if v == nil {
+				data.Rotationrate = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Rotationrate = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Rotationrate = types.Int64Value(int64(fv)) }
+					}
 				}
-			default:
-				data.ZfsGuid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["bus"]; ok && v != nil {
+		if v, ok := resultMap["type"]; ok {
+			if v == nil {
+				data.Type = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Type = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Type = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["zfs_guid"]; ok {
+			if v == nil {
+				data.ZfsGuid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ZfsGuid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ZfsGuid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ZfsGuid = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["bus"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Bus = types.StringValue(val)
@@ -377,7 +405,7 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Bus = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["devname"]; ok && v != nil {
+		if v, ok := resultMap["devname"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Devname = types.StringValue(val)
@@ -389,31 +417,39 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Devname = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["enclosure"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Enclosure = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Enclosure = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["enclosure"]; ok {
+			if v == nil {
+				data.Enclosure = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Enclosure = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Enclosure = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Enclosure = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Enclosure = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["pool"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Pool = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Pool = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["pool"]; ok {
+			if v == nil {
+				data.Pool = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Pool = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Pool = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Pool = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Pool = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["passwd"]; ok && v != nil {
+		if v, ok := resultMap["passwd"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Passwd = types.StringValue(val)
@@ -425,16 +461,20 @@ func (d *DiskDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				data.Passwd = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["kmip_uid"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.KmipUid = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.KmipUid = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["kmip_uid"]; ok {
+			if v == nil {
+				data.KmipUid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.KmipUid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.KmipUid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.KmipUid = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.KmipUid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
 

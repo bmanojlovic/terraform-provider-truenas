@@ -70,7 +70,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 		MarkdownDescription: "Create a Virtual Machine (VM).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
-			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: true)"},
+			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},
 			"command_line_args": schema.StringAttribute{
 				Required: false,
 				Optional: true,
@@ -237,88 +237,88 @@ func (r *VmResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	params := map[string]interface{}{}
-	if !data.CommandLineArgs.IsNull() {
+	if !data.CommandLineArgs.IsNull() && !data.CommandLineArgs.IsUnknown() {
 		params["command_line_args"] = data.CommandLineArgs.ValueString()
 	}
-	if !data.CpuMode.IsNull() {
+	if !data.CpuMode.IsNull() && !data.CpuMode.IsUnknown() {
 		params["cpu_mode"] = data.CpuMode.ValueString()
 	}
-	if !data.CpuModel.IsNull() {
+	if !data.CpuModel.IsNull() && !data.CpuModel.IsUnknown() {
 		params["cpu_model"] = data.CpuModel.ValueString()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Vcpus.IsNull() {
+	if !data.Vcpus.IsNull() && !data.Vcpus.IsUnknown() {
 		params["vcpus"] = data.Vcpus.ValueInt64()
 	}
-	if !data.Cores.IsNull() {
+	if !data.Cores.IsNull() && !data.Cores.IsUnknown() {
 		params["cores"] = data.Cores.ValueInt64()
 	}
-	if !data.Threads.IsNull() {
+	if !data.Threads.IsNull() && !data.Threads.IsUnknown() {
 		params["threads"] = data.Threads.ValueInt64()
 	}
-	if !data.Cpuset.IsNull() {
+	if !data.Cpuset.IsNull() && !data.Cpuset.IsUnknown() {
 		params["cpuset"] = data.Cpuset.ValueString()
 	}
-	if !data.Nodeset.IsNull() {
+	if !data.Nodeset.IsNull() && !data.Nodeset.IsUnknown() {
 		params["nodeset"] = data.Nodeset.ValueString()
 	}
-	if !data.EnableCpuTopologyExtension.IsNull() {
+	if !data.EnableCpuTopologyExtension.IsNull() && !data.EnableCpuTopologyExtension.IsUnknown() {
 		params["enable_cpu_topology_extension"] = data.EnableCpuTopologyExtension.ValueBool()
 	}
-	if !data.PinVcpus.IsNull() {
+	if !data.PinVcpus.IsNull() && !data.PinVcpus.IsUnknown() {
 		params["pin_vcpus"] = data.PinVcpus.ValueBool()
 	}
-	if !data.SuspendOnSnapshot.IsNull() {
+	if !data.SuspendOnSnapshot.IsNull() && !data.SuspendOnSnapshot.IsUnknown() {
 		params["suspend_on_snapshot"] = data.SuspendOnSnapshot.ValueBool()
 	}
-	if !data.TrustedPlatformModule.IsNull() {
+	if !data.TrustedPlatformModule.IsNull() && !data.TrustedPlatformModule.IsUnknown() {
 		params["trusted_platform_module"] = data.TrustedPlatformModule.ValueBool()
 	}
-	if !data.Memory.IsNull() {
+	if !data.Memory.IsNull() && !data.Memory.IsUnknown() {
 		params["memory"] = data.Memory.ValueInt64()
 	}
-	if !data.MinMemory.IsNull() {
+	if !data.MinMemory.IsNull() && !data.MinMemory.IsUnknown() {
 		params["min_memory"] = data.MinMemory.ValueInt64()
 	}
-	if !data.HypervEnlightenments.IsNull() {
+	if !data.HypervEnlightenments.IsNull() && !data.HypervEnlightenments.IsUnknown() {
 		params["hyperv_enlightenments"] = data.HypervEnlightenments.ValueBool()
 	}
-	if !data.Bootloader.IsNull() {
+	if !data.Bootloader.IsNull() && !data.Bootloader.IsUnknown() {
 		params["bootloader"] = data.Bootloader.ValueString()
 	}
-	if !data.BootloaderOvmf.IsNull() {
+	if !data.BootloaderOvmf.IsNull() && !data.BootloaderOvmf.IsUnknown() {
 		params["bootloader_ovmf"] = data.BootloaderOvmf.ValueString()
 	}
-	if !data.Autostart.IsNull() {
+	if !data.Autostart.IsNull() && !data.Autostart.IsUnknown() {
 		params["autostart"] = data.Autostart.ValueBool()
 	}
-	if !data.HideFromMsr.IsNull() {
+	if !data.HideFromMsr.IsNull() && !data.HideFromMsr.IsUnknown() {
 		params["hide_from_msr"] = data.HideFromMsr.ValueBool()
 	}
-	if !data.EnsureDisplayDevice.IsNull() {
+	if !data.EnsureDisplayDevice.IsNull() && !data.EnsureDisplayDevice.IsUnknown() {
 		params["ensure_display_device"] = data.EnsureDisplayDevice.ValueBool()
 	}
-	if !data.Time.IsNull() {
+	if !data.Time.IsNull() && !data.Time.IsUnknown() {
 		params["time"] = data.Time.ValueString()
 	}
-	if !data.ShutdownTimeout.IsNull() {
+	if !data.ShutdownTimeout.IsNull() && !data.ShutdownTimeout.IsUnknown() {
 		params["shutdown_timeout"] = data.ShutdownTimeout.ValueInt64()
 	}
-	if !data.ArchType.IsNull() {
+	if !data.ArchType.IsNull() && !data.ArchType.IsUnknown() {
 		params["arch_type"] = data.ArchType.ValueString()
 	}
-	if !data.MachineType.IsNull() {
+	if !data.MachineType.IsNull() && !data.MachineType.IsUnknown() {
 		params["machine_type"] = data.MachineType.ValueString()
 	}
-	if !data.Uuid.IsNull() {
+	if !data.Uuid.IsNull() && !data.Uuid.IsUnknown() {
 		params["uuid"] = data.Uuid.ValueString()
 	}
-	if !data.EnableSecureBoot.IsNull() {
+	if !data.EnableSecureBoot.IsNull() && !data.EnableSecureBoot.IsUnknown() {
 		params["enable_secure_boot"] = data.EnableSecureBoot.ValueBool()
 	}
 
@@ -341,12 +341,167 @@ func (r *VmResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	startOnCreate := true
+	startOnCreate := false
 	if !data.StartOnCreate.IsNull() { startOnCreate = data.StartOnCreate.ValueBool() }
 	if startOnCreate {
 		_, err = r.client.Call("vm.start", func() int { id, _ := strconv.Atoi(data.ID.ValueString()); return id }())
 		if err != nil { resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error())) }
 	}
+
+	// Read back to populate computed fields
+	var id interface{}
+	id, err = strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("vm.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back vm: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["cpu_model"]; ok {
+			if v == nil {
+				data.CpuModel = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.CpuModel = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["cpuset"]; ok {
+			if v == nil {
+				data.Cpuset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpuset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["nodeset"]; ok {
+			if v == nil {
+				data.Nodeset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Nodeset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			switch val := v.(type) {
+			case float64:
+				data.Memory = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["min_memory"]; ok {
+			if v == nil {
+				data.MinMemory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.MinMemory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.MinMemory = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["arch_type"]; ok {
+			if v == nil {
+				data.ArchType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ArchType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["machine_type"]; ok {
+			if v == nil {
+				data.MachineType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MachineType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["uuid"]; ok {
+			if v == nil {
+				data.Uuid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Uuid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -386,7 +541,23 @@ func (r *VmResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 		if v, ok := resultMap["id"]; ok && v != nil {
 			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+		if v, ok := resultMap["cpu_model"]; ok {
+			if v == nil {
+				data.CpuModel = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.CpuModel = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
 				data.Name = types.StringValue(val)
@@ -398,13 +569,107 @@ func (r *VmResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["memory"]; ok && v != nil {
+		if v, ok := resultMap["cpuset"]; ok {
+			if v == nil {
+				data.Cpuset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpuset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["nodeset"]; ok {
+			if v == nil {
+				data.Nodeset = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Nodeset = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
 			switch val := v.(type) {
 			case float64:
 				data.Memory = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
 					if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+				}
+			}
+		}
+		if v, ok := resultMap["min_memory"]; ok {
+			if v == nil {
+				data.MinMemory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.MinMemory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.MinMemory = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+		if v, ok := resultMap["arch_type"]; ok {
+			if v == nil {
+				data.ArchType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ArchType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["machine_type"]; ok {
+			if v == nil {
+				data.MachineType = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.MachineType = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["uuid"]; ok {
+			if v == nil {
+				data.Uuid = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Uuid = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
@@ -434,82 +699,82 @@ func (r *VmResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 
 	params := map[string]interface{}{}
-	if !data.CommandLineArgs.IsNull() {
+	if !data.CommandLineArgs.IsNull() && !data.CommandLineArgs.IsUnknown() {
 		params["command_line_args"] = data.CommandLineArgs.ValueString()
 	}
-	if !data.CpuMode.IsNull() {
+	if !data.CpuMode.IsNull() && !data.CpuMode.IsUnknown() {
 		params["cpu_mode"] = data.CpuMode.ValueString()
 	}
-	if !data.CpuModel.IsNull() {
+	if !data.CpuModel.IsNull() && !data.CpuModel.IsUnknown() {
 		params["cpu_model"] = data.CpuModel.ValueString()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Vcpus.IsNull() {
+	if !data.Vcpus.IsNull() && !data.Vcpus.IsUnknown() {
 		params["vcpus"] = data.Vcpus.ValueInt64()
 	}
-	if !data.Cores.IsNull() {
+	if !data.Cores.IsNull() && !data.Cores.IsUnknown() {
 		params["cores"] = data.Cores.ValueInt64()
 	}
-	if !data.Threads.IsNull() {
+	if !data.Threads.IsNull() && !data.Threads.IsUnknown() {
 		params["threads"] = data.Threads.ValueInt64()
 	}
-	if !data.Cpuset.IsNull() {
+	if !data.Cpuset.IsNull() && !data.Cpuset.IsUnknown() {
 		params["cpuset"] = data.Cpuset.ValueString()
 	}
-	if !data.Nodeset.IsNull() {
+	if !data.Nodeset.IsNull() && !data.Nodeset.IsUnknown() {
 		params["nodeset"] = data.Nodeset.ValueString()
 	}
-	if !data.EnableCpuTopologyExtension.IsNull() {
+	if !data.EnableCpuTopologyExtension.IsNull() && !data.EnableCpuTopologyExtension.IsUnknown() {
 		params["enable_cpu_topology_extension"] = data.EnableCpuTopologyExtension.ValueBool()
 	}
-	if !data.PinVcpus.IsNull() {
+	if !data.PinVcpus.IsNull() && !data.PinVcpus.IsUnknown() {
 		params["pin_vcpus"] = data.PinVcpus.ValueBool()
 	}
-	if !data.SuspendOnSnapshot.IsNull() {
+	if !data.SuspendOnSnapshot.IsNull() && !data.SuspendOnSnapshot.IsUnknown() {
 		params["suspend_on_snapshot"] = data.SuspendOnSnapshot.ValueBool()
 	}
-	if !data.TrustedPlatformModule.IsNull() {
+	if !data.TrustedPlatformModule.IsNull() && !data.TrustedPlatformModule.IsUnknown() {
 		params["trusted_platform_module"] = data.TrustedPlatformModule.ValueBool()
 	}
-	if !data.Memory.IsNull() {
+	if !data.Memory.IsNull() && !data.Memory.IsUnknown() {
 		params["memory"] = data.Memory.ValueInt64()
 	}
-	if !data.MinMemory.IsNull() {
+	if !data.MinMemory.IsNull() && !data.MinMemory.IsUnknown() {
 		params["min_memory"] = data.MinMemory.ValueInt64()
 	}
-	if !data.HypervEnlightenments.IsNull() {
+	if !data.HypervEnlightenments.IsNull() && !data.HypervEnlightenments.IsUnknown() {
 		params["hyperv_enlightenments"] = data.HypervEnlightenments.ValueBool()
 	}
-	if !data.Bootloader.IsNull() {
+	if !data.Bootloader.IsNull() && !data.Bootloader.IsUnknown() {
 		params["bootloader"] = data.Bootloader.ValueString()
 	}
-	if !data.Autostart.IsNull() {
+	if !data.Autostart.IsNull() && !data.Autostart.IsUnknown() {
 		params["autostart"] = data.Autostart.ValueBool()
 	}
-	if !data.HideFromMsr.IsNull() {
+	if !data.HideFromMsr.IsNull() && !data.HideFromMsr.IsUnknown() {
 		params["hide_from_msr"] = data.HideFromMsr.ValueBool()
 	}
-	if !data.EnsureDisplayDevice.IsNull() {
+	if !data.EnsureDisplayDevice.IsNull() && !data.EnsureDisplayDevice.IsUnknown() {
 		params["ensure_display_device"] = data.EnsureDisplayDevice.ValueBool()
 	}
-	if !data.Time.IsNull() {
+	if !data.Time.IsNull() && !data.Time.IsUnknown() {
 		params["time"] = data.Time.ValueString()
 	}
-	if !data.ShutdownTimeout.IsNull() {
+	if !data.ShutdownTimeout.IsNull() && !data.ShutdownTimeout.IsUnknown() {
 		params["shutdown_timeout"] = data.ShutdownTimeout.ValueInt64()
 	}
-	if !data.ArchType.IsNull() {
+	if !data.ArchType.IsNull() && !data.ArchType.IsUnknown() {
 		params["arch_type"] = data.ArchType.ValueString()
 	}
-	if !data.MachineType.IsNull() {
+	if !data.MachineType.IsNull() && !data.MachineType.IsUnknown() {
 		params["machine_type"] = data.MachineType.ValueString()
 	}
-	if !data.Uuid.IsNull() {
+	if !data.Uuid.IsNull() && !data.Uuid.IsUnknown() {
 		params["uuid"] = data.Uuid.ValueString()
 	}
 
@@ -537,13 +802,17 @@ func (r *VmResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
 	}
-	id = []interface{}{id, map[string]interface{}{}}
+	id = []interface{}{id, map[string]interface{}{"force": true, "zvols": true}}
 
 	_, _ = r.client.Call("vm.stop", func() int { id, _ := strconv.Atoi(data.ID.ValueString()); return id }())
 	time.Sleep(2 * time.Second)
 
 	_, err = r.client.Call("vm.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete vm: %s", err))
 		return
 	}

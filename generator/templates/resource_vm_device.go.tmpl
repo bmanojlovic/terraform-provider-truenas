@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -152,28 +152,19 @@ func (r *{resource_name}Resource) Delete(ctx context.Context, req resource.Delet
 		return
 	}}
 
-	// Stop VM before deleting device (TrueNAS requirement)
-	vmID := int(data.Vm.ValueInt64())
-	stopParams := []interface{{}}{{vmID, map[string]interface{{}}{{"force": true}}}}
-	_, err = r.client.CallWithJob("vm.stop", stopParams)
-	// Ignore error - VM might already be stopped, continue to try deletion anyway
-	_ = err
-	
-	// Wait for VM to actually stop (poll status)
-	for i := 0; i < 10; i++ {{
-		statusResult, _ := r.client.Call("vm.get_instance", vmID)
-		if statusMap, ok := statusResult.(map[string]interface{{}}); ok {{
-			if status, ok := statusMap["status"].(map[string]interface{{}}); ok {{
-				if state, ok := status["state"].(string); ok && state != "RUNNING" {{
-					break
-				}}
-			}}
-		}}
-		time.Sleep(1 * time.Second)
-	}}
-	
+	// Try to delete device
+	// If VM is running, this will fail - that's OK, VM deletion will cascade
 	_, err = r.client.Call("{api_name}.delete", resourceID)
 	if err != nil {{
+		// Ignore ENOENT - device already deleted (e.g., VM was deleted with force=true)
+		if strings.Contains(err.Error(), "[ENOENT]") {{
+			return
+		}}
+		// Ignore "VM must be stopped" errors - VM will cascade delete devices
+		if strings.Contains(err.Error(), "stop") || strings.Contains(err.Error(), "running") {{
+			tflog.Info(ctx, "Device deletion skipped - VM is running, will be cleaned up by VM deletion")
+			return
+		}}
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}}
