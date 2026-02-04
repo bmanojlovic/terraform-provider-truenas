@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_users Data Source - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Query users with `query-filters` and `query-options`.
 ---
@@ -12,25 +12,17 @@ Query users with `query-filters` and `query-options`.
 ## Example Usage
 
 ```terraform
-# Get all user
-data "truenas_users" "all" {}
-
-# Access items
-output "user_count" {
-  value = length(data.truenas_users.all.items)
-}
-
-output "user_names" {
-  value = [for item in data.truenas_users.all.items : item.name]
+data "truenas_users" "example" {
+  id = "1"
 }
 ```
 
 ## Schema
 
+### Required
+
+- `id` (String) The ID of the users to retrieve.
+
 ### Read-Only
-
-- `items` (List of Object) - List of user resources
-
-Items have the following attributes:
 
 - None

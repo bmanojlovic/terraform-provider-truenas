@@ -1,36 +1,28 @@
 ---
 page_title: "truenas_vms Data Source - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
-  Query vm resources
+  Query vm
 ---
 
 # truenas_vms (Data Source)
 
-Query vm resources
+Query vm
 
 ## Example Usage
 
 ```terraform
-# Get all vm
-data "truenas_vms" "all" {}
-
-# Access items
-output "vm_count" {
-  value = length(data.truenas_vms.all.items)
-}
-
-output "vm_names" {
-  value = [for item in data.truenas_vms.all.items : item.name]
+data "truenas_vms" "example" {
+  id = "1"
 }
 ```
 
 ## Schema
 
+### Required
+
+- `id` (String) The ID of the vms to retrieve.
+
 ### Read-Only
-
-- `items` (List of Object) - List of vm resources
-
-Items have the following attributes:
 
 - None

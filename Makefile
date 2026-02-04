@@ -22,7 +22,7 @@ fetch-spec:
 		echo "         export TRUENAS_TOKEN=your-api-token"; \
 		exit 1; \
 	fi
-	python3 fetch_methods.py
+	python3 scripts/fetch_methods.py
 
 generate:
 	@echo "Generating provider code..."

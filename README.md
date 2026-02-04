@@ -4,7 +4,7 @@ A comprehensive Terraform provider for TrueNAS SCALE using native JSON-RPC 2.0 o
 
 ## Features
 
-- ✅ **Comprehensive API Coverage** - Auto-generated from TrueNAS OpenAPI specification
+- ✅ **Comprehensive API Coverage** - Auto-generated from TrueNAS JSON-RPC API schema
 - ✅ **Native WebSocket JSON-RPC** - Direct protocol support for optimal performance
 - ✅ **Complete CRUD Operations** for resources
 - ✅ **Terraform Plugin Framework** implementation
@@ -69,7 +69,7 @@ resource "truenas_action_vm_start" "example" {
 }
 ```
 
-**Note**: Unlike cloud providers (AWS/GCP), VMs don't auto-start by default (`start_on_create = false`). This allows devices to be attached while the VM is stopped, which is required by TrueNAS. Use `truenas_action_vm_start` or set `start_on_create = true` to start the VM.
+**Note**: VMs don't auto-start by default (`start_on_create = false`). TrueNAS requires VMs to be stopped when attaching devices, so the recommended workflow is: create VM → attach devices → start with `truenas_action_vm_start`. Setting `start_on_create = true` will start the VM immediately, but devices cannot be attached until it's stopped.
 
 ## Available Resources
 
@@ -89,7 +89,7 @@ See [Resource Documentation](docs/resources/) for the complete list.
 
 - [Provider Configuration](docs/index.md)
 - [Resource Documentation](docs/resources/)
-- [Examples](examples/)
+- [Integration Tests](terraform/) - Real-world usage examples
 
 ## Development
 
@@ -97,7 +97,7 @@ Built with:
 - Go 1.21+
 - Terraform Plugin Framework
 - WebSocket JSON-RPC 2.0
-- OpenAPI-driven code generation
+- TrueNAS JSON-RPC schema-driven code generation
 
 ## Testing
 
@@ -113,7 +113,7 @@ Unit tests run automatically in CI and test core logic without requiring a TrueN
 - Optional field handling (generator correctly checks IsNull())
 - Business logic (start_on_create defaults, ID conversion)
 
-**Important:** These tests validate the **generator's behavior**. If TrueNAS changes its API schema, resources are regenerated from the OpenAPI spec. Tests ensure the generator produces correct code patterns.
+**Important:** These tests validate the **generator's behavior**. If TrueNAS changes its API schema, resources are regenerated from the JSON-RPC spec. Tests ensure the generator produces correct code patterns.
 
 ```bash
 # Run unit tests locally

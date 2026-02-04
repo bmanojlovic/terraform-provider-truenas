@@ -806,6 +806,15 @@ def main():
             if code:
                 (output_dir / f"datasource_{base.replace('.', '_')}s_generated.go").write_text(code)
                 generated_query.append(base + "s")
+                # Generate docs for query datasource
+                spec = methods[f"{base}.query"]
+                returns = spec.get("returns", [])
+                if returns:
+                    schema = returns[0] if isinstance(returns, list) else returns
+                    items = schema.get("items", [{}])
+                    item_schema = items[0] if isinstance(items, list) else items
+                    gen_datasource_docs(base.replace(".", "_") + "s", item_schema.get("properties", {}),
+                        (spec.get("description") or f"Query {base}").split("\n")[0][:200], templates)
 
     print(f"✅ Generated {len(generated_ds)} datasources, {len(generated_query)} query datasources", file=sys.stderr)
 

@@ -1,6 +1,6 @@
 ---
 page_title: "truenas_interfaces Data Source - terraform-provider-truenas"
-subcategory: ""
+subcategory: "Other"
 description: |-
   Query Interfaces with `query-filters` and `query-options`
 ---
@@ -12,25 +12,17 @@ Query Interfaces with `query-filters` and `query-options`
 ## Example Usage
 
 ```terraform
-# Get all interface
-data "truenas_interfaces" "all" {}
-
-# Access items
-output "interface_count" {
-  value = length(data.truenas_interfaces.all.items)
-}
-
-output "interface_names" {
-  value = [for item in data.truenas_interfaces.all.items : item.name]
+data "truenas_interfaces" "example" {
+  id = "1"
 }
 ```
 
 ## Schema
 
+### Required
+
+- `id` (String) The ID of the interfaces to retrieve.
+
 ### Read-Only
-
-- `items` (List of Object) - List of interface resources
-
-Items have the following attributes:
 
 - None
