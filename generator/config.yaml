@@ -26,28 +26,76 @@ datasources:
 
 # Query datasources: explicit list with query support  
 query_datasources:
+  # Core
   - vm
+  - vm.device
   - pool
   - pool.dataset
   - pool.snapshot
   - pool.snapshottask
+  - pool.scrub
   - disk
   - user
   - group
   - interface
   - service
+  - staticroute
+  # Apps & Containers
   - app
-  - certificate
-  - sharing.nfs
-  - sharing.smb
-  - vm.device
+  - app.image
+  - app.ix_volume
+  - app.registry
   - virt.instance
   - virt.volume
-  - boot.environment
-  - cronjob
+  - docker.network
+  # Sharing
+  - sharing.nfs
+  - sharing.smb
+  # Backup & Replication
   - replication
+  - cloudsync
+  - cloudsync.credentials
+  - cloud_backup
+  - rsynctask
+  - cronjob
+  # Security & Auth
+  - certificate
   - keychaincredential
-  - staticroute
+  - privilege
+  - api_key
+  - acme.dns.authenticator
+  - kerberos.keytab
+  - kerberos.realm
+  # Boot & System
+  - boot.environment
+  - dns
+  - initshutdownscript
+  - tunable
+  - system.ntpserver
+  - alertservice
+  - reporting.exporters
+  # iSCSI
+  - iscsi.auth
+  - iscsi.extent
+  - iscsi.initiator
+  - iscsi.portal
+  - iscsi.target
+  - iscsi.targetextent
+  # NVMe-oF
+  - nvmet.host
+  - nvmet.host_subsys
+  - nvmet.namespace
+  - nvmet.port
+  - nvmet.port_subsys
+  - nvmet.subsys
+  # Fibre Channel
+  - fc.fc_host
+  - fcport
+  - jbof
+  # VMware
+  - vmware
+  # Filesystem
+  - filesystem.acltemplate
 
 # Actions: job-based or keyword-matched methods
 actions:
