@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type ServicesDataSourceModel struct {
 }
 
 type ServicesItemModel struct {
-	ID types.String `tfsdk:"id"`
+	ID      types.String `tfsdk:"id"`
 	Service types.String `tfsdk:"service"`
-	Enable types.Bool `tfsdk:"enable"`
-	State types.String `tfsdk:"state"`
+	Enable  types.Bool   `tfsdk:"enable"`
+	State   types.String `tfsdk:"state"`
 }
 
 func (d *ServicesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,23 +42,23 @@ func (d *ServicesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		Description: "Query all system services with `query-filters` and `query-options`.",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of services resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"service": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the system service.",
-			},
-			"enable": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether the service is enabled to start on boot.",
-			},
-			"state": schema.StringAttribute{
-				Computed: true,
-				Description: "Current state of the service (e.g., 'RUNNING', 'STOPPED').",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"service": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the system service.",
+						},
+						"enable": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether the service is enabled to start on boot.",
+						},
+						"state": schema.StringAttribute{
+							Computed:    true,
+							Description: "Current state of the service (e.g., 'RUNNING', 'STOPPED').",
+						},
 					},
 				},
 			},
@@ -110,7 +110,9 @@ func (d *ServicesDataSource) Read(ctx context.Context, req datasource.ReadReques
 			itemModel.Service = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enable"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Enable = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Enable = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["state"]; ok && v != nil {
 			itemModel.State = types.StringValue(fmt.Sprintf("%v", v))
@@ -121,10 +123,10 @@ func (d *ServicesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"enable": types.BoolType,
-			"id": types.StringType,
+			"enable":  types.BoolType,
+			"id":      types.StringType,
 			"service": types.StringType,
-			"state": types.StringType,
+			"state":   types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

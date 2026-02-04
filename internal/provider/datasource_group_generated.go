@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -24,20 +24,20 @@ type GroupDataSource struct {
 }
 
 type GroupDataSourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Gid types.Int64 `tfsdk:"gid"`
-	Name types.String `tfsdk:"name"`
-	Builtin types.Bool `tfsdk:"builtin"`
-	SudoCommands types.List `tfsdk:"sudo_commands"`
-	SudoCommandsNopasswd types.List `tfsdk:"sudo_commands_nopasswd"`
-	Smb types.Bool `tfsdk:"smb"`
-	UsernsIdmap types.Int64 `tfsdk:"userns_idmap"`
-	Group types.String `tfsdk:"group"`
-	Local types.Bool `tfsdk:"local"`
-	Sid types.String `tfsdk:"sid"`
-	Roles types.List `tfsdk:"roles"`
-	Users types.List `tfsdk:"users"`
-	Immutable types.Bool `tfsdk:"immutable"`
+	ID                   types.String `tfsdk:"id"`
+	Gid                  types.Int64  `tfsdk:"gid"`
+	Name                 types.String `tfsdk:"name"`
+	Builtin              types.Bool   `tfsdk:"builtin"`
+	SudoCommands         types.List   `tfsdk:"sudo_commands"`
+	SudoCommandsNopasswd types.List   `tfsdk:"sudo_commands_nopasswd"`
+	Smb                  types.Bool   `tfsdk:"smb"`
+	UsernsIdmap          types.Int64  `tfsdk:"userns_idmap"`
+	Group                types.String `tfsdk:"group"`
+	Local                types.Bool   `tfsdk:"local"`
+	Sid                  types.String `tfsdk:"sid"`
+	Roles                types.List   `tfsdk:"roles"`
+	Users                types.List   `tfsdk:"users"`
+	Immutable            types.Bool   `tfsdk:"immutable"`
 }
 
 func (d *GroupDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -50,59 +50,59 @@ func (d *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
 			"gid": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "A non-negative integer used to identify a group. TrueNAS uses this value for permission checks and m",
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "A string used to identify a group.",
 			},
 			"builtin": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "If `True`, the group is an internal system account for the TrueNAS server. Typically, one should    ",
 			},
 			"sudo_commands": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "A list of commands that group members may execute with elevated privileges. User is prompted for pas",
 			},
 			"sudo_commands_nopasswd": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "A list of commands that group members may execute with elevated privileges. User is not prompted for",
 			},
 			"smb": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "If set to `True`, the group can be used for SMB share ACL entries. The group is mapped to an NT grou",
 			},
 			"userns_idmap": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Specifies the subgid mapping for this group. If DIRECT then the GID will be     directly mapped to a",
 			},
 			"group": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "A string used to identify a group. Identical to the `name` key. ",
 			},
 			"local": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a director",
 			},
 			"sid": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "The Security Identifier (SID) of the user if the account an `smb` account. The SMB server uses this ",
 			},
 			"roles": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "List of roles assigned to this groups. Roles control administrative access to TrueNAS through the we",
 			},
 			"users": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "A list a API user identifiers for local users who are members of this group. These IDs match the `id",
 			},
 			"immutable": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "This is a read-only field showing if the group entry can be changed. If `True`, the group is immutab",
 			},
 		},
@@ -140,74 +140,95 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-		if v, ok := resultMap["gid"]; ok && v != nil {
-			switch val := v.(type) {
-			case float64:
-				data.Gid = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Gid = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["gid"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Gid = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Gid = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["builtin"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { data.Builtin = types.BoolValue(bv) }
+	}
+	if v, ok := resultMap["builtin"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.Builtin = types.BoolValue(bv)
 		}
-		if v, ok := resultMap["sudo_commands"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.SudoCommands, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["sudo_commands"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.SudoCommands, _ = types.ListValue(types.StringType, strVals)
 		}
-		if v, ok := resultMap["sudo_commands_nopasswd"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["sudo_commands_nopasswd"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, strVals)
 		}
-		if v, ok := resultMap["smb"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { data.Smb = types.BoolValue(bv) }
+	}
+	if v, ok := resultMap["smb"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.Smb = types.BoolValue(bv)
 		}
-		if v, ok := resultMap["userns_idmap"]; ok && v != nil {
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		if v == nil {
+			data.UsernsIdmap = types.Int64Null()
+		} else {
 			switch val := v.(type) {
 			case float64:
 				data.UsernsIdmap = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
+					if fv, ok := parsed.(float64); ok {
+						data.UsernsIdmap = types.Int64Value(int64(fv))
+					}
 				}
 			}
 		}
-		if v, ok := resultMap["group"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Group = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Group = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Group = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["group"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Group = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Group = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Group = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["local"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { data.Local = types.BoolValue(bv) }
+	}
+	if v, ok := resultMap["local"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.Local = types.BoolValue(bv)
 		}
-		if v, ok := resultMap["sid"]; ok && v != nil {
+	}
+	if v, ok := resultMap["sid"]; ok {
+		if v == nil {
+			data.Sid = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
 				data.Sid = types.StringValue(val)
@@ -219,23 +240,30 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				data.Sid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["roles"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Roles, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["roles"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Roles, _ = types.ListValue(types.StringType, strVals)
 		}
-		if v, ok := resultMap["users"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Users, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["users"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Users, _ = types.ListValue(types.StringType, strVals)
 		}
-		if v, ok := resultMap["immutable"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { data.Immutable = types.BoolValue(bv) }
+	}
+	if v, ok := resultMap["immutable"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.Immutable = types.BoolValue(bv)
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

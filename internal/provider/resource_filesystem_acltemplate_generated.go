@@ -3,14 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type FilesystemAcltemplateResource struct {
@@ -18,10 +18,10 @@ type FilesystemAcltemplateResource struct {
 }
 
 type FilesystemAcltemplateResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID      types.String `tfsdk:"id"`
+	Name    types.String `tfsdk:"name"`
 	Acltype types.String `tfsdk:"acltype"`
-	Acl types.List `tfsdk:"acl"`
+	Acl     types.List   `tfsdk:"acl"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -43,24 +43,24 @@ func (r *FilesystemAcltemplateResource) Schema(ctx context.Context, req resource
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Human-readable name for the ACL template.",
 			},
 			"acltype": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ACL type this template provides.",
 			},
 			"acl": schema.ListAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				ElementType: types.StringType,
 				Description: "Array of Access Control Entries defined by this template.",
 			},
 			"comment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Optional descriptive comment about the template's purpose.",
 			},
 		},
@@ -87,18 +87,18 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Acltype.IsNull() {
+	if !data.Acltype.IsNull() && !data.Acltype.IsUnknown() {
 		params["acltype"] = data.Acltype.ValueString()
 	}
-	if !data.Acl.IsNull() {
+	if !data.Acl.IsNull() && !data.Acl.IsUnknown() {
 		var aclList []string
 		data.Acl.ElementsAs(ctx, &aclList, false)
 		params["acl"] = aclList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -119,6 +119,60 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("filesystem.acltemplate.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back filesystem_acltemplate: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["acltype"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Acltype = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["acl"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
+			}
+			data.Acl, _ = types.ListValue(types.StringType, strVals)
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -157,40 +211,42 @@ func (r *FilesystemAcltemplateResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["name"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acltype"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Acltype = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["acltype"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Acltype = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acl"]; ok && v != nil {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Acl, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["acl"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Acl, _ = types.ListValue(types.StringType, strVals)
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -217,18 +273,18 @@ func (r *FilesystemAcltemplateResource) Update(ctx context.Context, req resource
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Acltype.IsNull() {
+	if !data.Acltype.IsNull() && !data.Acltype.IsUnknown() {
 		params["acltype"] = data.Acltype.ValueString()
 	}
-	if !data.Acl.IsNull() {
+	if !data.Acl.IsNull() && !data.Acl.IsUnknown() {
 		var aclList []string
 		data.Acl.ElementsAs(ctx, &aclList, false)
 		params["acl"] = aclList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -249,9 +305,7 @@ func (r *FilesystemAcltemplateResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -259,6 +313,10 @@ func (r *FilesystemAcltemplateResource) Delete(ctx context.Context, req resource
 
 	_, err = r.client.Call("filesystem.acltemplate.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete filesystem_acltemplate: %s", err))
 		return
 	}

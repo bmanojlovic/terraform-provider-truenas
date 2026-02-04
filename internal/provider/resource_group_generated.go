@@ -3,15 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type GroupResource struct {
@@ -19,14 +19,14 @@ type GroupResource struct {
 }
 
 type GroupResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Gid types.Int64 `tfsdk:"gid"`
-	Name types.String `tfsdk:"name"`
-	SudoCommands types.List `tfsdk:"sudo_commands"`
-	SudoCommandsNopasswd types.List `tfsdk:"sudo_commands_nopasswd"`
-	Smb types.Bool `tfsdk:"smb"`
-	UsernsIdmap types.Int64 `tfsdk:"userns_idmap"`
-	Users types.List `tfsdk:"users"`
+	ID                   types.String `tfsdk:"id"`
+	Gid                  types.Int64  `tfsdk:"gid"`
+	Name                 types.String `tfsdk:"name"`
+	SudoCommands         types.List   `tfsdk:"sudo_commands"`
+	SudoCommandsNopasswd types.List   `tfsdk:"sudo_commands_nopasswd"`
+	Smb                  types.Bool   `tfsdk:"smb"`
+	UsernsIdmap          types.Int64  `tfsdk:"userns_idmap"`
+	Users                types.List   `tfsdk:"users"`
 }
 
 func NewGroupResource() resource.Resource {
@@ -47,41 +47,41 @@ func (r *GroupResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"gid": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "If `null`, it is automatically filled with the next one available.",
+				Required:      false,
+				Optional:      true,
+				Description:   "If `null`, it is automatically filled with the next one available.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "A string used to identify a group.",
 			},
 			"sudo_commands": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "A list of commands that group members may execute with elevated privileges. User is prompted for pas",
 			},
 			"sudo_commands_nopasswd": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "A list of commands that group members may execute with elevated privileges. User is not prompted for",
 			},
 			"smb": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "If set to `True`, the group can be used for SMB share ACL entries. The group is mapped to an NT grou",
 			},
 			"userns_idmap": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Specifies the subgid mapping for this group. If DIRECT then the GID will be     directly mapped to a",
 			},
 			"users": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "A list a API user identifiers for local users who are members of this group. These IDs match the `id",
 			},
@@ -109,29 +109,29 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	params := map[string]interface{}{}
-	if !data.Gid.IsNull() {
+	if !data.Gid.IsNull() && !data.Gid.IsUnknown() {
 		params["gid"] = data.Gid.ValueInt64()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Users.IsNull() {
+	if !data.Users.IsNull() && !data.Users.IsUnknown() {
 		var usersList []string
 		data.Users.ElementsAs(ctx, &usersList, false)
 		params["users"] = usersList
@@ -154,6 +154,55 @@ func (r *GroupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("group.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back group: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		if v == nil {
+			data.UsernsIdmap = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.UsernsIdmap = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.UsernsIdmap = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,21 +241,37 @@ func (r *GroupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		if v == nil {
+			data.UsernsIdmap = types.Int64Null()
+		} else {
 			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
+			case float64:
+				data.UsernsIdmap = types.Int64Value(int64(val))
 			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.UsernsIdmap = types.Int64Value(int64(fv))
+					}
 				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -233,26 +298,26 @@ func (r *GroupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.SudoCommands.IsNull() {
+	if !data.SudoCommands.IsNull() && !data.SudoCommands.IsUnknown() {
 		var sudo_commandsList []string
 		data.SudoCommands.ElementsAs(ctx, &sudo_commandsList, false)
 		params["sudo_commands"] = sudo_commandsList
 	}
-	if !data.SudoCommandsNopasswd.IsNull() {
+	if !data.SudoCommandsNopasswd.IsNull() && !data.SudoCommandsNopasswd.IsUnknown() {
 		var sudo_commands_nopasswdList []string
 		data.SudoCommandsNopasswd.ElementsAs(ctx, &sudo_commands_nopasswdList, false)
 		params["sudo_commands_nopasswd"] = sudo_commands_nopasswdList
 	}
-	if !data.Smb.IsNull() {
+	if !data.Smb.IsNull() && !data.Smb.IsUnknown() {
 		params["smb"] = data.Smb.ValueBool()
 	}
-	if !data.UsernsIdmap.IsNull() {
+	if !data.UsernsIdmap.IsNull() && !data.UsernsIdmap.IsUnknown() {
 		params["userns_idmap"] = data.UsernsIdmap.ValueInt64()
 	}
-	if !data.Users.IsNull() {
+	if !data.Users.IsNull() && !data.Users.IsUnknown() {
 		var usersList []string
 		data.Users.ElementsAs(ctx, &usersList, false)
 		params["users"] = usersList
@@ -286,6 +351,10 @@ func (r *GroupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	_, err = r.client.Call("group.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete group: %s", err))
 		return
 	}

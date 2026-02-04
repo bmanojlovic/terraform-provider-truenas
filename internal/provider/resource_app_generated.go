@@ -2,18 +2,18 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
-"encoding/json"
-	"time"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strings"
+	"time"
 )
 
 type AppResource struct {
@@ -21,15 +21,15 @@ type AppResource struct {
 }
 
 type AppResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	CustomApp types.Bool `tfsdk:"custom_app"`
-	Values types.String `tfsdk:"values"`
-	CustomComposeConfig types.String `tfsdk:"custom_compose_config"`
+	ID                        types.String `tfsdk:"id"`
+	CustomApp                 types.Bool   `tfsdk:"custom_app"`
+	Values                    types.String `tfsdk:"values"`
+	CustomComposeConfig       types.String `tfsdk:"custom_compose_config"`
 	CustomComposeConfigString types.String `tfsdk:"custom_compose_config_string"`
-	CatalogApp types.String `tfsdk:"catalog_app"`
-	AppName types.String `tfsdk:"app_name"`
-	Train types.String `tfsdk:"train"`
-	Version types.String `tfsdk:"version"`
+	CatalogApp                types.String `tfsdk:"catalog_app"`
+	AppName                   types.String `tfsdk:"app_name"`
+	Train                     types.String `tfsdk:"train"`
+	Version                   types.String `tfsdk:"version"`
 }
 
 func NewAppResource() resource.Resource {
@@ -50,48 +50,48 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"custom_app": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Whether to create a custom application (`true`) or install from catalog (`false`).",
+				Required:      false,
+				Optional:      true,
+				Description:   "Whether to create a custom application (`true`) or install from catalog (`false`).",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"values": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Updated configuration values for the application.",
 			},
 			"custom_compose_config": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Updated Docker Compose configuration as a structured object.",
 			},
 			"custom_compose_config_string": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Updated Docker Compose configuration as a YAML string.",
 			},
 			"catalog_app": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Name of the catalog application to install. Required when `custom_app` is `false`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Name of the catalog application to install. Required when `custom_app` is `false`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"app_name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
-				Description: "Application name must have the following:  * Lowercase alphanumeric characters can be specified. * N",
+				Required:      true,
+				Optional:      false,
+				Description:   "Application name must have the following:  * Lowercase alphanumeric characters can be specified. * N",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"train": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "The catalog train to install from.",
+				Required:      false,
+				Optional:      true,
+				Description:   "The catalog train to install from.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"version": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "The version of the application to install.",
+				Required:      false,
+				Optional:      true,
+				Description:   "The version of the application to install.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 		},
@@ -118,10 +118,10 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	params := map[string]interface{}{}
-	if !data.CustomApp.IsNull() {
+	if !data.CustomApp.IsNull() && !data.CustomApp.IsUnknown() {
 		params["custom_app"] = data.CustomApp.ValueBool()
 	}
-	if !data.Values.IsNull() {
+	if !data.Values.IsNull() && !data.Values.IsUnknown() {
 		var valuesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
@@ -129,7 +129,7 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		}
 		params["values"] = valuesObj
 	}
-	if !data.CustomComposeConfig.IsNull() {
+	if !data.CustomComposeConfig.IsNull() && !data.CustomComposeConfig.IsUnknown() {
 		var custom_compose_configObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
@@ -137,19 +137,19 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		}
 		params["custom_compose_config"] = custom_compose_configObj
 	}
-	if !data.CustomComposeConfigString.IsNull() {
+	if !data.CustomComposeConfigString.IsNull() && !data.CustomComposeConfigString.IsUnknown() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
 	}
-	if !data.CatalogApp.IsNull() {
+	if !data.CatalogApp.IsNull() && !data.CatalogApp.IsUnknown() {
 		params["catalog_app"] = data.CatalogApp.ValueString()
 	}
-	if !data.AppName.IsNull() {
+	if !data.AppName.IsNull() && !data.AppName.IsUnknown() {
 		params["app_name"] = data.AppName.ValueString()
 	}
-	if !data.Train.IsNull() {
+	if !data.Train.IsNull() && !data.Train.IsUnknown() {
 		params["train"] = data.Train.ValueString()
 	}
-	if !data.Version.IsNull() {
+	if !data.Version.IsNull() && !data.Version.IsUnknown() {
 		params["version"] = data.Version.ValueString()
 	}
 
@@ -170,6 +170,23 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id := data.ID.ValueString()
+	result, err = r.client.Call("app.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back app: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -204,9 +221,9 @@ func (r *AppResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -229,7 +246,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	id = state.ID.ValueString()
 
 	params := map[string]interface{}{}
-	if !data.Values.IsNull() {
+	if !data.Values.IsNull() && !data.Values.IsUnknown() {
 		var valuesObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.Values.ValueString()), &valuesObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse values: %s", err))
@@ -237,7 +254,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 		params["values"] = valuesObj
 	}
-	if !data.CustomComposeConfig.IsNull() {
+	if !data.CustomComposeConfig.IsNull() && !data.CustomComposeConfig.IsUnknown() {
 		var custom_compose_configObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CustomComposeConfig.ValueString()), &custom_compose_configObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse custom_compose_config: %s", err))
@@ -245,7 +262,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 		params["custom_compose_config"] = custom_compose_configObj
 	}
-	if !data.CustomComposeConfigString.IsNull() {
+	if !data.CustomComposeConfigString.IsNull() && !data.CustomComposeConfigString.IsUnknown() {
 		params["custom_compose_config_string"] = data.CustomComposeConfigString.ValueString()
 	}
 
@@ -266,15 +283,17 @@ func (r *AppResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	var id interface{}
-	var err error
-	id = []interface{}{data.ID.ValueString(), map[string]interface{}{}}
+	id := []interface{}{data.ID.ValueString(), map[string]interface{}{}}
 
 	_, _ = r.client.Call("app.stop", data.ID.ValueString())
 	time.Sleep(2 * time.Second)
 
-	_, err = r.client.CallWithJob("app.delete", id)
+	_, err := r.client.CallWithJob("app.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete app: %s", err))
 		return
 	}

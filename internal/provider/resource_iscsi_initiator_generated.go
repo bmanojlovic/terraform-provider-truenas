@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type IscsiInitiatorResource struct {
@@ -17,9 +17,9 @@ type IscsiInitiatorResource struct {
 }
 
 type IscsiInitiatorResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Initiators types.List `tfsdk:"initiators"`
-	Comment types.String `tfsdk:"comment"`
+	ID         types.String `tfsdk:"id"`
+	Initiators types.List   `tfsdk:"initiators"`
+	Comment    types.String `tfsdk:"comment"`
 }
 
 func NewIscsiInitiatorResource() resource.Resource {
@@ -40,12 +40,12 @@ func (r *IscsiInitiatorResource) Schema(ctx context.Context, req resource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
 			"initiators": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators.",
 			},
 			"comment": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Optional comment describing the authorized initiator group.",
 			},
 		},
@@ -72,12 +72,12 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 	}
 
 	params := map[string]interface{}{}
-	if !data.Initiators.IsNull() {
+	if !data.Initiators.IsNull() && !data.Initiators.IsUnknown() {
 		var initiatorsList []string
 		data.Initiators.ElementsAs(ctx, &initiatorsList, false)
 		params["initiators"] = initiatorsList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -98,6 +98,27 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("iscsi.initiator.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back iscsi_initiator: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -136,9 +157,9 @@ func (r *IscsiInitiatorResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -165,12 +186,12 @@ func (r *IscsiInitiatorResource) Update(ctx context.Context, req resource.Update
 	}
 
 	params := map[string]interface{}{}
-	if !data.Initiators.IsNull() {
+	if !data.Initiators.IsNull() && !data.Initiators.IsUnknown() {
 		var initiatorsList []string
 		data.Initiators.ElementsAs(ctx, &initiatorsList, false)
 		params["initiators"] = initiatorsList
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -191,9 +212,7 @@ func (r *IscsiInitiatorResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -201,6 +220,10 @@ func (r *IscsiInitiatorResource) Delete(ctx context.Context, req resource.Delete
 
 	_, err = r.client.Call("iscsi.initiator.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete iscsi_initiator: %s", err))
 		return
 	}

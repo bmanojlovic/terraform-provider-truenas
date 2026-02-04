@@ -17,7 +17,7 @@ type ActionServiceControlResource struct {
 }
 
 type ActionServiceControlResourceModel struct {
-	Verb types.String `tfsdk:"verb"`
+	Verb    types.String `tfsdk:"verb"`
 	Service types.String `tfsdk:"service"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
@@ -41,7 +41,7 @@ func (r *ActionServiceControlResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute service.control",
 		Attributes: map[string]schema.Attribute{
-			"verb": schema.StringAttribute{Required: true, MarkdownDescription: "The service operation to perform."},
+			"verb":    schema.StringAttribute{Required: true, MarkdownDescription: "The service operation to perform."},
 			"service": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the service to control."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the service operation behavior."},
 			"action_id": schema.StringAttribute{
@@ -97,7 +97,9 @@ func (r *ActionServiceControlResource) Create(ctx context.Context, req resource.
 	params = append(params, data.Service.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -111,7 +113,7 @@ func (r *ActionServiceControlResource) Create(ctx context.Context, req resource.
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

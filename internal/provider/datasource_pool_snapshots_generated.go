@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,16 +27,16 @@ type PoolSnapshotsDataSourceModel struct {
 }
 
 type PoolSnapshotsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Properties types.String `tfsdk:"properties"`
-	Pool types.String `tfsdk:"pool"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
+	ID           types.String `tfsdk:"id"`
+	Properties   types.String `tfsdk:"properties"`
+	Pool         types.String `tfsdk:"pool"`
+	Name         types.String `tfsdk:"name"`
+	Type         types.String `tfsdk:"type"`
 	SnapshotName types.String `tfsdk:"snapshot_name"`
-	Dataset types.String `tfsdk:"dataset"`
-	Createtxg types.String `tfsdk:"createtxg"`
-	Holds types.String `tfsdk:"holds"`
-	Retention types.String `tfsdk:"retention"`
+	Dataset      types.String `tfsdk:"dataset"`
+	Createtxg    types.String `tfsdk:"createtxg"`
+	Holds        types.String `tfsdk:"holds"`
+	Retention    types.String `tfsdk:"retention"`
 }
 
 func (d *PoolSnapshotsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -48,47 +48,47 @@ func (d *PoolSnapshotsDataSource) Schema(ctx context.Context, req datasource.Sch
 		Description: "Query all ZFS Snapshots with `query-filters` and `query-options`.",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of pool_snapshots resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"properties": schema.StringAttribute{
-				Computed: true,
-				Description: "Object mapping ZFS property names to their values and metadata.",
-			},
-			"pool": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the ZFS pool containing this snapshot.",
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Full name of the snapshot including dataset path.",
-			},
-			"type": schema.StringAttribute{
-				Computed: true,
-				Description: "Type identifier indicating this is a ZFS snapshot.",
-			},
-			"snapshot_name": schema.StringAttribute{
-				Computed: true,
-				Description: "Just the snapshot name portion without the dataset path.",
-			},
-			"dataset": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the dataset this snapshot was taken from.",
-			},
-			"createtxg": schema.StringAttribute{
-				Computed: true,
-				Description: "Transaction group ID when the snapshot was created.",
-			},
-			"holds": schema.StringAttribute{
-				Computed: true,
-				Description: "Returned when options.extra.holds is set.",
-			},
-			"retention": schema.StringAttribute{
-				Computed: true,
-				Description: "Returned when options.extra.retention is set.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"properties": schema.StringAttribute{
+							Computed:    true,
+							Description: "Object mapping ZFS property names to their values and metadata.",
+						},
+						"pool": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the ZFS pool containing this snapshot.",
+						},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Full name of the snapshot including dataset path.",
+						},
+						"type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Type identifier indicating this is a ZFS snapshot.",
+						},
+						"snapshot_name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Just the snapshot name portion without the dataset path.",
+						},
+						"dataset": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the dataset this snapshot was taken from.",
+						},
+						"createtxg": schema.StringAttribute{
+							Computed:    true,
+							Description: "Transaction group ID when the snapshot was created.",
+						},
+						"holds": schema.StringAttribute{
+							Computed:    true,
+							Description: "Returned when options.extra.holds is set.",
+						},
+						"retention": schema.StringAttribute{
+							Computed:    true,
+							Description: "Returned when options.extra.retention is set.",
+						},
 					},
 				},
 			},
@@ -169,16 +169,16 @@ func (d *PoolSnapshotsDataSource) Read(ctx context.Context, req datasource.ReadR
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"createtxg": types.StringType,
-			"dataset": types.StringType,
-			"holds": types.StringType,
-			"id": types.StringType,
-			"name": types.StringType,
-			"pool": types.StringType,
-			"properties": types.StringType,
-			"retention": types.StringType,
+			"createtxg":     types.StringType,
+			"dataset":       types.StringType,
+			"holds":         types.StringType,
+			"id":            types.StringType,
+			"name":          types.StringType,
+			"pool":          types.StringType,
+			"properties":    types.StringType,
+			"retention":     types.StringType,
 			"snapshot_name": types.StringType,
-			"type": types.StringType,
+			"type":          types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

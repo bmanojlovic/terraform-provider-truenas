@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type AppRegistryResource struct {
@@ -17,12 +17,12 @@ type AppRegistryResource struct {
 }
 
 type AppRegistryResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
-	Uri types.String `tfsdk:"uri"`
+	Username    types.String `tfsdk:"username"`
+	Password    types.String `tfsdk:"password"`
+	Uri         types.String `tfsdk:"uri"`
 }
 
 func NewAppRegistryResource() resource.Resource {
@@ -43,28 +43,28 @@ func (r *AppRegistryResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Human-readable name for the container registry.",
 			},
 			"description": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Optional description of the container registry or `null`.",
 			},
 			"username": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Username for registry authentication (masked for security).",
 			},
 			"password": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Password or access token for registry authentication (masked for security).",
 			},
 			"uri": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Container registry URI endpoint (defaults to Docker Hub).",
 			},
 		},
@@ -91,19 +91,19 @@ func (r *AppRegistryResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.Uri.IsNull() {
+	if !data.Uri.IsNull() && !data.Uri.IsUnknown() {
 		params["uri"] = data.Uri.ValueString()
 	}
 
@@ -124,6 +124,79 @@ func (r *AppRegistryResource) Create(ctx context.Context, req resource.CreateReq
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("app.registry.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back app_registry: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["description"]; ok {
+		if v == nil {
+			data.Description = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Description = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Description = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Password = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Password = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -162,45 +235,61 @@ func (r *AppRegistryResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+	}
+	if v, ok := resultMap["description"]; ok {
+		if v == nil {
+			data.Description = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Description = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Description = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["username"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Username = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Username = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["password"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Password = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Password = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Password = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -227,19 +316,19 @@ func (r *AppRegistryResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Description.IsNull() {
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		params["description"] = data.Description.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
-	if !data.Uri.IsNull() {
+	if !data.Uri.IsNull() && !data.Uri.IsUnknown() {
 		params["uri"] = data.Uri.ValueString()
 	}
 
@@ -260,9 +349,7 @@ func (r *AppRegistryResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -270,6 +357,10 @@ func (r *AppRegistryResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("app.registry.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete app_registry: %s", err))
 		return
 	}

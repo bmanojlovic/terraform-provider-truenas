@@ -100,7 +100,7 @@ func (r *KmipKmip_Sync_PendingResource) Create(ctx context.Context, req resource
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -16,7 +16,7 @@ type UpdateFileResource struct {
 }
 
 type UpdateFileResourceModel struct {
-	Resume types.Bool `tfsdk:"resume"`
+	Resume      types.Bool   `tfsdk:"resume"`
 	Destination types.String `tfsdk:"destination"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *UpdateFileResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Updates the system using the uploaded .tar file.",
 		Attributes: map[string]schema.Attribute{
-			"resume": schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
+			"resume":      schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
 			"destination": schema.StringAttribute{Optional: true, MarkdownDescription: "Create a temporary location by default."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -90,8 +90,12 @@ func (r *UpdateFileResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Resume.IsNull() { params["resume"] = data.Resume.ValueBool() }
-	if !data.Destination.IsNull() { params["destination"] = data.Destination.ValueString() }
+	if !data.Resume.IsNull() && !data.Resume.IsUnknown() {
+		params["resume"] = data.Resume.ValueBool()
+	}
+	if !data.Destination.IsNull() && !data.Destination.IsUnknown() {
+		params["destination"] = data.Destination.ValueString()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -105,7 +109,7 @@ func (r *UpdateFileResource) Create(ctx context.Context, req resource.CreateRequ
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

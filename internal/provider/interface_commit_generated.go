@@ -16,7 +16,7 @@ type InterfaceCommitResource struct {
 }
 
 type InterfaceCommitResourceModel struct {
-	Rollback types.Bool `tfsdk:"rollback"`
+	Rollback       types.Bool  `tfsdk:"rollback"`
 	CheckinTimeout types.Int64 `tfsdk:"checkin_timeout"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *InterfaceCommitResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Commit/apply pending interfaces changes.",
 		Attributes: map[string]schema.Attribute{
-			"rollback": schema.BoolAttribute{Optional: true, MarkdownDescription: "Roll back changes in case they fail to apply."},
+			"rollback":        schema.BoolAttribute{Optional: true, MarkdownDescription: "Roll back changes in case they fail to apply."},
 			"checkin_timeout": schema.Int64Attribute{Optional: true, MarkdownDescription: "Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from     the user. If checkin does not happen within this period of time, the changes will get r"},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -90,8 +90,12 @@ func (r *InterfaceCommitResource) Create(ctx context.Context, req resource.Creat
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Rollback.IsNull() { params["rollback"] = data.Rollback.ValueBool() }
-	if !data.CheckinTimeout.IsNull() { params["checkin_timeout"] = data.CheckinTimeout.ValueInt64() }
+	if !data.Rollback.IsNull() && !data.Rollback.IsUnknown() {
+		params["rollback"] = data.Rollback.ValueBool()
+	}
+	if !data.CheckinTimeout.IsNull() && !data.CheckinTimeout.IsUnknown() {
+		params["checkin_timeout"] = data.CheckinTimeout.ValueInt64()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -105,7 +109,7 @@ func (r *InterfaceCommitResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

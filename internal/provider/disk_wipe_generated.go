@@ -16,9 +16,9 @@ type DiskWipeResource struct {
 }
 
 type DiskWipeResourceModel struct {
-	Dev types.String `tfsdk:"dev"`
-	Mode types.String `tfsdk:"mode"`
-	Synccache types.Bool `tfsdk:"synccache"`
+	Dev       types.String `tfsdk:"dev"`
+	Mode      types.String `tfsdk:"mode"`
+	Synccache types.Bool   `tfsdk:"synccache"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -40,8 +40,8 @@ func (r *DiskWipeResource) Schema(ctx context.Context, req resource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Performs a wipe of a disk `dev`.",
 		Attributes: map[string]schema.Attribute{
-			"dev": schema.StringAttribute{Required: true, MarkdownDescription: "The device to perform the disk wipe operation on. May be passed as /dev/sda or just sda."},
-			"mode": schema.StringAttribute{Required: true, MarkdownDescription: "* QUICK: Write zeros to the first and last 32MB of device. * FULL: Write whole disk with zeros. * FULL_RANDOM: Write whole disk with random bytes."},
+			"dev":       schema.StringAttribute{Required: true, MarkdownDescription: "The device to perform the disk wipe operation on. May be passed as /dev/sda or just sda."},
+			"mode":      schema.StringAttribute{Required: true, MarkdownDescription: "* QUICK: Write zeros to the first and last 32MB of device. * FULL: Write whole disk with zeros. * FULL_RANDOM: Write whole disk with random bytes."},
 			"synccache": schema.BoolAttribute{Optional: true, MarkdownDescription: "Synchronize the device with the database."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *DiskWipeResource) Create(ctx context.Context, req resource.CreateReques
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.Dev.ValueString())
 	paramsArr = append(paramsArr, data.Mode.ValueString())
-	if !data.Synccache.IsNull() { paramsArr = append(paramsArr, data.Synccache.ValueBool()) }
+	if !data.Synccache.IsNull() {
+		paramsArr = append(paramsArr, data.Synccache.ValueBool())
+	}
 
 	// Execute action
 	result, err := r.client.Call("disk.wipe", paramsArr)
@@ -107,7 +109,7 @@ func (r *DiskWipeResource) Create(ctx context.Context, req resource.CreateReques
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -17,9 +17,9 @@ type FilesystemPutResource struct {
 }
 
 type FilesystemPutResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Path types.String `tfsdk:"path"`
-	Options types.String `tfsdk:"options"`
+	ID          types.String `tfsdk:"id"`
+	Path        types.String `tfsdk:"path"`
+	Options     types.String `tfsdk:"options"`
 	FileContent types.String `tfsdk:"file_content"`
 }
 
@@ -39,7 +39,7 @@ func (r *FilesystemPutResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 				MarkdownDescription: "Resource identifier",
 			},
-			"path": schema.StringAttribute{Required: true, MarkdownDescription: "Path where the file should be written."},
+			"path":    schema.StringAttribute{Required: true, MarkdownDescription: "Path where the file should be written."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling file writing behavior."},
 			"file_content": schema.StringAttribute{
 				Optional:            true,
@@ -72,7 +72,9 @@ func (r *FilesystemPutResource) Create(ctx context.Context, req resource.CreateR
 	// Build parameters
 	params := make(map[string]interface{})
 	params["path"] = data.Path.ValueString()
-	if !data.Options.IsNull() { params["options"] = data.Options.ValueString() }
+	if !data.Options.IsNull() {
+		params["options"] = data.Options.ValueString()
+	}
 
 	// Decode file content if provided
 	var fileContent []byte
@@ -112,7 +114,7 @@ func (r *FilesystemPutResource) Update(ctx context.Context, req resource.UpdateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
+
 	// Get ID from state
 	var state FilesystemPutResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -124,7 +126,9 @@ func (r *FilesystemPutResource) Update(ctx context.Context, req resource.UpdateR
 	// Build parameters
 	params := make(map[string]interface{})
 	params["path"] = data.Path.ValueString()
-	if !data.Options.IsNull() { params["options"] = data.Options.ValueString() }
+	if !data.Options.IsNull() {
+		params["options"] = data.Options.ValueString()
+	}
 
 	// Decode file content if provided
 	var fileContent []byte

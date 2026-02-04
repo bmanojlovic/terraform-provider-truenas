@@ -17,9 +17,9 @@ type VirtVolumeImport_IsoResource struct {
 }
 
 type VirtVolumeImport_IsoResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID                  types.String `tfsdk:"id"`
 	VirtVolumeImportIso types.String `tfsdk:"virt_volume_import_iso"`
-	FileContent types.String `tfsdk:"file_content"`
+	FileContent         types.String `tfsdk:"file_content"`
 }
 
 func NewVirtVolumeImport_IsoResource() resource.Resource {
@@ -109,7 +109,7 @@ func (r *VirtVolumeImport_IsoResource) Update(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
+
 	// Get ID from state
 	var state VirtVolumeImport_IsoResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)

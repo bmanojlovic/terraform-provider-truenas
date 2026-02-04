@@ -90,7 +90,9 @@ func (r *ActionSupportNew_TicketResource) Create(ctx context.Context, req resour
 	// Build parameters
 	params := []interface{}{}
 	var dataVal interface{}
-	if err := json.Unmarshal([]byte(data.Data.ValueString()), &dataVal); err == nil { params = append(params, dataVal) }
+	if err := json.Unmarshal([]byte(data.Data.ValueString()), &dataVal); err == nil {
+		params = append(params, dataVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("support.new_ticket", params)
@@ -103,7 +105,7 @@ func (r *ActionSupportNew_TicketResource) Create(ctx context.Context, req resour
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

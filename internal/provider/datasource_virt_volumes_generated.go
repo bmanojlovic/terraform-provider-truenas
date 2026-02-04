@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type VirtVolumesDataSourceModel struct {
 }
 
 type VirtVolumesItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
 	StoragePool types.String `tfsdk:"storage_pool"`
 	ContentType types.String `tfsdk:"content_type"`
-	CreatedAt types.String `tfsdk:"created_at"`
-	Type types.String `tfsdk:"type"`
-	Config types.String `tfsdk:"config"`
+	CreatedAt   types.String `tfsdk:"created_at"`
+	Type        types.String `tfsdk:"type"`
+	Config      types.String `tfsdk:"config"`
 }
 
 func (d *VirtVolumesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -45,35 +45,35 @@ func (d *VirtVolumesDataSource) Schema(ctx context.Context, req datasource.Schem
 		Description: "Query virt_volumes",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of virt_volumes resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Human-readable name of the virtualization volume.",
-			},
-			"storage_pool": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the storage pool containing this volume.",
-			},
-			"content_type": schema.StringAttribute{
-				Computed: true,
-				Description: "Type of content stored in this volume (e.g., 'BLOCK', 'ISO').",
-			},
-			"created_at": schema.StringAttribute{
-				Computed: true,
-				Description: "Timestamp when this volume was created.",
-			},
-			"type": schema.StringAttribute{
-				Computed: true,
-				Description: "Volume type indicating its storage backend and characteristics.",
-			},
-			"config": schema.StringAttribute{
-				Computed: true,
-				Description: "Object containing detailed configuration parameters for this volume.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Human-readable name of the virtualization volume.",
+						},
+						"storage_pool": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the storage pool containing this volume.",
+						},
+						"content_type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Type of content stored in this volume (e.g., 'BLOCK', 'ISO').",
+						},
+						"created_at": schema.StringAttribute{
+							Computed:    true,
+							Description: "Timestamp when this volume was created.",
+						},
+						"type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Volume type indicating its storage backend and characteristics.",
+						},
+						"config": schema.StringAttribute{
+							Computed:    true,
+							Description: "Object containing detailed configuration parameters for this volume.",
+						},
 					},
 				},
 			},
@@ -145,13 +145,13 @@ func (d *VirtVolumesDataSource) Read(ctx context.Context, req datasource.ReadReq
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"config": types.StringType,
+			"config":       types.StringType,
 			"content_type": types.StringType,
-			"created_at": types.StringType,
-			"id": types.StringType,
-			"name": types.StringType,
+			"created_at":   types.StringType,
+			"id":           types.StringType,
+			"name":         types.StringType,
 			"storage_pool": types.StringType,
-			"type": types.StringType,
+			"type":         types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

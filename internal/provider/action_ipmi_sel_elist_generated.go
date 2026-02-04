@@ -93,11 +93,15 @@ func (r *ActionIpmiSelElistResource) Create(ctx context.Context, req resource.Cr
 	params := []interface{}{}
 	if !data.Filters.IsNull() {
 		var filtersVal interface{}
-		if err := json.Unmarshal([]byte(data.Filters.ValueString()), &filtersVal); err == nil { params = append(params, filtersVal) }
+		if err := json.Unmarshal([]byte(data.Filters.ValueString()), &filtersVal); err == nil {
+			params = append(params, filtersVal)
+		}
 	}
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -111,7 +115,7 @@ func (r *ActionIpmiSelElistResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

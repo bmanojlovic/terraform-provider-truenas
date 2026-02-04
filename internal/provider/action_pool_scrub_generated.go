@@ -16,7 +16,7 @@ type ActionPoolScrubResource struct {
 }
 
 type ActionPoolScrubResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID     types.Int64  `tfsdk:"id"`
 	Action types.String `tfsdk:"action"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *ActionPoolScrubResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Performs a scrub action to pool of `id`.  `action` can be either of \"START\", \"STOP\" or \"PAUSE\".",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to perform scrub action on."},
+			"id":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to perform scrub action on."},
 			"action": schema.StringAttribute{Required: true, MarkdownDescription: "The scrub action to perform."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -104,7 +104,7 @@ func (r *ActionPoolScrubResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -4,6 +4,14 @@
 resources:
   auto_detect: true
   exclude: []
+  
+  # Resource-specific delete options
+  delete_options:
+    vm:
+      force: true
+      zvols: true
+    vm.device:
+      zvol: true
 
 # Datasources: explicit list with get_instance support
 datasources:

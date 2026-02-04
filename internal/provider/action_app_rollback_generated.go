@@ -41,7 +41,7 @@ func (r *ActionAppRollbackResource) Schema(ctx context.Context, req resource.Sch
 		MarkdownDescription: "Rollback `app_name` app to previous version.",
 		Attributes: map[string]schema.Attribute{
 			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to rollback."},
-			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Rollback options."},
+			"options":  schema.StringAttribute{Required: true, MarkdownDescription: "Rollback options."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -93,7 +93,9 @@ func (r *ActionAppRollbackResource) Create(ctx context.Context, req resource.Cre
 	params := []interface{}{}
 	params = append(params, data.AppName.ValueString())
 	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+		params = append(params, optionsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("app.rollback", params)
@@ -106,7 +108,7 @@ func (r *ActionAppRollbackResource) Create(ctx context.Context, req resource.Cre
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

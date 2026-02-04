@@ -2,19 +2,19 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
-"strconv"
 	"encoding/json"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"fmt"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type CertificateResource struct {
@@ -22,32 +22,32 @@ type CertificateResource struct {
 }
 
 type CertificateResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	CreateType types.String `tfsdk:"create_type"`
-	AddToTrustedStore types.Bool `tfsdk:"add_to_trusted_store"`
-	Certificate types.String `tfsdk:"certificate"`
-	Privatekey types.String `tfsdk:"privatekey"`
-	Csr types.String `tfsdk:"csr"`
-	KeyLength types.Int64 `tfsdk:"key_length"`
-	KeyType types.String `tfsdk:"key_type"`
-	EcCurve types.String `tfsdk:"ec_curve"`
-	Passphrase types.String `tfsdk:"passphrase"`
-	City types.String `tfsdk:"city"`
-	Common types.String `tfsdk:"common"`
-	Country types.String `tfsdk:"country"`
-	Email types.String `tfsdk:"email"`
-	Organization types.String `tfsdk:"organization"`
+	ID                 types.String `tfsdk:"id"`
+	Name               types.String `tfsdk:"name"`
+	CreateType         types.String `tfsdk:"create_type"`
+	AddToTrustedStore  types.Bool   `tfsdk:"add_to_trusted_store"`
+	Certificate        types.String `tfsdk:"certificate"`
+	Privatekey         types.String `tfsdk:"privatekey"`
+	Csr                types.String `tfsdk:"csr"`
+	KeyLength          types.Int64  `tfsdk:"key_length"`
+	KeyType            types.String `tfsdk:"key_type"`
+	EcCurve            types.String `tfsdk:"ec_curve"`
+	Passphrase         types.String `tfsdk:"passphrase"`
+	City               types.String `tfsdk:"city"`
+	Common             types.String `tfsdk:"common"`
+	Country            types.String `tfsdk:"country"`
+	Email              types.String `tfsdk:"email"`
+	Organization       types.String `tfsdk:"organization"`
 	OrganizationalUnit types.String `tfsdk:"organizational_unit"`
-	State types.String `tfsdk:"state"`
-	DigestAlgorithm types.String `tfsdk:"digest_algorithm"`
-	San types.List `tfsdk:"san"`
-	CertExtensions types.String `tfsdk:"cert_extensions"`
-	AcmeDirectoryUri types.String `tfsdk:"acme_directory_uri"`
-	CsrId types.Int64 `tfsdk:"csr_id"`
-	Tos types.Bool `tfsdk:"tos"`
-	DnsMapping types.String `tfsdk:"dns_mapping"`
-	RenewDays types.Int64 `tfsdk:"renew_days"`
+	State              types.String `tfsdk:"state"`
+	DigestAlgorithm    types.String `tfsdk:"digest_algorithm"`
+	San                types.List   `tfsdk:"san"`
+	CertExtensions     types.String `tfsdk:"cert_extensions"`
+	AcmeDirectoryUri   types.String `tfsdk:"acme_directory_uri"`
+	CsrId              types.Int64  `tfsdk:"csr_id"`
+	Tos                types.Bool   `tfsdk:"tos"`
+	DnsMapping         types.String `tfsdk:"dns_mapping"`
+	RenewDays          types.Int64  `tfsdk:"renew_days"`
 }
 
 func NewCertificateResource() resource.Resource {
@@ -68,150 +68,150 @@ func (r *CertificateResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Certificate name.",
 			},
 			"create_type": schema.StringAttribute{
-				Required: true,
-				Optional: false,
-				Description: "Type of certificate creation operation.",
+				Required:      true,
+				Optional:      false,
+				Description:   "Type of certificate creation operation.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"add_to_trusted_store": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Whether to add this certificate to the trusted certificate store.",
 			},
 			"certificate": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded certificate to import or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "PEM-encoded certificate to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"privatekey": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded private key to import or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "PEM-encoded private key to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"csr": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded certificate signing request to import or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "PEM-encoded certificate signing request to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"key_length": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "RSA key length in bits or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "RSA key length in bits or `null`.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"key_type": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Description: "Type of cryptographic key to generate.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Type of cryptographic key to generate.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"ec_curve": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Elliptic curve to use for EC keys.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Elliptic curve to use for EC keys.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"passphrase": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Passphrase to protect the private key or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Passphrase to protect the private key or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"city": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "City or locality name for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "City or locality name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"common": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Common name for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Common name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"country": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Country name for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Country name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"email": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Email address for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Email address for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"organization": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Organization name for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Organization name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"organizational_unit": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Organizational unit for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Organizational unit for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"state": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "State or province name for certificate subject or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "State or province name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"digest_algorithm": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Hash algorithm for certificate signing.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Hash algorithm for certificate signing.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"san": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "Subject alternative names for the certificate.",
 			},
 			"cert_extensions": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Certificate extensions configuration.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Certificate extensions configuration.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"acme_directory_uri": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "ACME directory URI to be used for ACME certificate creation.",
+				Required:      false,
+				Optional:      true,
+				Description:   "ACME directory URI to be used for ACME certificate creation.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"csr_id": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "CSR to be used for ACME certificate creation.",
+				Required:      false,
+				Optional:      true,
+				Description:   "CSR to be used for ACME certificate creation.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"tos": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Set this when creating an ACME certificate to accept terms of service of the ACME service.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Set this when creating an ACME certificate to accept terms of service of the ACME service.",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"dns_mapping": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the",
+				Required:      false,
+				Optional:      true,
+				Description:   "A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"renew_days": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Days before expiration to attempt renewal.",
 			},
 		},
@@ -238,66 +238,66 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.CreateType.IsNull() {
+	if !data.CreateType.IsNull() && !data.CreateType.IsUnknown() {
 		params["create_type"] = data.CreateType.ValueString()
 	}
-	if !data.AddToTrustedStore.IsNull() {
+	if !data.AddToTrustedStore.IsNull() && !data.AddToTrustedStore.IsUnknown() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
-	if !data.Certificate.IsNull() {
+	if !data.Certificate.IsNull() && !data.Certificate.IsUnknown() {
 		params["certificate"] = data.Certificate.ValueString()
 	}
-	if !data.Privatekey.IsNull() {
+	if !data.Privatekey.IsNull() && !data.Privatekey.IsUnknown() {
 		params["privatekey"] = data.Privatekey.ValueString()
 	}
-	if !data.Csr.IsNull() {
+	if !data.Csr.IsNull() && !data.Csr.IsUnknown() {
 		params["CSR"] = data.Csr.ValueString()
 	}
-	if !data.KeyLength.IsNull() {
+	if !data.KeyLength.IsNull() && !data.KeyLength.IsUnknown() {
 		params["key_length"] = data.KeyLength.ValueInt64()
 	}
-	if !data.KeyType.IsNull() {
+	if !data.KeyType.IsNull() && !data.KeyType.IsUnknown() {
 		params["key_type"] = data.KeyType.ValueString()
 	}
-	if !data.EcCurve.IsNull() {
+	if !data.EcCurve.IsNull() && !data.EcCurve.IsUnknown() {
 		params["ec_curve"] = data.EcCurve.ValueString()
 	}
-	if !data.Passphrase.IsNull() {
+	if !data.Passphrase.IsNull() && !data.Passphrase.IsUnknown() {
 		params["passphrase"] = data.Passphrase.ValueString()
 	}
-	if !data.City.IsNull() {
+	if !data.City.IsNull() && !data.City.IsUnknown() {
 		params["city"] = data.City.ValueString()
 	}
-	if !data.Common.IsNull() {
+	if !data.Common.IsNull() && !data.Common.IsUnknown() {
 		params["common"] = data.Common.ValueString()
 	}
-	if !data.Country.IsNull() {
+	if !data.Country.IsNull() && !data.Country.IsUnknown() {
 		params["country"] = data.Country.ValueString()
 	}
-	if !data.Email.IsNull() {
+	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		params["email"] = data.Email.ValueString()
 	}
-	if !data.Organization.IsNull() {
+	if !data.Organization.IsNull() && !data.Organization.IsUnknown() {
 		params["organization"] = data.Organization.ValueString()
 	}
-	if !data.OrganizationalUnit.IsNull() {
+	if !data.OrganizationalUnit.IsNull() && !data.OrganizationalUnit.IsUnknown() {
 		params["organizational_unit"] = data.OrganizationalUnit.ValueString()
 	}
-	if !data.State.IsNull() {
+	if !data.State.IsNull() && !data.State.IsUnknown() {
 		params["state"] = data.State.ValueString()
 	}
-	if !data.DigestAlgorithm.IsNull() {
+	if !data.DigestAlgorithm.IsNull() && !data.DigestAlgorithm.IsUnknown() {
 		params["digest_algorithm"] = data.DigestAlgorithm.ValueString()
 	}
-	if !data.San.IsNull() {
+	if !data.San.IsNull() && !data.San.IsUnknown() {
 		var sanList []string
 		data.San.ElementsAs(ctx, &sanList, false)
 		params["san"] = sanList
 	}
-	if !data.CertExtensions.IsNull() {
+	if !data.CertExtensions.IsNull() && !data.CertExtensions.IsUnknown() {
 		var cert_extensionsObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.CertExtensions.ValueString()), &cert_extensionsObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse cert_extensions: %s", err))
@@ -305,16 +305,16 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["cert_extensions"] = cert_extensionsObj
 	}
-	if !data.AcmeDirectoryUri.IsNull() {
+	if !data.AcmeDirectoryUri.IsNull() && !data.AcmeDirectoryUri.IsUnknown() {
 		params["acme_directory_uri"] = data.AcmeDirectoryUri.ValueString()
 	}
-	if !data.CsrId.IsNull() {
+	if !data.CsrId.IsNull() && !data.CsrId.IsUnknown() {
 		params["csr_id"] = data.CsrId.ValueInt64()
 	}
-	if !data.Tos.IsNull() {
+	if !data.Tos.IsNull() && !data.Tos.IsUnknown() {
 		params["tos"] = data.Tos.ValueBool()
 	}
-	if !data.DnsMapping.IsNull() {
+	if !data.DnsMapping.IsNull() && !data.DnsMapping.IsUnknown() {
 		var dns_mappingObj map[string]interface{}
 		if err := json.Unmarshal([]byte(data.DnsMapping.ValueString()), &dns_mappingObj); err != nil {
 			resp.Diagnostics.AddError("JSON Parse Error", fmt.Sprintf("Failed to parse dns_mapping: %s", err))
@@ -322,7 +322,7 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		params["dns_mapping"] = dns_mappingObj
 	}
-	if !data.RenewDays.IsNull() {
+	if !data.RenewDays.IsNull() && !data.RenewDays.IsUnknown() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
 
@@ -343,6 +343,39 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("certificate.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back certificate: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -381,21 +414,21 @@ func (r *CertificateResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["name"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -422,13 +455,13 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.RenewDays.IsNull() {
+	if !data.RenewDays.IsNull() && !data.RenewDays.IsUnknown() {
 		params["renew_days"] = data.RenewDays.ValueInt64()
 	}
-	if !data.AddToTrustedStore.IsNull() {
+	if !data.AddToTrustedStore.IsNull() && !data.AddToTrustedStore.IsUnknown() {
 		params["add_to_trusted_store"] = data.AddToTrustedStore.ValueBool()
 	}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
 
@@ -460,6 +493,10 @@ func (r *CertificateResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.CallWithJob("certificate.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete certificate: %s", err))
 		return
 	}

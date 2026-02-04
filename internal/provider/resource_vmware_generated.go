@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type VmwareResource struct {
@@ -17,12 +17,12 @@ type VmwareResource struct {
 }
 
 type VmwareResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Datastore types.String `tfsdk:"datastore"`
+	ID         types.String `tfsdk:"id"`
+	Datastore  types.String `tfsdk:"datastore"`
 	Filesystem types.String `tfsdk:"filesystem"`
-	Hostname types.String `tfsdk:"hostname"`
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
+	Hostname   types.String `tfsdk:"hostname"`
+	Username   types.String `tfsdk:"username"`
+	Password   types.String `tfsdk:"password"`
 }
 
 func NewVmwareResource() resource.Resource {
@@ -43,28 +43,28 @@ func (r *VmwareResource) Schema(ctx context.Context, req resource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"datastore": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Valid datastore name which exists on the VMWare host.",
 			},
 			"filesystem": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ZFS filesystem or dataset to use for VMware storage.",
 			},
 			"hostname": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cl",
 			},
 			"username": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Credentials used to authorize access to the VMWare host.",
 			},
 			"password": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Password for VMware host authentication.",
 			},
 		},
@@ -91,19 +91,19 @@ func (r *VmwareResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	params := map[string]interface{}{}
-	if !data.Datastore.IsNull() {
+	if !data.Datastore.IsNull() && !data.Datastore.IsUnknown() {
 		params["datastore"] = data.Datastore.ValueString()
 	}
-	if !data.Filesystem.IsNull() {
+	if !data.Filesystem.IsNull() && !data.Filesystem.IsUnknown() {
 		params["filesystem"] = data.Filesystem.ValueString()
 	}
-	if !data.Hostname.IsNull() {
+	if !data.Hostname.IsNull() && !data.Hostname.IsUnknown() {
 		params["hostname"] = data.Hostname.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
 
@@ -124,6 +124,87 @@ func (r *VmwareResource) Create(ctx context.Context, req resource.CreateRequest,
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("vmware.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back vmware: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["datastore"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Datastore = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Datastore = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Datastore = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["filesystem"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Filesystem = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Filesystem = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Filesystem = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["hostname"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Hostname = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Hostname = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Hostname = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Password = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Password = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -162,69 +243,69 @@ func (r *VmwareResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["datastore"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Datastore = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Datastore = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Datastore = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["datastore"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Datastore = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Datastore = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Datastore = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["filesystem"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Filesystem = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Filesystem = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Filesystem = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["filesystem"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Filesystem = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Filesystem = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Filesystem = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["hostname"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Hostname = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Hostname = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Hostname = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["hostname"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Hostname = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Hostname = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Hostname = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["username"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Username = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Username = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["password"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Password = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Password = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Password = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -251,19 +332,19 @@ func (r *VmwareResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	params := map[string]interface{}{}
-	if !data.Datastore.IsNull() {
+	if !data.Datastore.IsNull() && !data.Datastore.IsUnknown() {
 		params["datastore"] = data.Datastore.ValueString()
 	}
-	if !data.Filesystem.IsNull() {
+	if !data.Filesystem.IsNull() && !data.Filesystem.IsUnknown() {
 		params["filesystem"] = data.Filesystem.ValueString()
 	}
-	if !data.Hostname.IsNull() {
+	if !data.Hostname.IsNull() && !data.Hostname.IsUnknown() {
 		params["hostname"] = data.Hostname.ValueString()
 	}
-	if !data.Username.IsNull() {
+	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		params["username"] = data.Username.ValueString()
 	}
-	if !data.Password.IsNull() {
+	if !data.Password.IsNull() && !data.Password.IsUnknown() {
 		params["password"] = data.Password.ValueString()
 	}
 
@@ -284,9 +365,7 @@ func (r *VmwareResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -294,6 +373,10 @@ func (r *VmwareResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	_, err = r.client.Call("vmware.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete vmware: %s", err))
 		return
 	}

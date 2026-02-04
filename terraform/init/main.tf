@@ -1,102 +1,88 @@
-# TrueNAS test VM
-resource "truenas_vm" "test_truenas" {
-  name        = "testvm5"
-  description = "TrueNAS VM for provider testing"
+# Nested TrueNAS VM for safe provider testing
+resource "truenas_vm" "test" {
+  name        = "testtruenasvm"
+  description = "Nested TrueNAS for provider testing (self-bootstrap)"
   vcpus       = 4
   memory      = 10240  # 10GB
   autostart   = false
 }
 
-# Data source to verify VM was created
-data "truenas_vm" "test_lookup" {
-  id = truenas_vm.test_truenas.id
-}
+# Devices reference VM but shouldn't block VM destruction
+# VM deletion with force=true will clean up all devices automatically
 
-# Query data source to list all VMs
-data "truenas_vms" "all" {}
-
-# Boot disk - 30GB
+# Boot disk - 32GB (power of 2 for block alignment)
 resource "truenas_vm_device" "boot_disk" {
-  vm = truenas_vm.test_truenas.id
+  vm = truenas_vm.test.id
   attributes = jsonencode({
-    dtype = "DISK"
-    create_zvol = true
-    zvol_name = "${var.pool_name}/vm-test5-boot"
-    zvol_volsize = 32212254720  # 30GB in bytes
-    type = "VIRTIO"
+    dtype        = "DISK"
+    create_zvol  = true
+    zvol_name    = "${var.pool_name}/vm-test-boot"
+    zvol_volsize = 32 * 1024 * 1024 * 1024  # 32GB in bytes
+    type         = "VIRTIO"
   })
   order = 1000
+  
+  lifecycle {
+    # Don't try to destroy if VM is already gone
+    ignore_changes = []
+  }
 }
 
-# Data disk 1 - 128GB
-resource "truenas_vm_device" "data_disk_1" {
-  vm = truenas_vm.test_truenas.id
+# Data disks for ZFS pool testing inside nested TrueNAS
+resource "truenas_vm_device" "data_disk" {
+  count = 4
+  vm    = truenas_vm.test.id
   attributes = jsonencode({
-    dtype = "DISK"
-    create_zvol = true
-    zvol_name = "${var.pool_name}/vm-test5-data1"
-    zvol_volsize = 137438953472  # 128GB in bytes
-    type = "VIRTIO"
+    dtype        = "DISK"
+    create_zvol  = true
+    zvol_name    = "${var.pool_name}/vm-test-data${count.index + 1}"
+    zvol_volsize = 128 * 1024 * 1024 * 1024  # 128GB in bytes
+    type         = "VIRTIO"
   })
-  order = 1001
-}
-
-# Data disk 2 - 128GB
-resource "truenas_vm_device" "data_disk_2" {
-  vm = truenas_vm.test_truenas.id
-  attributes = jsonencode({
-    dtype = "DISK"
-    create_zvol = true
-    zvol_name = "${var.pool_name}/vm-test5-data2"
-    zvol_volsize = 137438953472
-    type = "VIRTIO"
-  })
-  order = 1002
-}
-
-# Data disk 3 - 128GB
-resource "truenas_vm_device" "data_disk_3" {
-  vm = truenas_vm.test_truenas.id
-  attributes = jsonencode({
-    dtype = "DISK"
-    create_zvol = true
-    zvol_name = "${var.pool_name}/vm-test5-data3"
-    zvol_volsize = 137438953472
-    type = "VIRTIO"
-  })
-  order = 1003
-}
-
-# Data disk 4 - 128GB
-resource "truenas_vm_device" "data_disk_4" {
-  vm = truenas_vm.test_truenas.id
-  attributes = jsonencode({
-    dtype = "DISK"
-    create_zvol = true
-    zvol_name = "${var.pool_name}/vm-test5-data4"
-    zvol_volsize = 137438953472
-    type = "VIRTIO"
-  })
-  order = 1004
+  order = 1001 + count.index
 }
 
 # CD-ROM for TrueNAS ISO
 resource "truenas_vm_device" "cdrom" {
-  vm = truenas_vm.test_truenas.id
+  vm = truenas_vm.test.id
   attributes = jsonencode({
     dtype = "CDROM"
-    path = local.truenas_iso_path
+    path  = local.truenas_iso_path
   })
   order = 1005
 }
 
-# Network interface
+# Network interface (bridged to LAN)
 resource "truenas_vm_device" "nic" {
-  vm = truenas_vm.test_truenas.id
+  vm = truenas_vm.test.id
   attributes = jsonencode({
-    dtype = "NIC"
-    type = "VIRTIO"
+    dtype      = "NIC"
+    type       = "VIRTIO"
     nic_attach = var.bridge_interface
   })
   order = 1006
+}
+
+# Display device for console access (SPICE)
+resource "truenas_vm_device" "display" {
+  vm = truenas_vm.test.id
+  attributes = jsonencode({
+    dtype    = "DISPLAY"
+    type     = "SPICE"
+    password = "letmein"
+  })
+  order = 1007
+}
+
+# Start VM after all devices are configured
+# VMs don't auto-start by default (cloud-like behavior)
+resource "truenas_action_vm_start" "test" {
+  id = tonumber(truenas_vm.test.id)
+  depends_on = [
+    truenas_vm_device.boot_disk,
+    truenas_vm_device.data_disk,
+    truenas_vm_device.cdrom,
+    truenas_vm_device.nic,
+    truenas_vm_device.display
+  ]
 }

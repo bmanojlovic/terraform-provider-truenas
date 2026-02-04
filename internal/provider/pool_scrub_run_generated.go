@@ -16,8 +16,8 @@ type PoolScrubRunResource struct {
 }
 
 type PoolScrubRunResourceModel struct {
-	Name types.String `tfsdk:"name"`
-	Threshold types.Int64 `tfsdk:"threshold"`
+	Name      types.String `tfsdk:"name"`
+	Threshold types.Int64  `tfsdk:"threshold"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,7 @@ func (r *PoolScrubRunResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.",
 		Attributes: map[string]schema.Attribute{
-			"name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to run scrub on."},
+			"name":      schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to run scrub on."},
 			"threshold": schema.Int64Attribute{Optional: true, MarkdownDescription: "Days before a scrub is due when the scrub should start."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,7 +91,9 @@ func (r *PoolScrubRunResource) Create(ctx context.Context, req resource.CreateRe
 	// Build parameters
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.Name.ValueString())
-	if !data.Threshold.IsNull() { paramsArr = append(paramsArr, data.Threshold.ValueInt64()) }
+	if !data.Threshold.IsNull() {
+		paramsArr = append(paramsArr, data.Threshold.ValueInt64())
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.scrub.run", paramsArr)
@@ -104,7 +106,7 @@ func (r *PoolScrubRunResource) Create(ctx context.Context, req resource.CreateRe
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

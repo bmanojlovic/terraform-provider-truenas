@@ -16,7 +16,7 @@ Create a Virtual Machine (VM).
 resource "truenas_vm" "example" {
   memory = 1
   name = "example"
-  start_on_create = true
+  start_on_create = false  # Explicit start control (cloud-like)
 }
 ```
 
@@ -29,7 +29,7 @@ resource "truenas_vm" "example" {
 
 ### Optional
 
-- `start_on_create` (Bool) - Start immediately after creation. Default: `true`
+- `start_on_create` (Bool) - Start immediately after creation. Default: `false`
 - `arch_type` (String) - Guest architecture type. `null` to use hypervisor default. Default: `None`
 - `autostart` (Bool) - Whether to automatically start the VM when the host system boots. Default: `True`
 - `bootloader` (String) - Boot firmware type. `UEFI` for modern UEFI, `UEFI_CSM` for legacy BIOS compatibility. Default: `UEFI` Valid values: `UEFI_CSM`, `UEFI`

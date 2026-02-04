@@ -17,7 +17,7 @@ type ActionCloudsyncRestoreResource struct {
 }
 
 type ActionCloudsyncRestoreResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID   types.Int64  `tfsdk:"id"`
 	Opts types.String `tfsdk:"opts"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionCloudsyncRestoreResource) Schema(ctx context.Context, req resourc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to restore from."},
+			"id":   schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to restore from."},
 			"opts": schema.StringAttribute{Required: true, MarkdownDescription: "Restore operation configuration options."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,7 +93,9 @@ func (r *ActionCloudsyncRestoreResource) Create(ctx context.Context, req resourc
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
 	var optsVal interface{}
-	if err := json.Unmarshal([]byte(data.Opts.ValueString()), &optsVal); err == nil { params = append(params, optsVal) }
+	if err := json.Unmarshal([]byte(data.Opts.ValueString()), &optsVal); err == nil {
+		params = append(params, optsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("cloudsync.restore", params)
@@ -106,7 +108,7 @@ func (r *ActionCloudsyncRestoreResource) Create(ctx context.Context, req resourc
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

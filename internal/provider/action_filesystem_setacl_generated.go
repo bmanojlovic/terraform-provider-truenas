@@ -90,7 +90,9 @@ func (r *ActionFilesystemSetaclResource) Create(ctx context.Context, req resourc
 	// Build parameters
 	params := []interface{}{}
 	var filesystem_aclVal interface{}
-	if err := json.Unmarshal([]byte(data.FilesystemAcl.ValueString()), &filesystem_aclVal); err == nil { params = append(params, filesystem_aclVal) }
+	if err := json.Unmarshal([]byte(data.FilesystemAcl.ValueString()), &filesystem_aclVal); err == nil {
+		params = append(params, filesystem_aclVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("filesystem.setacl", params)
@@ -103,7 +105,7 @@ func (r *ActionFilesystemSetaclResource) Create(ctx context.Context, req resourc
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

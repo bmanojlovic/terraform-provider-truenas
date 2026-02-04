@@ -17,7 +17,7 @@ type ActionPoolRemoveResource struct {
 }
 
 type ActionPoolRemoveResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID      types.Int64  `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolRemoveResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Remove a disk from pool of id `id`.  `label` is the vdev guid or device name.  Error codes:      EZFS_NOSPC(2032): out of space to remove a device     EZFS_NODEVICE(2017): no such device in pool     E",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to remove a disk from."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to remove a disk from."},
 			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Disk identifier to remove from the pool."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,7 +93,9 @@ func (r *ActionPoolRemoveResource) Create(ctx context.Context, req resource.Crea
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
 	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+		params = append(params, optionsVal)
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.remove", params)
@@ -106,7 +108,7 @@ func (r *ActionPoolRemoveResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

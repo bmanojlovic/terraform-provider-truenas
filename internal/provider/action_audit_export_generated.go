@@ -91,7 +91,9 @@ func (r *ActionAuditExportResource) Create(ctx context.Context, req resource.Cre
 	params := []interface{}{}
 	if !data.Data.IsNull() {
 		var dataVal interface{}
-		if err := json.Unmarshal([]byte(data.Data.ValueString()), &dataVal); err == nil { params = append(params, dataVal) }
+		if err := json.Unmarshal([]byte(data.Data.ValueString()), &dataVal); err == nil {
+			params = append(params, dataVal)
+		}
 	}
 
 	// Execute action
@@ -105,7 +107,7 @@ func (r *ActionAuditExportResource) Create(ctx context.Context, req resource.Cre
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

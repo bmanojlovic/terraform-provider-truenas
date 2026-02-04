@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type NvmetSubsysResource struct {
@@ -17,14 +17,14 @@ type NvmetSubsysResource struct {
 }
 
 type NvmetSubsysResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Subnqn types.String `tfsdk:"subnqn"`
-	AllowAnyHost types.Bool `tfsdk:"allow_any_host"`
-	PiEnable types.Bool `tfsdk:"pi_enable"`
-	QidMax types.Int64 `tfsdk:"qid_max"`
-	IeeeOui types.String `tfsdk:"ieee_oui"`
-	Ana types.Bool `tfsdk:"ana"`
+	ID           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	Subnqn       types.String `tfsdk:"subnqn"`
+	AllowAnyHost types.Bool   `tfsdk:"allow_any_host"`
+	PiEnable     types.Bool   `tfsdk:"pi_enable"`
+	QidMax       types.Int64  `tfsdk:"qid_max"`
+	IeeeOui      types.String `tfsdk:"ieee_oui"`
+	Ana          types.Bool   `tfsdk:"ana"`
 }
 
 func NewNvmetSubsysResource() resource.Resource {
@@ -45,38 +45,38 @@ func (r *NvmetSubsysResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Human readable name for the subsystem.  If `subnqn` is not provided on creation, then this name will",
 			},
 			"subnqn": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "NVMe Qualified Name (NQN) for the subsystem.  Must be a valid NQN format if provided.",
 			},
 			"allow_any_host": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Any host can access the storage associated with this subsystem (i.e. no access control).",
 			},
 			"pi_enable": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Enable Protection Information (PI) for data integrity checking.",
 			},
 			"qid_max": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Maximum number of queue IDs allowed for this subsystem.",
 			},
 			"ieee_oui": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "IEEE Organizationally Unique Identifier for the subsystem.",
 			},
 			"ana": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "If set to either `True` or `False`, then *override* the global `ana` setting from `nvmet.global.conf",
 			},
 		},
@@ -103,25 +103,25 @@ func (r *NvmetSubsysResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Subnqn.IsNull() {
+	if !data.Subnqn.IsNull() && !data.Subnqn.IsUnknown() {
 		params["subnqn"] = data.Subnqn.ValueString()
 	}
-	if !data.AllowAnyHost.IsNull() {
+	if !data.AllowAnyHost.IsNull() && !data.AllowAnyHost.IsUnknown() {
 		params["allow_any_host"] = data.AllowAnyHost.ValueBool()
 	}
-	if !data.PiEnable.IsNull() {
+	if !data.PiEnable.IsNull() && !data.PiEnable.IsUnknown() {
 		params["pi_enable"] = data.PiEnable.ValueBool()
 	}
-	if !data.QidMax.IsNull() {
+	if !data.QidMax.IsNull() && !data.QidMax.IsUnknown() {
 		params["qid_max"] = data.QidMax.ValueInt64()
 	}
-	if !data.IeeeOui.IsNull() {
+	if !data.IeeeOui.IsNull() && !data.IeeeOui.IsUnknown() {
 		params["ieee_oui"] = data.IeeeOui.ValueString()
 	}
-	if !data.Ana.IsNull() {
+	if !data.Ana.IsNull() && !data.Ana.IsUnknown() {
 		params["ana"] = data.Ana.ValueBool()
 	}
 
@@ -142,6 +142,105 @@ func (r *NvmetSubsysResource) Create(ctx context.Context, req resource.CreateReq
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("nvmet.subsys.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back nvmet_subsys: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["subnqn"]; ok {
+		if v == nil {
+			data.Subnqn = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Subnqn = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Subnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Subnqn = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["pi_enable"]; ok {
+		if v == nil {
+			data.PiEnable = types.BoolNull()
+		} else {
+			if bv, ok := v.(bool); ok {
+				data.PiEnable = types.BoolValue(bv)
+			}
+		}
+	}
+	if v, ok := resultMap["qid_max"]; ok {
+		if v == nil {
+			data.QidMax = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.QidMax = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.QidMax = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["ieee_oui"]; ok {
+		if v == nil {
+			data.IeeeOui = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.IeeeOui = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.IeeeOui = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.IeeeOui = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["ana"]; ok {
+		if v == nil {
+			data.Ana = types.BoolNull()
+		} else {
+			if bv, ok := v.(bool); ok {
+				data.Ana = types.BoolValue(bv)
+			}
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -180,21 +279,87 @@ func (r *NvmetSubsysResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok && v != nil {
+	}
+	if v, ok := resultMap["subnqn"]; ok {
+		if v == nil {
+			data.Subnqn = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Subnqn = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Subnqn = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Subnqn = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["pi_enable"]; ok {
+		if v == nil {
+			data.PiEnable = types.BoolNull()
+		} else {
+			if bv, ok := v.(bool); ok {
+				data.PiEnable = types.BoolValue(bv)
+			}
+		}
+	}
+	if v, ok := resultMap["qid_max"]; ok {
+		if v == nil {
+			data.QidMax = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.QidMax = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.QidMax = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["ieee_oui"]; ok {
+		if v == nil {
+			data.IeeeOui = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.IeeeOui = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.IeeeOui = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.IeeeOui = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["ana"]; ok {
+		if v == nil {
+			data.Ana = types.BoolNull()
+		} else {
+			if bv, ok := v.(bool); ok {
+				data.Ana = types.BoolValue(bv)
+			}
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -221,25 +386,25 @@ func (r *NvmetSubsysResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	params := map[string]interface{}{}
-	if !data.Name.IsNull() {
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		params["name"] = data.Name.ValueString()
 	}
-	if !data.Subnqn.IsNull() {
+	if !data.Subnqn.IsNull() && !data.Subnqn.IsUnknown() {
 		params["subnqn"] = data.Subnqn.ValueString()
 	}
-	if !data.AllowAnyHost.IsNull() {
+	if !data.AllowAnyHost.IsNull() && !data.AllowAnyHost.IsUnknown() {
 		params["allow_any_host"] = data.AllowAnyHost.ValueBool()
 	}
-	if !data.PiEnable.IsNull() {
+	if !data.PiEnable.IsNull() && !data.PiEnable.IsUnknown() {
 		params["pi_enable"] = data.PiEnable.ValueBool()
 	}
-	if !data.QidMax.IsNull() {
+	if !data.QidMax.IsNull() && !data.QidMax.IsUnknown() {
 		params["qid_max"] = data.QidMax.ValueInt64()
 	}
-	if !data.IeeeOui.IsNull() {
+	if !data.IeeeOui.IsNull() && !data.IeeeOui.IsUnknown() {
 		params["ieee_oui"] = data.IeeeOui.ValueString()
 	}
-	if !data.Ana.IsNull() {
+	if !data.Ana.IsNull() && !data.Ana.IsUnknown() {
 		params["ana"] = data.Ana.ValueBool()
 	}
 
@@ -271,6 +436,10 @@ func (r *NvmetSubsysResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	_, err = r.client.Call("nvmet.subsys.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete nvmet_subsys: %s", err))
 		return
 	}

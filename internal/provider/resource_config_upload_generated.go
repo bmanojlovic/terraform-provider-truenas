@@ -108,7 +108,7 @@ func (r *ConfigUploadResource) Update(ctx context.Context, req resource.UpdateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
+
 	// Get ID from state
 	var state ConfigUploadResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)

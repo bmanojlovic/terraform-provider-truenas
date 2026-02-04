@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type SystemNtpserverResource struct {
@@ -17,14 +17,14 @@ type SystemNtpserverResource struct {
 }
 
 type SystemNtpserverResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID      types.String `tfsdk:"id"`
 	Address types.String `tfsdk:"address"`
-	Burst types.Bool `tfsdk:"burst"`
-	Iburst types.Bool `tfsdk:"iburst"`
-	Prefer types.Bool `tfsdk:"prefer"`
-	Minpoll types.Int64 `tfsdk:"minpoll"`
-	Maxpoll types.Int64 `tfsdk:"maxpoll"`
-	Force types.Bool `tfsdk:"force"`
+	Burst   types.Bool   `tfsdk:"burst"`
+	Iburst  types.Bool   `tfsdk:"iburst"`
+	Prefer  types.Bool   `tfsdk:"prefer"`
+	Minpoll types.Int64  `tfsdk:"minpoll"`
+	Maxpoll types.Int64  `tfsdk:"maxpoll"`
+	Force   types.Bool   `tfsdk:"force"`
 }
 
 func NewSystemNtpserverResource() resource.Resource {
@@ -45,38 +45,38 @@ func (r *SystemNtpserverResource) Schema(ctx context.Context, req resource.Schem
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"address": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Hostname or IP address of the NTP server.",
 			},
 			"burst": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Send a burst of packets when the server is reachable.",
 			},
 			"iburst": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Send a burst of packets when the server is unreachable.",
 			},
 			"prefer": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Mark this server as preferred for time synchronization.",
 			},
 			"minpoll": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Minimum polling interval (log2 seconds).",
 			},
 			"maxpoll": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Maximum polling interval (log2 seconds).",
 			},
 			"force": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Force creation even if the server is unreachable.",
 			},
 		},
@@ -103,25 +103,25 @@ func (r *SystemNtpserverResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	params := map[string]interface{}{}
-	if !data.Address.IsNull() {
+	if !data.Address.IsNull() && !data.Address.IsUnknown() {
 		params["address"] = data.Address.ValueString()
 	}
-	if !data.Burst.IsNull() {
+	if !data.Burst.IsNull() && !data.Burst.IsUnknown() {
 		params["burst"] = data.Burst.ValueBool()
 	}
-	if !data.Iburst.IsNull() {
+	if !data.Iburst.IsNull() && !data.Iburst.IsUnknown() {
 		params["iburst"] = data.Iburst.ValueBool()
 	}
-	if !data.Prefer.IsNull() {
+	if !data.Prefer.IsNull() && !data.Prefer.IsUnknown() {
 		params["prefer"] = data.Prefer.ValueBool()
 	}
-	if !data.Minpoll.IsNull() {
+	if !data.Minpoll.IsNull() && !data.Minpoll.IsUnknown() {
 		params["minpoll"] = data.Minpoll.ValueInt64()
 	}
-	if !data.Maxpoll.IsNull() {
+	if !data.Maxpoll.IsNull() && !data.Maxpoll.IsUnknown() {
 		params["maxpoll"] = data.Maxpoll.ValueInt64()
 	}
-	if !data.Force.IsNull() {
+	if !data.Force.IsNull() && !data.Force.IsUnknown() {
 		params["force"] = data.Force.ValueBool()
 	}
 
@@ -142,6 +142,39 @@ func (r *SystemNtpserverResource) Create(ctx context.Context, req resource.Creat
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("system.ntpserver.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back system_ntpserver: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["address"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Address = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Address = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -180,21 +213,21 @@ func (r *SystemNtpserverResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["address"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Address = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Address = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["address"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Address = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Address = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -221,25 +254,25 @@ func (r *SystemNtpserverResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	params := map[string]interface{}{}
-	if !data.Address.IsNull() {
+	if !data.Address.IsNull() && !data.Address.IsUnknown() {
 		params["address"] = data.Address.ValueString()
 	}
-	if !data.Burst.IsNull() {
+	if !data.Burst.IsNull() && !data.Burst.IsUnknown() {
 		params["burst"] = data.Burst.ValueBool()
 	}
-	if !data.Iburst.IsNull() {
+	if !data.Iburst.IsNull() && !data.Iburst.IsUnknown() {
 		params["iburst"] = data.Iburst.ValueBool()
 	}
-	if !data.Prefer.IsNull() {
+	if !data.Prefer.IsNull() && !data.Prefer.IsUnknown() {
 		params["prefer"] = data.Prefer.ValueBool()
 	}
-	if !data.Minpoll.IsNull() {
+	if !data.Minpoll.IsNull() && !data.Minpoll.IsUnknown() {
 		params["minpoll"] = data.Minpoll.ValueInt64()
 	}
-	if !data.Maxpoll.IsNull() {
+	if !data.Maxpoll.IsNull() && !data.Maxpoll.IsUnknown() {
 		params["maxpoll"] = data.Maxpoll.ValueInt64()
 	}
-	if !data.Force.IsNull() {
+	if !data.Force.IsNull() && !data.Force.IsUnknown() {
 		params["force"] = data.Force.ValueBool()
 	}
 
@@ -260,9 +293,7 @@ func (r *SystemNtpserverResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -270,6 +301,10 @@ func (r *SystemNtpserverResource) Delete(ctx context.Context, req resource.Delet
 
 	_, err = r.client.Call("system.ntpserver.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete system_ntpserver: %s", err))
 		return
 	}

@@ -17,7 +17,7 @@ type ActionPoolExportResource struct {
 }
 
 type ActionPoolExportResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID      types.Int64  `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolExportResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Export pool of `id`.  `cascade` will delete all attachments of the given pool (`pool.attachments`). `restart_services` will restart services that have open files on given pool. `destroy` will also PER",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to export."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to export."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the pool export process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *ActionPoolExportResource) Create(ctx context.Context, req resource.Crea
 	params = append(params, data.ID.ValueInt64())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionPoolExportResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type InitshutdownscriptResource struct {
@@ -17,13 +17,13 @@ type InitshutdownscriptResource struct {
 }
 
 type InitshutdownscriptResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
+	ID      types.String `tfsdk:"id"`
+	Type    types.String `tfsdk:"type"`
 	Command types.String `tfsdk:"command"`
-	Script types.String `tfsdk:"script"`
-	When types.String `tfsdk:"when"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	Timeout types.Int64 `tfsdk:"timeout"`
+	Script  types.String `tfsdk:"script"`
+	When    types.String `tfsdk:"when"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Timeout types.Int64  `tfsdk:"timeout"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -45,38 +45,38 @@ func (r *InitshutdownscriptResource) Schema(ctx context.Context, req resource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"type": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Type of init/shutdown script to execute.  * `COMMAND`: Execute a single command * `SCRIPT`: Execute ",
 			},
 			"command": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Must be given if `type=\"COMMAND\"`.",
 			},
 			"script": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Must be given if `type=\"SCRIPT\"`.",
 			},
 			"when": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "* \"PREINIT\": Early in the boot process before all services have started. * \"POSTINIT\": Late in the b",
 			},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Whether the init/shutdown script is enabled to execute.",
 			},
 			"timeout": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "An integer time in seconds that the system should wait for the execution of the script/command.  A h",
 			},
 			"comment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Optional comment describing the purpose of this script.",
 			},
 		},
@@ -103,25 +103,25 @@ func (r *InitshutdownscriptResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	params := map[string]interface{}{}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Command.IsNull() {
+	if !data.Command.IsNull() && !data.Command.IsUnknown() {
 		params["command"] = data.Command.ValueString()
 	}
-	if !data.Script.IsNull() {
+	if !data.Script.IsNull() && !data.Script.IsUnknown() {
 		params["script"] = data.Script.ValueString()
 	}
-	if !data.When.IsNull() {
+	if !data.When.IsNull() && !data.When.IsUnknown() {
 		params["when"] = data.When.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Timeout.IsNull() {
+	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
 		params["timeout"] = data.Timeout.ValueInt64()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -142,6 +142,51 @@ func (r *InitshutdownscriptResource) Create(ctx context.Context, req resource.Cr
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("initshutdownscript.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back initshutdownscript: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["when"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.When = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.When = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.When = types.StringValue(fmt.Sprintf("%v", v))
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -180,33 +225,33 @@ func (r *InitshutdownscriptResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["when"]; ok && v != nil {
-			switch val := v.(type) {
-			case string:
-				data.When = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.When = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.When = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["when"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.When = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.When = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.When = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -233,25 +278,25 @@ func (r *InitshutdownscriptResource) Update(ctx context.Context, req resource.Up
 	}
 
 	params := map[string]interface{}{}
-	if !data.Type.IsNull() {
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
 		params["type"] = data.Type.ValueString()
 	}
-	if !data.Command.IsNull() {
+	if !data.Command.IsNull() && !data.Command.IsUnknown() {
 		params["command"] = data.Command.ValueString()
 	}
-	if !data.Script.IsNull() {
+	if !data.Script.IsNull() && !data.Script.IsUnknown() {
 		params["script"] = data.Script.ValueString()
 	}
-	if !data.When.IsNull() {
+	if !data.When.IsNull() && !data.When.IsUnknown() {
 		params["when"] = data.When.ValueString()
 	}
-	if !data.Enabled.IsNull() {
+	if !data.Enabled.IsNull() && !data.Enabled.IsUnknown() {
 		params["enabled"] = data.Enabled.ValueBool()
 	}
-	if !data.Timeout.IsNull() {
+	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
 		params["timeout"] = data.Timeout.ValueInt64()
 	}
-	if !data.Comment.IsNull() {
+	if !data.Comment.IsNull() && !data.Comment.IsUnknown() {
 		params["comment"] = data.Comment.ValueString()
 	}
 
@@ -272,9 +317,7 @@ func (r *InitshutdownscriptResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -282,6 +325,10 @@ func (r *InitshutdownscriptResource) Delete(ctx context.Context, req resource.De
 
 	_, err = r.client.Call("initshutdownscript.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete initshutdownscript: %s", err))
 		return
 	}

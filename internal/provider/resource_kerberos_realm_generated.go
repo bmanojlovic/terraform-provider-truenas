@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type KerberosRealmResource struct {
@@ -17,12 +17,12 @@ type KerberosRealmResource struct {
 }
 
 type KerberosRealmResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Realm types.String `tfsdk:"realm"`
-	PrimaryKdc types.String `tfsdk:"primary_kdc"`
-	Kdc types.List `tfsdk:"kdc"`
-	AdminServer types.List `tfsdk:"admin_server"`
-	KpasswdServer types.List `tfsdk:"kpasswd_server"`
+	ID            types.String `tfsdk:"id"`
+	Realm         types.String `tfsdk:"realm"`
+	PrimaryKdc    types.String `tfsdk:"primary_kdc"`
+	Kdc           types.List   `tfsdk:"kdc"`
+	AdminServer   types.List   `tfsdk:"admin_server"`
+	KpasswdServer types.List   `tfsdk:"kpasswd_server"`
 }
 
 func NewKerberosRealmResource() resource.Resource {
@@ -43,30 +43,30 @@ func (r *KerberosRealmResource) Schema(ctx context.Context, req resource.SchemaR
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"realm": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Kerberos realm name. This is external to TrueNAS and is case-sensitive.     The general convention f",
 			},
 			"primary_kdc": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "The master Kerberos domain controller for this realm. TrueNAS uses this as a fallback if it cannot g",
 			},
 			"kdc": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "List of kerberos domain controllers. If the list is empty then the kerberos     libraries will use D",
 			},
 			"admin_server": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "List of kerberos admin servers. If the list is empty then the kerberos     libraries will use DNS to",
 			},
 			"kpasswd_server": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				ElementType: types.StringType,
 				Description: "List of kerberos kpasswd servers. If the list is empty then DNS will be used     to look them up if ",
 			},
@@ -94,23 +94,23 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	params := map[string]interface{}{}
-	if !data.Realm.IsNull() {
+	if !data.Realm.IsNull() && !data.Realm.IsUnknown() {
 		params["realm"] = data.Realm.ValueString()
 	}
-	if !data.PrimaryKdc.IsNull() {
+	if !data.PrimaryKdc.IsNull() && !data.PrimaryKdc.IsUnknown() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
-	if !data.Kdc.IsNull() {
+	if !data.Kdc.IsNull() && !data.Kdc.IsUnknown() {
 		var kdcList []string
 		data.Kdc.ElementsAs(ctx, &kdcList, false)
 		params["kdc"] = kdcList
 	}
-	if !data.AdminServer.IsNull() {
+	if !data.AdminServer.IsNull() && !data.AdminServer.IsUnknown() {
 		var admin_serverList []string
 		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
 		params["admin_server"] = admin_serverList
 	}
-	if !data.KpasswdServer.IsNull() {
+	if !data.KpasswdServer.IsNull() && !data.KpasswdServer.IsUnknown() {
 		var kpasswd_serverList []string
 		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
 		params["kpasswd_server"] = kpasswd_serverList
@@ -133,6 +133,55 @@ func (r *KerberosRealmResource) Create(ctx context.Context, req resource.CreateR
 	if data.ID.IsNull() || data.ID.ValueString() == "" {
 		resp.Diagnostics.AddError("Create Error", "API did not return a valid ID")
 		return
+	}
+
+	// Read back to populate computed fields
+	id, err := strconv.Atoi(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
+		return
+	}
+	result, err = r.client.Call("kerberos.realm.get_instance", id)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Created but failed to read back kerberos_realm: %s", err))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["realm"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Realm = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Realm = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Realm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["primary_kdc"]; ok {
+		if v == nil {
+			data.PrimaryKdc = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.PrimaryKdc = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -171,21 +220,37 @@ func (r *KerberosRealmResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["realm"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Realm = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Realm = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Realm = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["realm"]; ok && v != nil {
+	}
+	if v, ok := resultMap["primary_kdc"]; ok {
+		if v == nil {
+			data.PrimaryKdc = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Realm = types.StringValue(val)
+				data.PrimaryKdc = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Realm = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Realm = types.StringValue(fmt.Sprintf("%v", v))
+				data.PrimaryKdc = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -212,23 +277,23 @@ func (r *KerberosRealmResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	params := map[string]interface{}{}
-	if !data.Realm.IsNull() {
+	if !data.Realm.IsNull() && !data.Realm.IsUnknown() {
 		params["realm"] = data.Realm.ValueString()
 	}
-	if !data.PrimaryKdc.IsNull() {
+	if !data.PrimaryKdc.IsNull() && !data.PrimaryKdc.IsUnknown() {
 		params["primary_kdc"] = data.PrimaryKdc.ValueString()
 	}
-	if !data.Kdc.IsNull() {
+	if !data.Kdc.IsNull() && !data.Kdc.IsUnknown() {
 		var kdcList []string
 		data.Kdc.ElementsAs(ctx, &kdcList, false)
 		params["kdc"] = kdcList
 	}
-	if !data.AdminServer.IsNull() {
+	if !data.AdminServer.IsNull() && !data.AdminServer.IsUnknown() {
 		var admin_serverList []string
 		data.AdminServer.ElementsAs(ctx, &admin_serverList, false)
 		params["admin_server"] = admin_serverList
 	}
-	if !data.KpasswdServer.IsNull() {
+	if !data.KpasswdServer.IsNull() && !data.KpasswdServer.IsUnknown() {
 		var kpasswd_serverList []string
 		data.KpasswdServer.ElementsAs(ctx, &kpasswd_serverList, false)
 		params["kpasswd_server"] = kpasswd_serverList
@@ -251,9 +316,7 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	var id interface{}
-	var err error
-	id, err = strconv.Atoi(data.ID.ValueString())
+	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid ID", fmt.Sprintf("Cannot parse ID: %s", err))
 		return
@@ -261,6 +324,10 @@ func (r *KerberosRealmResource) Delete(ctx context.Context, req resource.DeleteR
 
 	_, err = r.client.Call("kerberos.realm.delete", id)
 	if err != nil {
+		// Ignore ENOENT - resource already deleted
+		if strings.Contains(err.Error(), "[ENOENT]") {
+			return
+		}
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Unable to delete kerberos_realm: %s", err))
 		return
 	}

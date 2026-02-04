@@ -16,7 +16,7 @@ type TruenasSet_ProductionResource struct {
 }
 
 type TruenasSet_ProductionResourceModel struct {
-	Production types.Bool `tfsdk:"production"`
+	Production  types.Bool `tfsdk:"production"`
 	AttachDebug types.Bool `tfsdk:"attach_debug"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *TruenasSet_ProductionResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Sets system production state and optionally sends initial debug.",
 		Attributes: map[string]schema.Attribute{
-			"production": schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to configure the system for production use."},
+			"production":   schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to configure the system for production use."},
 			"attach_debug": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to attach debug information when transitioning to production mode."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,7 +91,9 @@ func (r *TruenasSet_ProductionResource) Create(ctx context.Context, req resource
 	// Build parameters
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.Production.ValueBool())
-	if !data.AttachDebug.IsNull() { paramsArr = append(paramsArr, data.AttachDebug.ValueBool()) }
+	if !data.AttachDebug.IsNull() {
+		paramsArr = append(paramsArr, data.AttachDebug.ValueBool())
+	}
 
 	// Execute action
 	result, err := r.client.Call("truenas.set_production", paramsArr)
@@ -104,7 +106,7 @@ func (r *TruenasSet_ProductionResource) Create(ctx context.Context, req resource
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

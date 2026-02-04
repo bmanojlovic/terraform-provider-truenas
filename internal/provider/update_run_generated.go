@@ -17,10 +17,10 @@ type UpdateRunResource struct {
 
 type UpdateRunResourceModel struct {
 	DatasetName types.String `tfsdk:"dataset_name"`
-	Resume types.Bool `tfsdk:"resume"`
-	Train types.String `tfsdk:"train"`
-	Version types.String `tfsdk:"version"`
-	Reboot types.Bool `tfsdk:"reboot"`
+	Resume      types.Bool   `tfsdk:"resume"`
+	Train       types.String `tfsdk:"train"`
+	Version     types.String `tfsdk:"version"`
+	Reboot      types.Bool   `tfsdk:"reboot"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -43,10 +43,10 @@ func (r *UpdateRunResource) Schema(ctx context.Context, req resource.SchemaReque
 		MarkdownDescription: "Downloads (if not already in cache) and apply an update.",
 		Attributes: map[string]schema.Attribute{
 			"dataset_name": schema.StringAttribute{Optional: true, MarkdownDescription: "Name of the ZFS dataset to use for the new boot environment. `null` for automatic naming."},
-			"resume": schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
-			"train": schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
-			"version": schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to update to. `null` to use the latest version from the specified train."},
-			"reboot": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to automatically reboot the system after applying the update."},
+			"resume":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
+			"train":        schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
+			"version":      schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to update to. `null` to use the latest version from the specified train."},
+			"reboot":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to automatically reboot the system after applying the update."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -96,11 +96,21 @@ func (r *UpdateRunResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.DatasetName.IsNull() { params["dataset_name"] = data.DatasetName.ValueString() }
-	if !data.Resume.IsNull() { params["resume"] = data.Resume.ValueBool() }
-	if !data.Train.IsNull() { params["train"] = data.Train.ValueString() }
-	if !data.Version.IsNull() { params["version"] = data.Version.ValueString() }
-	if !data.Reboot.IsNull() { params["reboot"] = data.Reboot.ValueBool() }
+	if !data.DatasetName.IsNull() && !data.DatasetName.IsUnknown() {
+		params["dataset_name"] = data.DatasetName.ValueString()
+	}
+	if !data.Resume.IsNull() && !data.Resume.IsUnknown() {
+		params["resume"] = data.Resume.ValueBool()
+	}
+	if !data.Train.IsNull() && !data.Train.IsUnknown() {
+		params["train"] = data.Train.ValueString()
+	}
+	if !data.Version.IsNull() && !data.Version.IsUnknown() {
+		params["version"] = data.Version.ValueString()
+	}
+	if !data.Reboot.IsNull() && !data.Reboot.IsUnknown() {
+		params["reboot"] = data.Reboot.ValueBool()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -114,7 +124,7 @@ func (r *UpdateRunResource) Create(ctx context.Context, req resource.CreateReque
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

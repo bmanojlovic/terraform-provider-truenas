@@ -16,13 +16,13 @@ type FilesystemChownResource struct {
 }
 
 type FilesystemChownResourceModel struct {
-	Path types.String `tfsdk:"path"`
-	Uid types.Int64 `tfsdk:"uid"`
-	User types.String `tfsdk:"user"`
-	Gid types.Int64 `tfsdk:"gid"`
-	Group types.String `tfsdk:"group"`
-	OptionsRecursive types.Bool `tfsdk:"options_recursive"`
-	OptionsTraverse types.Bool `tfsdk:"options_traverse"`
+	Path             types.String `tfsdk:"path"`
+	Uid              types.Int64  `tfsdk:"uid"`
+	User             types.String `tfsdk:"user"`
+	Gid              types.Int64  `tfsdk:"gid"`
+	Group            types.String `tfsdk:"group"`
+	OptionsRecursive types.Bool   `tfsdk:"options_recursive"`
+	OptionsTraverse  types.Bool   `tfsdk:"options_traverse"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -44,13 +44,13 @@ func (r *FilesystemChownResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Change owner or group of file at `path`.  `uid` and `gid` specify new owner of the file. If either key is absent or None, then existing value on the file is not changed.  `user` and `group` alternativ",
 		Attributes: map[string]schema.Attribute{
-			"path": schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify."},
-			"uid": schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged."},
-			"user": schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged."},
-			"gid": schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged."},
-			"group": schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged."},
+			"path":              schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify."},
+			"uid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged."},
+			"user":              schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged."},
+			"gid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged."},
+			"group":             schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged."},
 			"options_recursive": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to apply the operation recursively to subdirectories."},
-			"options_traverse": schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem."},
+			"options_traverse":  schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -101,14 +101,28 @@ func (r *FilesystemChownResource) Create(ctx context.Context, req resource.Creat
 	// Build parameters
 	params := map[string]interface{}{}
 	params["path"] = data.Path.ValueString()
-	if !data.Uid.IsNull() { params["uid"] = data.Uid.ValueInt64() }
-	if !data.User.IsNull() { params["user"] = data.User.ValueString() }
-	if !data.Gid.IsNull() { params["gid"] = data.Gid.ValueInt64() }
-	if !data.Group.IsNull() { params["group"] = data.Group.ValueString() }
+	if !data.Uid.IsNull() && !data.Uid.IsUnknown() {
+		params["uid"] = data.Uid.ValueInt64()
+	}
+	if !data.User.IsNull() && !data.User.IsUnknown() {
+		params["user"] = data.User.ValueString()
+	}
+	if !data.Gid.IsNull() && !data.Gid.IsUnknown() {
+		params["gid"] = data.Gid.ValueInt64()
+	}
+	if !data.Group.IsNull() && !data.Group.IsUnknown() {
+		params["group"] = data.Group.ValueString()
+	}
 	optionsOpts := map[string]interface{}{}
-	if !data.OptionsRecursive.IsNull() { optionsOpts["recursive"] = data.OptionsRecursive.ValueBool() }
-	if !data.OptionsTraverse.IsNull() { optionsOpts["traverse"] = data.OptionsTraverse.ValueBool() }
-	if len(optionsOpts) > 0 { params["options"] = optionsOpts }
+	if !data.OptionsRecursive.IsNull() {
+		optionsOpts["recursive"] = data.OptionsRecursive.ValueBool()
+	}
+	if !data.OptionsTraverse.IsNull() {
+		optionsOpts["traverse"] = data.OptionsTraverse.ValueBool()
+	}
+	if len(optionsOpts) > 0 {
+		params["options"] = optionsOpts
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -122,7 +136,7 @@ func (r *FilesystemChownResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")
