@@ -17,7 +17,7 @@ type ActionPoolAttachResource struct {
 }
 
 type ActionPoolAttachResourceModel struct {
-	Oid     types.Int64  `tfsdk:"oid"`
+	Oid types.Int64 `tfsdk:"oid"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolAttachResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "`target_vdev` is the GUID of the vdev where the disk needs to be attached. In case of STRIPED vdev, this is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will",
 		Attributes: map[string]schema.Attribute{
-			"oid":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to attach a disk to."},
+			"oid": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to attach a disk to."},
 			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk attachment operation."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,9 +93,7 @@ func (r *ActionPoolAttachResource) Create(ctx context.Context, req resource.Crea
 	params := []interface{}{}
 	params = append(params, data.Oid.ValueInt64())
 	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-		params = append(params, optionsVal)
-	}
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 
 	// Execute action
 	result, err := r.client.Call("pool.attach", params)
@@ -108,7 +106,7 @@ func (r *ActionPoolAttachResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -16,9 +16,9 @@ type VirtDeviceExport_Disk_ImageResource struct {
 }
 
 type VirtDeviceExport_Disk_ImageResourceModel struct {
-	Format    types.String `tfsdk:"format"`
+	Format types.String `tfsdk:"format"`
 	Directory types.String `tfsdk:"directory"`
-	Zvol      types.String `tfsdk:"zvol"`
+	Zvol types.String `tfsdk:"zvol"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -40,9 +40,9 @@ func (r *VirtDeviceExport_Disk_ImageResource) Schema(ctx context.Context, req re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Exports a zvol to a formatted VM disk image.  Utilized qemu-img with the conversion functionality to export a zvol to any supported disk image format, from RAW -> ${OTHER}. The resulting file will be",
 		Attributes: map[string]schema.Attribute{
-			"format":    schema.StringAttribute{Required: true, MarkdownDescription: "Output format for the exported disk image (e.g., 'qcow2', 'raw')."},
+			"format": schema.StringAttribute{Required: true, MarkdownDescription: "Output format for the exported disk image (e.g., 'qcow2', 'raw')."},
 			"directory": schema.StringAttribute{Required: true, MarkdownDescription: "Directory path where the exported disk image will be saved."},
-			"zvol":      schema.StringAttribute{Required: true, MarkdownDescription: "Source ZFS volume to export as a disk image."},
+			"zvol": schema.StringAttribute{Required: true, MarkdownDescription: "Source ZFS volume to export as a disk image."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -108,7 +108,7 @@ func (r *VirtDeviceExport_Disk_ImageResource) Create(ctx context.Context, req re
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

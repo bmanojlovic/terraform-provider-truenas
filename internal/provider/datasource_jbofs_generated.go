@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,14 +27,14 @@ type JbofsDataSourceModel struct {
 }
 
 type JbofsItemModel struct {
-	ID           types.String `tfsdk:"id"`
-	Description  types.String `tfsdk:"description"`
-	MgmtIp1      types.String `tfsdk:"mgmt_ip1"`
-	MgmtIp2      types.String `tfsdk:"mgmt_ip2"`
+	ID types.String `tfsdk:"id"`
+	Description types.String `tfsdk:"description"`
+	MgmtIp1 types.String `tfsdk:"mgmt_ip1"`
+	MgmtIp2 types.String `tfsdk:"mgmt_ip2"`
 	MgmtUsername types.String `tfsdk:"mgmt_username"`
 	MgmtPassword types.String `tfsdk:"mgmt_password"`
-	Index        types.Int64  `tfsdk:"index"`
-	Uuid         types.String `tfsdk:"uuid"`
+	Index types.Int64 `tfsdk:"index"`
+	Uuid types.String `tfsdk:"uuid"`
 }
 
 func (d *JbofsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -46,39 +46,39 @@ func (d *JbofsDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		Description: "Query jbofs",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of jbofs resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"description": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional description of the JBOF.",
-						},
-						"mgmt_ip1": schema.StringAttribute{
-							Computed:    true,
-							Description: "IP of first Redfish management interface.",
-						},
-						"mgmt_ip2": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional IP of second Redfish management interface.",
-						},
-						"mgmt_username": schema.StringAttribute{
-							Computed:    true,
-							Description: "Redfish administrative username.",
-						},
-						"mgmt_password": schema.StringAttribute{
-							Computed:    true,
-							Description: "Redfish administrative password.",
-						},
-						"index": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Index of the JBOF.  Used to determine data plane IP addresses.",
-						},
-						"uuid": schema.StringAttribute{
-							Computed:    true,
-							Description: "UUID of the JBOF as reported by the enclosure firmware.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"description": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional description of the JBOF.",
+			},
+			"mgmt_ip1": schema.StringAttribute{
+				Computed: true,
+				Description: "IP of first Redfish management interface.",
+			},
+			"mgmt_ip2": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional IP of second Redfish management interface.",
+			},
+			"mgmt_username": schema.StringAttribute{
+				Computed: true,
+				Description: "Redfish administrative username.",
+			},
+			"mgmt_password": schema.StringAttribute{
+				Computed: true,
+				Description: "Redfish administrative password.",
+			},
+			"index": schema.Int64Attribute{
+				Computed: true,
+				Description: "Index of the JBOF.  Used to determine data plane IP addresses.",
+			},
+			"uuid": schema.StringAttribute{
+				Computed: true,
+				Description: "UUID of the JBOF as reported by the enclosure firmware.",
+			},
 					},
 				},
 			},
@@ -142,9 +142,7 @@ func (d *JbofsDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			itemModel.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["index"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Index = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Index = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["uuid"]; ok && v != nil {
 			itemModel.Uuid = types.StringValue(fmt.Sprintf("%v", v))
@@ -155,14 +153,14 @@ func (d *JbofsDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"description":   types.StringType,
-			"id":            types.StringType,
-			"index":         types.Int64Type,
-			"mgmt_ip1":      types.StringType,
-			"mgmt_ip2":      types.StringType,
+			"description": types.StringType,
+			"id": types.StringType,
+			"index": types.Int64Type,
+			"mgmt_ip1": types.StringType,
+			"mgmt_ip2": types.StringType,
 			"mgmt_password": types.StringType,
 			"mgmt_username": types.StringType,
-			"uuid":          types.StringType,
+			"uuid": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

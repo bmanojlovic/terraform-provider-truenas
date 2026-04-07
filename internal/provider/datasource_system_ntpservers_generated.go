@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type SystemNtpserversDataSourceModel struct {
 }
 
 type SystemNtpserversItemModel struct {
-	ID      types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Address types.String `tfsdk:"address"`
-	Burst   types.Bool   `tfsdk:"burst"`
-	Iburst  types.Bool   `tfsdk:"iburst"`
-	Prefer  types.Bool   `tfsdk:"prefer"`
-	Minpoll types.Int64  `tfsdk:"minpoll"`
-	Maxpoll types.Int64  `tfsdk:"maxpoll"`
+	Burst types.Bool `tfsdk:"burst"`
+	Iburst types.Bool `tfsdk:"iburst"`
+	Prefer types.Bool `tfsdk:"prefer"`
+	Minpoll types.Int64 `tfsdk:"minpoll"`
+	Maxpoll types.Int64 `tfsdk:"maxpoll"`
 }
 
 func (d *SystemNtpserversDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -45,35 +45,35 @@ func (d *SystemNtpserversDataSource) Schema(ctx context.Context, req datasource.
 		Description: "Query system_ntpservers",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of system_ntpservers resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"address": schema.StringAttribute{
-							Computed:    true,
-							Description: "Hostname or IP address of the NTP server.",
-						},
-						"burst": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Send a burst of packets when the server is reachable.",
-						},
-						"iburst": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Send a burst of packets when the server is unreachable.",
-						},
-						"prefer": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Mark this server as preferred for time synchronization.",
-						},
-						"minpoll": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Minimum polling interval (log2 seconds).",
-						},
-						"maxpoll": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Maximum polling interval (log2 seconds).",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"address": schema.StringAttribute{
+				Computed: true,
+				Description: "Hostname or IP address of the NTP server.",
+			},
+			"burst": schema.BoolAttribute{
+				Computed: true,
+				Description: "Send a burst of packets when the server is reachable.",
+			},
+			"iburst": schema.BoolAttribute{
+				Computed: true,
+				Description: "Send a burst of packets when the server is unreachable.",
+			},
+			"prefer": schema.BoolAttribute{
+				Computed: true,
+				Description: "Mark this server as preferred for time synchronization.",
+			},
+			"minpoll": schema.Int64Attribute{
+				Computed: true,
+				Description: "Minimum polling interval (log2 seconds).",
+			},
+			"maxpoll": schema.Int64Attribute{
+				Computed: true,
+				Description: "Maximum polling interval (log2 seconds).",
+			},
 					},
 				},
 			},
@@ -125,29 +125,19 @@ func (d *SystemNtpserversDataSource) Read(ctx context.Context, req datasource.Re
 			itemModel.Address = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["burst"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Burst = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Burst = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["iburst"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Iburst = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Iburst = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["prefer"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Prefer = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Prefer = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["minpoll"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Minpoll = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Minpoll = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["maxpoll"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Maxpoll = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Maxpoll = types.Int64Value(int64(fv)) }
 		}
 		items = append(items, itemModel)
 	}
@@ -156,12 +146,12 @@ func (d *SystemNtpserversDataSource) Read(ctx context.Context, req datasource.Re
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"address": types.StringType,
-			"burst":   types.BoolType,
-			"iburst":  types.BoolType,
-			"id":      types.StringType,
+			"burst": types.BoolType,
+			"iburst": types.BoolType,
+			"id": types.StringType,
 			"maxpoll": types.Int64Type,
 			"minpoll": types.Int64Type,
-			"prefer":  types.BoolType,
+			"prefer": types.BoolType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,8 +27,8 @@ type IscsiPortalsDataSourceModel struct {
 }
 
 type IscsiPortalsItemModel struct {
-	ID      types.String `tfsdk:"id"`
-	Tag     types.Int64  `tfsdk:"tag"`
+	ID types.String `tfsdk:"id"`
+	Tag types.Int64 `tfsdk:"tag"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -41,19 +41,19 @@ func (d *IscsiPortalsDataSource) Schema(ctx context.Context, req datasource.Sche
 		Description: "Query iscsi_portals",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of iscsi_portals resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"tag": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Numeric tag used to associate this portal with iSCSI targets.",
-						},
-						"comment": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional comment describing the portal.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"tag": schema.Int64Attribute{
+				Computed: true,
+				Description: "Numeric tag used to associate this portal with iSCSI targets.",
+			},
+			"comment": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional comment describing the portal.",
+			},
 					},
 				},
 			},
@@ -102,9 +102,7 @@ func (d *IscsiPortalsDataSource) Read(ctx context.Context, req datasource.ReadRe
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["tag"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Tag = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Tag = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["comment"]; ok && v != nil {
 			itemModel.Comment = types.StringValue(fmt.Sprintf("%v", v))
@@ -116,8 +114,8 @@ func (d *IscsiPortalsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"comment": types.StringType,
-			"id":      types.StringType,
-			"tag":     types.Int64Type,
+			"id": types.StringType,
+			"tag": types.Int64Type,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

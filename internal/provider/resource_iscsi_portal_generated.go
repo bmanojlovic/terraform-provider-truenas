@@ -2,16 +2,16 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"strings"
+"strconv"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"encoding/json"
+	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type IscsiPortalResource struct {
@@ -19,8 +19,8 @@ type IscsiPortalResource struct {
 }
 
 type IscsiPortalResourceModel struct {
-	ID      types.String `tfsdk:"id"`
-	Listen  types.List   `tfsdk:"listen"`
+	ID types.String `tfsdk:"id"`
+	Listen types.List `tfsdk:"listen"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -42,14 +42,14 @@ func (r *IscsiPortalResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"listen": schema.ListAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				ElementType: types.StringType,
 				Description: "Array of IP addresses for the portal to listen on.",
 			},
 			"comment": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Optional comment describing the portal.",
 			},
 		},
@@ -113,6 +113,7 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -130,18 +131,16 @@ func (r *IscsiPortalResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["listen"]; ok {
-		if arr, ok := v.([]interface{}); ok {
-			strVals := make([]attr.Value, len(arr))
-			for i, item := range arr {
-				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
-			}
-			data.Listen, _ = types.ListValue(types.StringType, strVals)
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["listen"]; ok {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Listen, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -179,18 +178,16 @@ func (r *IscsiPortalResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["listen"]; ok {
-		if arr, ok := v.([]interface{}); ok {
-			strVals := make([]attr.Value, len(arr))
-			for i, item := range arr {
-				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
-			}
-			data.Listen, _ = types.ListValue(types.StringType, strVals)
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["listen"]; ok {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Listen, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -242,6 +239,30 @@ func (r *IscsiPortalResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("iscsi.portal.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back iscsi_portal: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["listen"]; ok {
+			if arr, ok := v.([]interface{}); ok {
+				strVals := make([]attr.Value, len(arr))
+				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
+				data.Listen, _ = types.ListValue(types.StringType, strVals)
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

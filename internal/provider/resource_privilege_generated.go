@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type PrivilegeResource struct {
@@ -17,12 +17,12 @@ type PrivilegeResource struct {
 }
 
 type PrivilegeResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	LocalGroups types.List   `tfsdk:"local_groups"`
-	DsGroups    types.List   `tfsdk:"ds_groups"`
-	Roles       types.List   `tfsdk:"roles"`
-	WebShell    types.Bool   `tfsdk:"web_shell"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	LocalGroups types.List `tfsdk:"local_groups"`
+	DsGroups types.List `tfsdk:"ds_groups"`
+	Roles types.List `tfsdk:"roles"`
+	WebShell types.Bool `tfsdk:"web_shell"`
 }
 
 func NewPrivilegeResource() resource.Resource {
@@ -43,31 +43,31 @@ func (r *PrivilegeResource) Schema(ctx context.Context, req resource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Display name of the privilege.",
 			},
 			"local_groups": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of local group IDs to assign to this privilege.",
 			},
 			"ds_groups": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of directory service group IDs or SIDs to assign to this privilege.",
 			},
 			"roles": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of role names included in this privilege.",
 			},
 			"web_shell": schema.BoolAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Whether this privilege grants access to the web shell.",
 			},
 		},
@@ -135,6 +135,7 @@ func (r *PrivilegeResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -152,26 +153,24 @@ func (r *PrivilegeResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["web_shell"]; ok {
-		if bv, ok := v.(bool); ok {
-			data.WebShell = types.BoolValue(bv)
+		if v, ok := resultMap["web_shell"]; ok {
+			if bv, ok := v.(bool); ok { data.WebShell = types.BoolValue(bv) }
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -209,26 +208,24 @@ func (r *PrivilegeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["web_shell"]; ok {
-		if bv, ok := v.(bool); ok {
-			data.WebShell = types.BoolValue(bv)
+		if v, ok := resultMap["web_shell"]; ok {
+			if bv, ok := v.(bool); ok { data.WebShell = types.BoolValue(bv) }
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -284,6 +281,38 @@ func (r *PrivilegeResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("privilege.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back privilege: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["web_shell"]; ok {
+			if bv, ok := v.(bool); ok { data.WebShell = types.BoolValue(bv) }
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

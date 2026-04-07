@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,7 +27,7 @@ type DnssDataSourceModel struct {
 }
 
 type DnssItemModel struct {
-	ID         types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Nameserver types.String `tfsdk:"nameserver"`
 }
 
@@ -40,15 +40,15 @@ func (d *DnssDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 		Description: "Query Name Servers with `query-filters` and `query-options`.",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of dnss resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"nameserver": schema.StringAttribute{
-							Computed:    true,
-							Description: "IP address of the DNS nameserver to query.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"nameserver": schema.StringAttribute{
+				Computed: true,
+				Description: "IP address of the DNS nameserver to query.",
+			},
 					},
 				},
 			},

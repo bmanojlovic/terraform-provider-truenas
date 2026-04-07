@@ -18,9 +18,9 @@ type FilesystemMkdirResource struct {
 }
 
 type FilesystemMkdirResourceModel struct {
-	Path                   types.String `tfsdk:"path"`
-	OptionsMode            types.String `tfsdk:"options_mode"`
-	OptionsRaiseChmodError types.Bool   `tfsdk:"options_raise_chmod_error"`
+	Path types.String `tfsdk:"path"`
+	OptionsMode types.String `tfsdk:"options_mode"`
+	OptionsRaiseChmodError types.Bool `tfsdk:"options_raise_chmod_error"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -42,8 +42,8 @@ func (r *FilesystemMkdirResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a directory at the specified path.  The following options are supported:  `mode` - specify the permissions to set on the new directory (0o755 is default). `raise_chmod_error` - choose whether t",
 		Attributes: map[string]schema.Attribute{
-			"path":                      schema.StringAttribute{Required: true, MarkdownDescription: "Path where the new directory should be created.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
-			"options_mode":              schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions for the new directory."},
+			"path": schema.StringAttribute{Required: true, MarkdownDescription: "Path where the new directory should be created.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options_mode": schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions for the new directory."},
 			"options_raise_chmod_error": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to raise an error if chmod fails."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -96,15 +96,9 @@ func (r *FilesystemMkdirResource) Create(ctx context.Context, req resource.Creat
 	params := map[string]interface{}{}
 	params["path"] = data.Path.ValueString()
 	optionsOpts := map[string]interface{}{}
-	if !data.OptionsMode.IsNull() {
-		optionsOpts["mode"] = data.OptionsMode.ValueString()
-	}
-	if !data.OptionsRaiseChmodError.IsNull() {
-		optionsOpts["raise_chmod_error"] = data.OptionsRaiseChmodError.ValueBool()
-	}
-	if len(optionsOpts) > 0 {
-		params["options"] = optionsOpts
-	}
+	if !data.OptionsMode.IsNull() { optionsOpts["mode"] = data.OptionsMode.ValueString() }
+	if !data.OptionsRaiseChmodError.IsNull() { optionsOpts["raise_chmod_error"] = data.OptionsRaiseChmodError.ValueBool() }
+	if len(optionsOpts) > 0 { params["options"] = optionsOpts }
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -118,7 +112,7 @@ func (r *FilesystemMkdirResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")
@@ -165,12 +159,8 @@ func (r *FilesystemMkdirResource) Update(ctx context.Context, req resource.Updat
 
 	// Build update parameters
 	updateParams := map[string]interface{}{}
-	if !data.Path.IsNull() {
-		updateParams["path"] = data.Path.ValueString()
-	}
-	if !data.OptionsMode.IsNull() {
-		updateParams["mode"] = data.OptionsMode.ValueString()
-	}
+	if !data.Path.IsNull() { updateParams["path"] = data.Path.ValueString() }
+	if !data.OptionsMode.IsNull() { updateParams["mode"] = data.OptionsMode.ValueString() }
 	updateParamsArr := []interface{}{updateParams}
 
 	// Execute update

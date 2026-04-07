@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,7 +27,7 @@ type IscsiInitiatorsDataSourceModel struct {
 }
 
 type IscsiInitiatorsItemModel struct {
-	ID      types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -40,15 +40,15 @@ func (d *IscsiInitiatorsDataSource) Schema(ctx context.Context, req datasource.S
 		Description: "Query iscsi_initiators",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of iscsi_initiators resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"comment": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional comment describing the authorized initiator group.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"comment": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional comment describing the authorized initiator group.",
+			},
 					},
 				},
 			},
@@ -106,7 +106,7 @@ func (d *IscsiInitiatorsDataSource) Read(ctx context.Context, req datasource.Rea
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"comment": types.StringType,
-			"id":      types.StringType,
+			"id": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

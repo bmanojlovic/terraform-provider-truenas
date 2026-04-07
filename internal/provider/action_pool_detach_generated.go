@@ -17,7 +17,7 @@ type ActionPoolDetachResource struct {
 }
 
 type ActionPoolDetachResourceModel struct {
-	ID      types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolDetachResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Detach a disk from pool of id `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to detach a disk from."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to detach a disk from."},
 			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk detachment operation."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,9 +93,7 @@ func (r *ActionPoolDetachResource) Create(ctx context.Context, req resource.Crea
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
 	var optionsVal interface{}
-	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-		params = append(params, optionsVal)
-	}
+	if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 
 	// Execute action
 	result, err := r.client.Call("pool.detach", params)
@@ -108,7 +106,7 @@ func (r *ActionPoolDetachResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

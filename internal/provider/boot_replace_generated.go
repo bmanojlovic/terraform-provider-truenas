@@ -17,7 +17,7 @@ type BootReplaceResource struct {
 
 type BootReplaceResourceModel struct {
 	Label types.String `tfsdk:"label"`
-	Dev   types.String `tfsdk:"dev"`
+	Dev types.String `tfsdk:"dev"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -40,7 +40,7 @@ func (r *BootReplaceResource) Schema(ctx context.Context, req resource.SchemaReq
 		MarkdownDescription: "Replace device `label` on boot pool with `dev`.",
 		Attributes: map[string]schema.Attribute{
 			"label": schema.StringAttribute{Required: true, MarkdownDescription: "Label of the disk in the boot pool to replace."},
-			"dev":   schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path of the replacement disk."},
+			"dev": schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path of the replacement disk."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -104,7 +104,7 @@ func (r *BootReplaceResource) Create(ctx context.Context, req resource.CreateReq
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

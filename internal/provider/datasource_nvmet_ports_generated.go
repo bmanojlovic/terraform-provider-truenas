@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,16 +27,16 @@ type NvmetPortsDataSourceModel struct {
 }
 
 type NvmetPortsItemModel struct {
-	ID             types.String `tfsdk:"id"`
-	Index          types.Int64  `tfsdk:"index"`
-	AddrTrtype     types.String `tfsdk:"addr_trtype"`
-	AddrTrsvcid    types.Int64  `tfsdk:"addr_trsvcid"`
-	AddrTraddr     types.String `tfsdk:"addr_traddr"`
-	AddrAdrfam     types.String `tfsdk:"addr_adrfam"`
-	InlineDataSize types.Int64  `tfsdk:"inline_data_size"`
-	MaxQueueSize   types.Int64  `tfsdk:"max_queue_size"`
-	PiEnable       types.Bool   `tfsdk:"pi_enable"`
-	Enabled        types.Bool   `tfsdk:"enabled"`
+	ID types.String `tfsdk:"id"`
+	Index types.Int64 `tfsdk:"index"`
+	AddrTrtype types.String `tfsdk:"addr_trtype"`
+	AddrTrsvcid types.Int64 `tfsdk:"addr_trsvcid"`
+	AddrTraddr types.String `tfsdk:"addr_traddr"`
+	AddrAdrfam types.String `tfsdk:"addr_adrfam"`
+	InlineDataSize types.Int64 `tfsdk:"inline_data_size"`
+	MaxQueueSize types.Int64 `tfsdk:"max_queue_size"`
+	PiEnable types.Bool `tfsdk:"pi_enable"`
+	Enabled types.Bool `tfsdk:"enabled"`
 }
 
 func (d *NvmetPortsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -48,47 +48,47 @@ func (d *NvmetPortsDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Query nvmet_ports",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of nvmet_ports resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"index": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Index of the port, for internal use. ",
-						},
-						"addr_trtype": schema.StringAttribute{
-							Computed:    true,
-							Description: "Fabric transport technology name. ",
-						},
-						"addr_trsvcid": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. ",
-						},
-						"addr_traddr": schema.StringAttribute{
-							Computed:    true,
-							Description: "A transport-specific field identifying the NVMe host port to use for the connection to the controlle",
-						},
-						"addr_adrfam": schema.StringAttribute{
-							Computed:    true,
-							Description: "Address family.",
-						},
-						"inline_data_size": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Maximum size for inline data transfers or `null` for default.",
-						},
-						"max_queue_size": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Maximum number of queue entries or `null` for default.",
-						},
-						"pi_enable": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether Protection Information (PI) is enabled or `null` for default.",
-						},
-						"enabled": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Port enabled.  When NVMe target is running, cannot make changes to an enabled port. ",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"index": schema.Int64Attribute{
+				Computed: true,
+				Description: "Index of the port, for internal use. ",
+			},
+			"addr_trtype": schema.StringAttribute{
+				Computed: true,
+				Description: "Fabric transport technology name. ",
+			},
+			"addr_trsvcid": schema.Int64Attribute{
+				Computed: true,
+				Description: "Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. ",
+			},
+			"addr_traddr": schema.StringAttribute{
+				Computed: true,
+				Description: "A transport-specific field identifying the NVMe host port to use for the connection to the controlle",
+			},
+			"addr_adrfam": schema.StringAttribute{
+				Computed: true,
+				Description: "Address family.",
+			},
+			"inline_data_size": schema.Int64Attribute{
+				Computed: true,
+				Description: "Maximum size for inline data transfers or `null` for default.",
+			},
+			"max_queue_size": schema.Int64Attribute{
+				Computed: true,
+				Description: "Maximum number of queue entries or `null` for default.",
+			},
+			"pi_enable": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether Protection Information (PI) is enabled or `null` for default.",
+			},
+			"enabled": schema.BoolAttribute{
+				Computed: true,
+				Description: "Port enabled.  When NVMe target is running, cannot make changes to an enabled port. ",
+			},
 					},
 				},
 			},
@@ -137,17 +137,13 @@ func (d *NvmetPortsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["index"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Index = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Index = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["addr_trtype"]; ok && v != nil {
 			itemModel.AddrTrtype = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["addr_trsvcid"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.AddrTrsvcid = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.AddrTrsvcid = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["addr_traddr"]; ok && v != nil {
 			itemModel.AddrTraddr = types.StringValue(fmt.Sprintf("%v", v))
@@ -156,24 +152,16 @@ func (d *NvmetPortsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			itemModel.AddrAdrfam = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["inline_data_size"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.InlineDataSize = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.InlineDataSize = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["max_queue_size"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.MaxQueueSize = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.MaxQueueSize = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["pi_enable"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.PiEnable = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.PiEnable = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Enabled = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
 		}
 		items = append(items, itemModel)
 	}
@@ -181,16 +169,16 @@ func (d *NvmetPortsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"addr_adrfam":      types.StringType,
-			"addr_traddr":      types.StringType,
-			"addr_trsvcid":     types.Int64Type,
-			"addr_trtype":      types.StringType,
-			"enabled":          types.BoolType,
-			"id":               types.StringType,
-			"index":            types.Int64Type,
+			"addr_adrfam": types.StringType,
+			"addr_traddr": types.StringType,
+			"addr_trsvcid": types.Int64Type,
+			"addr_trtype": types.StringType,
+			"enabled": types.BoolType,
+			"id": types.StringType,
+			"index": types.Int64Type,
 			"inline_data_size": types.Int64Type,
-			"max_queue_size":   types.Int64Type,
-			"pi_enable":        types.BoolType,
+			"max_queue_size": types.Int64Type,
+			"pi_enable": types.BoolType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

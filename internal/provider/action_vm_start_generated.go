@@ -17,7 +17,7 @@ type ActionVmStartResource struct {
 }
 
 type ActionVmStartResourceModel struct {
-	ID      types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionVmStartResource) Schema(ctx context.Context, req resource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Start a VM.  options.overcommit defaults to false, meaning VMs are not allowed to start if there is not enough available memory to hold all configured VMs. If true, VM starts even if there is not enou",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to start."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to start."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the VM start process."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,9 +94,7 @@ func (r *ActionVmStartResource) Create(ctx context.Context, req resource.CreateR
 	params = append(params, data.ID.ValueInt64())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionVmStartResource) Create(ctx context.Context, req resource.CreateR
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -2,17 +2,17 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"encoding/json"
+	"time"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
-	"time"
 )
 
 type VirtInstanceResource struct {
@@ -20,27 +20,27 @@ type VirtInstanceResource struct {
 }
 
 type VirtInstanceResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	StartOnCreate  types.Bool   `tfsdk:"start_on_create"`
-	Name           types.String `tfsdk:"name"`
-	SourceType     types.String `tfsdk:"source_type"`
-	StoragePool    types.String `tfsdk:"storage_pool"`
-	Image          types.String `tfsdk:"image"`
-	RootDiskSize   types.Int64  `tfsdk:"root_disk_size"`
-	RootDiskIoBus  types.String `tfsdk:"root_disk_io_bus"`
-	Remote         types.String `tfsdk:"remote"`
-	InstanceType   types.String `tfsdk:"instance_type"`
-	Environment    types.String `tfsdk:"environment"`
-	Autostart      types.Bool   `tfsdk:"autostart"`
-	Cpu            types.String `tfsdk:"cpu"`
-	Devices        types.List   `tfsdk:"devices"`
-	Memory         types.Int64  `tfsdk:"memory"`
-	PrivilegedMode types.Bool   `tfsdk:"privileged_mode"`
-	VncPort        types.Int64  `tfsdk:"vnc_port"`
-	EnableVnc      types.Bool   `tfsdk:"enable_vnc"`
-	VncPassword    types.String `tfsdk:"vnc_password"`
-	SecureBoot     types.Bool   `tfsdk:"secure_boot"`
-	ImageOs        types.String `tfsdk:"image_os"`
+	ID types.String `tfsdk:"id"`
+	StartOnCreate types.Bool `tfsdk:"start_on_create"`
+	Name types.String `tfsdk:"name"`
+	SourceType types.String `tfsdk:"source_type"`
+	StoragePool types.String `tfsdk:"storage_pool"`
+	Image types.String `tfsdk:"image"`
+	RootDiskSize types.Int64 `tfsdk:"root_disk_size"`
+	RootDiskIoBus types.String `tfsdk:"root_disk_io_bus"`
+	Remote types.String `tfsdk:"remote"`
+	InstanceType types.String `tfsdk:"instance_type"`
+	Environment types.String `tfsdk:"environment"`
+	Autostart types.Bool `tfsdk:"autostart"`
+	Cpu types.String `tfsdk:"cpu"`
+	Devices types.List `tfsdk:"devices"`
+	Memory types.Int64 `tfsdk:"memory"`
+	PrivilegedMode types.Bool `tfsdk:"privileged_mode"`
+	VncPort types.Int64 `tfsdk:"vnc_port"`
+	EnableVnc types.Bool `tfsdk:"enable_vnc"`
+	VncPassword types.String `tfsdk:"vnc_password"`
+	SecureBoot types.Bool `tfsdk:"secure_boot"`
+	ImageOs types.String `tfsdk:"image_os"`
 }
 
 func NewVirtInstanceResource() resource.Resource {
@@ -59,107 +59,107 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a new virtualized instance.",
 		Attributes: map[string]schema.Attribute{
-			"id":              schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Name for the new virtual instance.",
 			},
 			"source_type": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Source type for instance creation.",
+				Required: false,
+				Optional: true,
+				Description: "Source type for instance creation.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"storage_pool": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.gl",
+				Required: false,
+				Optional: true,
+				Description: "Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.gl",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"image": schema.StringAttribute{
-				Required:      true,
-				Optional:      false,
-				Description:   "Image identifier to use for creating the instance.",
+				Required: true,
+				Optional: false,
+				Description: "Image identifier to use for creating the instance.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"root_disk_size": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Size of the root disk in GB (minimum 5GB) or `null` to keep current size.",
 			},
 			"root_disk_io_bus": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "I/O bus type for the root disk or `null` to keep current setting.",
 			},
 			"remote": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Remote image source to use.",
+				Required: false,
+				Optional: true,
+				Description: "Remote image source to use.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"instance_type": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Type of instance to create.",
+				Required: false,
+				Optional: true,
+				Description: "Type of instance to create.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"environment": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Environment variables to set inside the instance.",
 			},
 			"autostart": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether the instance should automatically start when the host boots.",
 			},
 			"cpu": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "CPU allocation specification or `null` for automatic allocation.",
 			},
 			"devices": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of devices to attach to the instance.",
 			},
 			"memory": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Memory allocation in bytes or `null` for automatic allocation.",
 			},
 			"privileged_mode": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "This is only valid for containers and should only be set when container instance which is to be depl",
 			},
 			"vnc_port": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "TCP port number for VNC access (5900-65535) or `null` to disable VNC.",
 			},
 			"enable_vnc": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to enable VNC remote access for the instance.",
 			},
 			"vnc_password": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Setting vnc_password to null will unset VNC password.",
 			},
 			"secure_boot": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to enable UEFI Secure Boot (VMs only).",
 			},
 			"image_os": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Operating system type for the instance or `null` for auto-detection.",
 			},
 		},
@@ -271,14 +271,10 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	startOnCreate := false
-	if !data.StartOnCreate.IsNull() {
-		startOnCreate = data.StartOnCreate.ValueBool()
-	}
+	if !data.StartOnCreate.IsNull() { startOnCreate = data.StartOnCreate.ValueBool() }
 	if startOnCreate {
 		_, err = r.client.Call("virt.instance.start", data.ID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error()))
-		}
+		if err != nil { resp.Diagnostics.AddWarning("Start Failed", fmt.Sprintf("Resource created but failed to start: %s", err.Error())) }
 	}
 
 	// Read back to populate computed fields
@@ -294,69 +290,67 @@ func (r *VirtInstanceResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["environment"]; ok {
-		if v == nil {
-			data.Environment = types.StringNull()
-		} else {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
-				data.Environment = types.StringValue(val)
+				data.Name = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
-	if v, ok := resultMap["cpu"]; ok {
-		if v == nil {
-			data.Cpu = types.StringNull()
-		} else {
-			switch val := v.(type) {
-			case string:
-				data.Cpu = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["environment"]; ok {
+			if v == nil {
+				data.Environment = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Environment = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Environment = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
-	if v, ok := resultMap["memory"]; ok {
-		if v == nil {
-			data.Memory = types.Int64Null()
-		} else {
-			switch val := v.(type) {
-			case float64:
-				data.Memory = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok {
-						data.Memory = types.Int64Value(int64(fv))
+		if v, ok := resultMap["cpu"]; ok {
+			if v == nil {
+				data.Cpu = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpu = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			if v == nil {
+				data.Memory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Memory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
 					}
 				}
 			}
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -390,69 +384,67 @@ func (r *VirtInstanceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["environment"]; ok {
-		if v == nil {
-			data.Environment = types.StringNull()
-		} else {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
-				data.Environment = types.StringValue(val)
+				data.Name = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
-	if v, ok := resultMap["cpu"]; ok {
-		if v == nil {
-			data.Cpu = types.StringNull()
-		} else {
-			switch val := v.(type) {
-			case string:
-				data.Cpu = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["environment"]; ok {
+			if v == nil {
+				data.Environment = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Environment = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Environment = types.StringValue(fmt.Sprintf("%v", v))
 				}
-			default:
-				data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
-	if v, ok := resultMap["memory"]; ok {
-		if v == nil {
-			data.Memory = types.Int64Null()
-		} else {
-			switch val := v.(type) {
-			case float64:
-				data.Memory = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok {
-						data.Memory = types.Int64Value(int64(fv))
+		if v, ok := resultMap["cpu"]; ok {
+			if v == nil {
+				data.Cpu = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpu = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			if v == nil {
+				data.Memory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Memory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
 					}
 				}
 			}
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -524,6 +516,81 @@ func (r *VirtInstanceResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("virt.instance.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back virt_instance: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["environment"]; ok {
+			if v == nil {
+				data.Environment = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Environment = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Environment = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Environment = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["cpu"]; ok {
+			if v == nil {
+				data.Cpu = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.Cpu = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.Cpu = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.Cpu = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+		if v, ok := resultMap["memory"]; ok {
+			if v == nil {
+				data.Memory = types.Int64Null()
+			} else {
+				switch val := v.(type) {
+				case float64:
+					data.Memory = types.Int64Value(int64(val))
+				case map[string]interface{}:
+					if parsed, ok := val["parsed"]; ok && parsed != nil {
+						if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
+					}
+				}
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

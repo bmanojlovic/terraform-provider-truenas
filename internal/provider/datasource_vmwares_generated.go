@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type VmwaresDataSourceModel struct {
 }
 
 type VmwaresItemModel struct {
-	ID         types.String `tfsdk:"id"`
-	Datastore  types.String `tfsdk:"datastore"`
+	ID types.String `tfsdk:"id"`
+	Datastore types.String `tfsdk:"datastore"`
 	Filesystem types.String `tfsdk:"filesystem"`
-	Hostname   types.String `tfsdk:"hostname"`
-	Username   types.String `tfsdk:"username"`
-	Password   types.String `tfsdk:"password"`
-	State      types.String `tfsdk:"state"`
+	Hostname types.String `tfsdk:"hostname"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
+	State types.String `tfsdk:"state"`
 }
 
 func (d *VmwaresDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -45,35 +45,35 @@ func (d *VmwaresDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		Description: "Query vmwares",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of vmwares resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"datastore": schema.StringAttribute{
-							Computed:    true,
-							Description: "Valid datastore name which exists on the VMWare host.",
-						},
-						"filesystem": schema.StringAttribute{
-							Computed:    true,
-							Description: "ZFS filesystem or dataset to use for VMware storage.",
-						},
-						"hostname": schema.StringAttribute{
-							Computed:    true,
-							Description: "Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cl",
-						},
-						"username": schema.StringAttribute{
-							Computed:    true,
-							Description: "Credentials used to authorize access to the VMWare host.",
-						},
-						"password": schema.StringAttribute{
-							Computed:    true,
-							Description: "Password for VMware host authentication.",
-						},
-						"state": schema.StringAttribute{
-							Computed:    true,
-							Description: "Current connection and synchronization state with the VMware host.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"datastore": schema.StringAttribute{
+				Computed: true,
+				Description: "Valid datastore name which exists on the VMWare host.",
+			},
+			"filesystem": schema.StringAttribute{
+				Computed: true,
+				Description: "ZFS filesystem or dataset to use for VMware storage.",
+			},
+			"hostname": schema.StringAttribute{
+				Computed: true,
+				Description: "Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cl",
+			},
+			"username": schema.StringAttribute{
+				Computed: true,
+				Description: "Credentials used to authorize access to the VMWare host.",
+			},
+			"password": schema.StringAttribute{
+				Computed: true,
+				Description: "Password for VMware host authentication.",
+			},
+			"state": schema.StringAttribute{
+				Computed: true,
+				Description: "Current connection and synchronization state with the VMware host.",
+			},
 					},
 				},
 			},
@@ -145,13 +145,13 @@ func (d *VmwaresDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"datastore":  types.StringType,
+			"datastore": types.StringType,
 			"filesystem": types.StringType,
-			"hostname":   types.StringType,
-			"id":         types.StringType,
-			"password":   types.StringType,
-			"state":      types.StringType,
-			"username":   types.StringType,
+			"hostname": types.StringType,
+			"id": types.StringType,
+			"password": types.StringType,
+			"state": types.StringType,
+			"username": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

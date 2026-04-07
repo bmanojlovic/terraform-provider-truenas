@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,9 +27,9 @@ type AppIxVolumesDataSourceModel struct {
 }
 
 type AppIxVolumesItemModel struct {
-	ID      types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	AppName types.String `tfsdk:"app_name"`
-	Name    types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 }
 
 func (d *AppIxVolumesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -41,19 +41,19 @@ func (d *AppIxVolumesDataSource) Schema(ctx context.Context, req datasource.Sche
 		Description: "Query ix-volumes with `filters` and `options`.",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of app_ix_volumes resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"app_name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Name of the application that owns this iX volume.",
-						},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Name of the iX volume used for persistent storage.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"app_name": schema.StringAttribute{
+				Computed: true,
+				Description: "Name of the application that owns this iX volume.",
+			},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Name of the iX volume used for persistent storage.",
+			},
 					},
 				},
 			},
@@ -111,7 +111,7 @@ func (d *AppIxVolumesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"app_name": types.StringType,
-			"name":     types.StringType,
+			"name": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

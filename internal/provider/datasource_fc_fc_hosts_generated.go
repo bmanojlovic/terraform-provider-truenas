@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,11 +27,11 @@ type FcFcHostsDataSourceModel struct {
 }
 
 type FcFcHostsItemModel struct {
-	ID    types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Alias types.String `tfsdk:"alias"`
-	Wwpn  types.String `tfsdk:"wwpn"`
+	Wwpn types.String `tfsdk:"wwpn"`
 	WwpnB types.String `tfsdk:"wwpn_b"`
-	Npiv  types.Int64  `tfsdk:"npiv"`
+	Npiv types.Int64 `tfsdk:"npiv"`
 }
 
 func (d *FcFcHostsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -43,27 +43,27 @@ func (d *FcFcHostsDataSource) Schema(ctx context.Context, req datasource.SchemaR
 		Description: "Query fc_fc_hosts",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of fc_fc_hosts resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"alias": schema.StringAttribute{
-							Computed:    true,
-							Description: "Human-readable alias for the Fibre Channel host.",
-						},
-						"wwpn": schema.StringAttribute{
-							Computed:    true,
-							Description: "World Wide Port Name for port A or `null` if not configured.",
-						},
-						"wwpn_b": schema.StringAttribute{
-							Computed:    true,
-							Description: "World Wide Port Name for port B or `null` if not configured.",
-						},
-						"npiv": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Number of N_Port ID Virtualization (NPIV) virtual ports to create.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"alias": schema.StringAttribute{
+				Computed: true,
+				Description: "Human-readable alias for the Fibre Channel host.",
+			},
+			"wwpn": schema.StringAttribute{
+				Computed: true,
+				Description: "World Wide Port Name for port A or `null` if not configured.",
+			},
+			"wwpn_b": schema.StringAttribute{
+				Computed: true,
+				Description: "World Wide Port Name for port B or `null` if not configured.",
+			},
+			"npiv": schema.Int64Attribute{
+				Computed: true,
+				Description: "Number of N_Port ID Virtualization (NPIV) virtual ports to create.",
+			},
 					},
 				},
 			},
@@ -121,9 +121,7 @@ func (d *FcFcHostsDataSource) Read(ctx context.Context, req datasource.ReadReque
 			itemModel.WwpnB = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["npiv"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Npiv = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Npiv = types.Int64Value(int64(fv)) }
 		}
 		items = append(items, itemModel)
 	}
@@ -131,10 +129,10 @@ func (d *FcFcHostsDataSource) Read(ctx context.Context, req datasource.ReadReque
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"alias":  types.StringType,
-			"id":     types.StringType,
-			"npiv":   types.Int64Type,
-			"wwpn":   types.StringType,
+			"alias": types.StringType,
+			"id": types.StringType,
+			"npiv": types.Int64Type,
+			"wwpn": types.StringType,
 			"wwpn_b": types.StringType,
 		},
 	}, items)

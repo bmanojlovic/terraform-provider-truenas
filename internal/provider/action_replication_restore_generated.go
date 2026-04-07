@@ -17,7 +17,7 @@ type ActionReplicationRestoreResource struct {
 }
 
 type ActionReplicationRestoreResourceModel struct {
-	ID                 types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	ReplicationRestore types.String `tfsdk:"replication_restore"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionReplicationRestoreResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).",
 		Attributes: map[string]schema.Attribute{
-			"id":                  schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the replication task to restore."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the replication task to restore."},
 			"replication_restore": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration options for restoring the replication task."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,9 +93,7 @@ func (r *ActionReplicationRestoreResource) Create(ctx context.Context, req resou
 	params := []interface{}{}
 	params = append(params, data.ID.ValueInt64())
 	var replication_restoreVal interface{}
-	if err := json.Unmarshal([]byte(data.ReplicationRestore.ValueString()), &replication_restoreVal); err == nil {
-		params = append(params, replication_restoreVal)
-	}
+	if err := json.Unmarshal([]byte(data.ReplicationRestore.ValueString()), &replication_restoreVal); err == nil { params = append(params, replication_restoreVal) }
 
 	// Execute action
 	result, err := r.client.Call("replication.restore", params)
@@ -108,7 +106,7 @@ func (r *ActionReplicationRestoreResource) Create(ctx context.Context, req resou
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

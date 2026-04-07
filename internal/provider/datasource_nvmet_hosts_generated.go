@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,12 +27,12 @@ type NvmetHostsDataSourceModel struct {
 }
 
 type NvmetHostsItemModel struct {
-	ID            types.String `tfsdk:"id"`
-	Hostnqn       types.String `tfsdk:"hostnqn"`
-	DhchapKey     types.String `tfsdk:"dhchap_key"`
+	ID types.String `tfsdk:"id"`
+	Hostnqn types.String `tfsdk:"hostnqn"`
+	DhchapKey types.String `tfsdk:"dhchap_key"`
 	DhchapCtrlKey types.String `tfsdk:"dhchap_ctrl_key"`
 	DhchapDhgroup types.String `tfsdk:"dhchap_dhgroup"`
-	DhchapHash    types.String `tfsdk:"dhchap_hash"`
+	DhchapHash types.String `tfsdk:"dhchap_hash"`
 }
 
 func (d *NvmetHostsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,31 +44,31 @@ func (d *NvmetHostsDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Query nvmet_hosts",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of nvmet_hosts resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"hostnqn": schema.StringAttribute{
-							Computed:    true,
-							Description: "NQN of the host that will connect to this TrueNAS. ",
-						},
-						"dhchap_key": schema.StringAttribute{
-							Computed:    true,
-							Description: "If set, the secret that the host must present when connecting.  A suitable secret can be generated u",
-						},
-						"dhchap_ctrl_key": schema.StringAttribute{
-							Computed:    true,
-							Description: "If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Direct",
-						},
-						"dhchap_dhgroup": schema.StringAttribute{
-							Computed:    true,
-							Description: "If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication",
-						},
-						"dhchap_hash": schema.StringAttribute{
-							Computed:    true,
-							Description: "HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selecte",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"hostnqn": schema.StringAttribute{
+				Computed: true,
+				Description: "NQN of the host that will connect to this TrueNAS. ",
+			},
+			"dhchap_key": schema.StringAttribute{
+				Computed: true,
+				Description: "If set, the secret that the host must present when connecting.  A suitable secret can be generated u",
+			},
+			"dhchap_ctrl_key": schema.StringAttribute{
+				Computed: true,
+				Description: "If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Direct",
+			},
+			"dhchap_dhgroup": schema.StringAttribute{
+				Computed: true,
+				Description: "If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication",
+			},
+			"dhchap_hash": schema.StringAttribute{
+				Computed: true,
+				Description: "HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selecte",
+			},
 					},
 				},
 			},
@@ -138,11 +138,11 @@ func (d *NvmetHostsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"dhchap_ctrl_key": types.StringType,
-			"dhchap_dhgroup":  types.StringType,
-			"dhchap_hash":     types.StringType,
-			"dhchap_key":      types.StringType,
-			"hostnqn":         types.StringType,
-			"id":              types.StringType,
+			"dhchap_dhgroup": types.StringType,
+			"dhchap_hash": types.StringType,
+			"dhchap_key": types.StringType,
+			"hostnqn": types.StringType,
+			"id": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

@@ -17,9 +17,9 @@ type PoolDatasetUnlockResource struct {
 }
 
 type PoolDatasetUnlockResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	DatasetId   types.String `tfsdk:"dataset_id"`
-	Options     types.String `tfsdk:"options"`
+	ID types.String `tfsdk:"id"`
+	DatasetId types.String `tfsdk:"dataset_id"`
+	Options types.String `tfsdk:"options"`
 	FileContent types.String `tfsdk:"file_content"`
 }
 
@@ -40,7 +40,7 @@ func (r *PoolDatasetUnlockResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: "Resource identifier",
 			},
 			"dataset_id": schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to unlock."},
-			"options":    schema.StringAttribute{Optional: true, MarkdownDescription: "Options for unlocking including force settings, recursion, and dataset-specific keys."},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for unlocking including force settings, recursion, and dataset-specific keys."},
 			"file_content": schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
@@ -72,9 +72,7 @@ func (r *PoolDatasetUnlockResource) Create(ctx context.Context, req resource.Cre
 	// Build parameters
 	params := make(map[string]interface{})
 	params["id"] = data.DatasetId.ValueString()
-	if !data.Options.IsNull() {
-		params["options"] = data.Options.ValueString()
-	}
+	if !data.Options.IsNull() { params["options"] = data.Options.ValueString() }
 
 	// Decode file content if provided
 	var fileContent []byte
@@ -114,7 +112,7 @@ func (r *PoolDatasetUnlockResource) Update(ctx context.Context, req resource.Upd
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
+	
 	// Get ID from state
 	var state PoolDatasetUnlockResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -126,9 +124,7 @@ func (r *PoolDatasetUnlockResource) Update(ctx context.Context, req resource.Upd
 	// Build parameters
 	params := make(map[string]interface{})
 	params["id"] = data.DatasetId.ValueString()
-	if !data.Options.IsNull() {
-		params["options"] = data.Options.ValueString()
-	}
+	if !data.Options.IsNull() { params["options"] = data.Options.ValueString() }
 
 	// Decode file content if provided
 	var fileContent []byte

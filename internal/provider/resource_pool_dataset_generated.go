@@ -2,17 +2,17 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"encoding/json"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
 )
 
 type PoolDatasetResource struct {
@@ -20,45 +20,45 @@ type PoolDatasetResource struct {
 }
 
 type PoolDatasetResourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	Name                  types.String `tfsdk:"name"`
-	Comments              types.String `tfsdk:"comments"`
-	Sync                  types.String `tfsdk:"sync"`
-	Snapdev               types.String `tfsdk:"snapdev"`
-	Compression           types.String `tfsdk:"compression"`
-	Exec                  types.String `tfsdk:"exec"`
-	Managedby             types.String `tfsdk:"managedby"`
-	QuotaWarning          types.Int64  `tfsdk:"quota_warning"`
-	QuotaCritical         types.Int64  `tfsdk:"quota_critical"`
-	RefquotaWarning       types.Int64  `tfsdk:"refquota_warning"`
-	RefquotaCritical      types.Int64  `tfsdk:"refquota_critical"`
-	Reservation           types.Int64  `tfsdk:"reservation"`
-	Refreservation        types.Int64  `tfsdk:"refreservation"`
-	SpecialSmallBlockSize types.Int64  `tfsdk:"special_small_block_size"`
-	Copies                types.Int64  `tfsdk:"copies"`
-	Snapdir               types.String `tfsdk:"snapdir"`
-	Deduplication         types.String `tfsdk:"deduplication"`
-	Checksum              types.String `tfsdk:"checksum"`
-	Readonly              types.String `tfsdk:"readonly"`
-	ShareType             types.String `tfsdk:"share_type"`
-	EncryptionOptions     types.String `tfsdk:"encryption_options"`
-	Encryption            types.Bool   `tfsdk:"encryption"`
-	InheritEncryption     types.Bool   `tfsdk:"inherit_encryption"`
-	UserProperties        types.List   `tfsdk:"user_properties"`
-	CreateAncestors       types.Bool   `tfsdk:"create_ancestors"`
-	Type                  types.String `tfsdk:"type"`
-	Aclmode               types.String `tfsdk:"aclmode"`
-	Acltype               types.String `tfsdk:"acltype"`
-	Atime                 types.String `tfsdk:"atime"`
-	Casesensitivity       types.String `tfsdk:"casesensitivity"`
-	Quota                 types.Int64  `tfsdk:"quota"`
-	Refquota              types.Int64  `tfsdk:"refquota"`
-	Recordsize            types.String `tfsdk:"recordsize"`
-	ForceSize             types.Bool   `tfsdk:"force_size"`
-	Sparse                types.Bool   `tfsdk:"sparse"`
-	Volsize               types.Int64  `tfsdk:"volsize"`
-	Volblocksize          types.String `tfsdk:"volblocksize"`
-	UserPropertiesUpdate  types.List   `tfsdk:"user_properties_update"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Comments types.String `tfsdk:"comments"`
+	Sync types.String `tfsdk:"sync"`
+	Snapdev types.String `tfsdk:"snapdev"`
+	Compression types.String `tfsdk:"compression"`
+	Exec types.String `tfsdk:"exec"`
+	Managedby types.String `tfsdk:"managedby"`
+	QuotaWarning types.Int64 `tfsdk:"quota_warning"`
+	QuotaCritical types.Int64 `tfsdk:"quota_critical"`
+	RefquotaWarning types.Int64 `tfsdk:"refquota_warning"`
+	RefquotaCritical types.Int64 `tfsdk:"refquota_critical"`
+	Reservation types.Int64 `tfsdk:"reservation"`
+	Refreservation types.Int64 `tfsdk:"refreservation"`
+	SpecialSmallBlockSize types.Int64 `tfsdk:"special_small_block_size"`
+	Copies types.Int64 `tfsdk:"copies"`
+	Snapdir types.String `tfsdk:"snapdir"`
+	Deduplication types.String `tfsdk:"deduplication"`
+	Checksum types.String `tfsdk:"checksum"`
+	Readonly types.String `tfsdk:"readonly"`
+	ShareType types.String `tfsdk:"share_type"`
+	EncryptionOptions types.String `tfsdk:"encryption_options"`
+	Encryption types.Bool `tfsdk:"encryption"`
+	InheritEncryption types.Bool `tfsdk:"inherit_encryption"`
+	UserProperties types.List `tfsdk:"user_properties"`
+	CreateAncestors types.Bool `tfsdk:"create_ancestors"`
+	Type types.String `tfsdk:"type"`
+	Aclmode types.String `tfsdk:"aclmode"`
+	Acltype types.String `tfsdk:"acltype"`
+	Atime types.String `tfsdk:"atime"`
+	Casesensitivity types.String `tfsdk:"casesensitivity"`
+	Quota types.Int64 `tfsdk:"quota"`
+	Refquota types.Int64 `tfsdk:"refquota"`
+	Recordsize types.String `tfsdk:"recordsize"`
+	ForceSize types.Bool `tfsdk:"force_size"`
+	Sparse types.Bool `tfsdk:"sparse"`
+	Volsize types.Int64 `tfsdk:"volsize"`
+	Volblocksize types.String `tfsdk:"volblocksize"`
+	UserPropertiesUpdate types.List `tfsdk:"user_properties_update"`
 }
 
 func NewPoolDatasetResource() resource.Resource {
@@ -79,202 +79,202 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "The name of the dataset to create.",
 			},
 			"comments": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Comments or description for the dataset.",
 			},
 			"sync": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Synchronous write behavior for the dataset.",
 			},
 			"snapdev": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Controls visibility of volume snapshots under /dev/zvol/.",
 			},
 			"compression": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Compression algorithm to use for the dataset. Higher numbered variants provide better compression   ",
 			},
 			"exec": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether files in this dataset can be executed.",
 			},
 			"managedby": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Identifies which service or system manages this dataset.",
 			},
 			"quota_warning": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Percentage of dataset quota at which to issue a warning. 0-100 or 'INHERIT'.",
 			},
 			"quota_critical": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Percentage of dataset quota at which to issue a critical alert. 0-100 or 'INHERIT'.",
 			},
 			"refquota_warning": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Percentage of reference quota at which to issue a warning. 0-100 or 'INHERIT'.",
 			},
 			"refquota_critical": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Percentage of reference quota at which to issue a critical alert. 0-100 or 'INHERIT'.",
 			},
 			"reservation": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Minimum disk space guaranteed to this dataset and its children in bytes.",
 			},
 			"refreservation": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Minimum disk space guaranteed to this dataset itself in bytes.",
 			},
 			"special_small_block_size": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Size threshold below which blocks are stored on special vdevs.",
 			},
 			"copies": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Number of copies of data blocks to maintain for redundancy.",
 			},
 			"snapdir": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Controls visibility of the `.zfs/snapshot` directory. 'DISABLED' hides snapshots, 'VISIBLE' shows th",
 			},
 			"deduplication": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Deduplication setting. 'ON' enables dedup, 'VERIFY' enables with checksum verification, 'OFF' disabl",
 			},
 			"checksum": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Checksum algorithm to verify data integrity. Higher security algorithms like SHA256 provide better  ",
 			},
 			"readonly": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether the dataset is read-only.",
 			},
 			"share_type": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Optimization type for the dataset based on its intended use.",
+				Required: false,
+				Optional: true,
+				Description: "Optimization type for the dataset based on its intended use.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"encryption_options": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Configuration for encryption of dataset for `name` pool.",
+				Required: false,
+				Optional: true,
+				Description: "Configuration for encryption of dataset for `name` pool.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"encryption": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Create a ZFS encrypted root dataset for `name` pool. There is 1 case where ZFS encryption is not all",
+				Required: false,
+				Optional: true,
+				Description: "Create a ZFS encrypted root dataset for `name` pool. There is 1 case where ZFS encryption is not all",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"inherit_encryption": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Whether to inherit encryption settings from the parent dataset.",
+				Required: false,
+				Optional: true,
+				Description: "Whether to inherit encryption settings from the parent dataset.",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"user_properties": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Custom user-defined properties to set on the dataset.",
 			},
 			"create_ancestors": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether to create any missing parent datasets.",
 			},
 			"type": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Type of dataset to create - volume (zvol).",
+				Required: false,
+				Optional: true,
+				Description: "Type of dataset to create - volume (zvol).",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"aclmode": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "How Access Control Lists are handled when chmod is used.",
 			},
 			"acltype": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "The type of Access Control List system to use.",
 			},
 			"atime": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether file access times are updated when files are accessed.",
 			},
 			"casesensitivity": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "File name case sensitivity setting.",
+				Required: false,
+				Optional: true,
+				Description: "File name case sensitivity setting.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"quota": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Maximum disk space this dataset and its children can consume in bytes.",
 			},
 			"refquota": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Maximum disk space this dataset itself can consume in bytes.",
 			},
 			"recordsize": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "The suggested block size for files in this filesystem dataset.",
 			},
 			"force_size": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Force creation even if the size is not optimal.",
 			},
 			"sparse": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Whether to use sparse (thin) provisioning for the volume.",
+				Required: false,
+				Optional: true,
+				Description: "Whether to use sparse (thin) provisioning for the volume.",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"volsize": schema.Int64Attribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "The volume size in bytes; supposed to be a multiple of the block size.",
 			},
 			"volblocksize": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Defaults to `128K` if the parent pool is a DRAID pool or `16K` otherwise.",
+				Required: false,
+				Optional: true,
+				Description: "Defaults to `128K` if the parent pool is a DRAID pool or `16K` otherwise.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"user_properties_update": schema.ListAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				ElementType: types.StringType,
 				Description: "Array of user property updates to apply to the dataset.",
 			},
@@ -463,6 +463,7 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id := data.ID.ValueString()
 	result, err = r.client.Call("pool.dataset.get_instance", id)
@@ -476,33 +477,33 @@ func (r *PoolDatasetResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["type"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Type = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -536,33 +537,33 @@ func (r *PoolDatasetResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["type"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Type = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -702,6 +703,47 @@ func (r *PoolDatasetResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("pool.dataset.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back pool_dataset: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["type"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Type = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

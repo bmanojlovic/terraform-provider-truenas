@@ -16,15 +16,15 @@ type FilesystemSetpermResource struct {
 }
 
 type FilesystemSetpermResourceModel struct {
-	Path             types.String `tfsdk:"path"`
-	Uid              types.Int64  `tfsdk:"uid"`
-	User             types.String `tfsdk:"user"`
-	Gid              types.Int64  `tfsdk:"gid"`
-	Group            types.String `tfsdk:"group"`
-	Mode             types.String `tfsdk:"mode"`
-	OptionsRecursive types.Bool   `tfsdk:"options_recursive"`
-	OptionsTraverse  types.Bool   `tfsdk:"options_traverse"`
-	OptionsStripacl  types.Bool   `tfsdk:"options_stripacl"`
+	Path types.String `tfsdk:"path"`
+	Uid types.Int64 `tfsdk:"uid"`
+	User types.String `tfsdk:"user"`
+	Gid types.Int64 `tfsdk:"gid"`
+	Group types.String `tfsdk:"group"`
+	Mode types.String `tfsdk:"mode"`
+	OptionsRecursive types.Bool `tfsdk:"options_recursive"`
+	OptionsTraverse types.Bool `tfsdk:"options_traverse"`
+	OptionsStripacl types.Bool `tfsdk:"options_stripacl"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -46,15 +46,15 @@ func (r *FilesystemSetpermResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Set unix permissions on given `path`.  If `mode` is specified then the mode will be applied to the path and files and subdirectories depending on which `options` are selected. Mode should be formatted",
 		Attributes: map[string]schema.Attribute{
-			"path":              schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify."},
-			"uid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged."},
-			"user":              schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged."},
-			"gid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged."},
-			"group":             schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged."},
-			"mode":              schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions to set (octal format). `null` to leave unchanged."},
+			"path": schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify."},
+			"uid": schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged."},
+			"user": schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged."},
+			"gid": schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged."},
+			"group": schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged."},
+			"mode": schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions to set (octal format). `null` to leave unchanged."},
 			"options_recursive": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to apply the operation recursively to subdirectories."},
-			"options_traverse":  schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem."},
-			"options_stripacl":  schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to remove existing Access Control Lists when setting permissions."},
+			"options_traverse": schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem."},
+			"options_stripacl": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to remove existing Access Control Lists when setting permissions."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -105,34 +105,16 @@ func (r *FilesystemSetpermResource) Create(ctx context.Context, req resource.Cre
 	// Build parameters
 	params := map[string]interface{}{}
 	params["path"] = data.Path.ValueString()
-	if !data.Uid.IsNull() && !data.Uid.IsUnknown() {
-		params["uid"] = data.Uid.ValueInt64()
-	}
-	if !data.User.IsNull() && !data.User.IsUnknown() {
-		params["user"] = data.User.ValueString()
-	}
-	if !data.Gid.IsNull() && !data.Gid.IsUnknown() {
-		params["gid"] = data.Gid.ValueInt64()
-	}
-	if !data.Group.IsNull() && !data.Group.IsUnknown() {
-		params["group"] = data.Group.ValueString()
-	}
-	if !data.Mode.IsNull() && !data.Mode.IsUnknown() {
-		params["mode"] = data.Mode.ValueString()
-	}
+	if !data.Uid.IsNull() && !data.Uid.IsUnknown() { params["uid"] = data.Uid.ValueInt64() }
+	if !data.User.IsNull() && !data.User.IsUnknown() { params["user"] = data.User.ValueString() }
+	if !data.Gid.IsNull() && !data.Gid.IsUnknown() { params["gid"] = data.Gid.ValueInt64() }
+	if !data.Group.IsNull() && !data.Group.IsUnknown() { params["group"] = data.Group.ValueString() }
+	if !data.Mode.IsNull() && !data.Mode.IsUnknown() { params["mode"] = data.Mode.ValueString() }
 	optionsOpts := map[string]interface{}{}
-	if !data.OptionsRecursive.IsNull() {
-		optionsOpts["recursive"] = data.OptionsRecursive.ValueBool()
-	}
-	if !data.OptionsTraverse.IsNull() {
-		optionsOpts["traverse"] = data.OptionsTraverse.ValueBool()
-	}
-	if !data.OptionsStripacl.IsNull() {
-		optionsOpts["stripacl"] = data.OptionsStripacl.ValueBool()
-	}
-	if len(optionsOpts) > 0 {
-		params["options"] = optionsOpts
-	}
+	if !data.OptionsRecursive.IsNull() { optionsOpts["recursive"] = data.OptionsRecursive.ValueBool() }
+	if !data.OptionsTraverse.IsNull() { optionsOpts["traverse"] = data.OptionsTraverse.ValueBool() }
+	if !data.OptionsStripacl.IsNull() { optionsOpts["stripacl"] = data.OptionsStripacl.ValueBool() }
+	if len(optionsOpts) > 0 { params["options"] = optionsOpts }
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -146,7 +128,7 @@ func (r *FilesystemSetpermResource) Create(ctx context.Context, req resource.Cre
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,12 +27,12 @@ type IscsiAuthsDataSourceModel struct {
 }
 
 type IscsiAuthsItemModel struct {
-	ID            types.String `tfsdk:"id"`
-	Tag           types.Int64  `tfsdk:"tag"`
-	User          types.String `tfsdk:"user"`
-	Secret        types.String `tfsdk:"secret"`
-	Peeruser      types.String `tfsdk:"peeruser"`
-	Peersecret    types.String `tfsdk:"peersecret"`
+	ID types.String `tfsdk:"id"`
+	Tag types.Int64 `tfsdk:"tag"`
+	User types.String `tfsdk:"user"`
+	Secret types.String `tfsdk:"secret"`
+	Peeruser types.String `tfsdk:"peeruser"`
+	Peersecret types.String `tfsdk:"peersecret"`
 	DiscoveryAuth types.String `tfsdk:"discovery_auth"`
 }
 
@@ -45,35 +45,35 @@ func (d *IscsiAuthsDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Query iscsi_auths",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of iscsi_auths resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"tag": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Numeric tag used to associate this credential with iSCSI targets.",
-						},
-						"user": schema.StringAttribute{
-							Computed:    true,
-							Description: "Username for iSCSI CHAP authentication.",
-						},
-						"secret": schema.StringAttribute{
-							Computed:    true,
-							Description: "Password/secret for iSCSI CHAP authentication.",
-						},
-						"peeruser": schema.StringAttribute{
-							Computed:    true,
-							Description: "Username for mutual CHAP authentication or empty string if not configured.",
-						},
-						"peersecret": schema.StringAttribute{
-							Computed:    true,
-							Description: "Password/secret for mutual CHAP authentication or empty string if not configured.",
-						},
-						"discovery_auth": schema.StringAttribute{
-							Computed:    true,
-							Description: "Authentication method for target discovery. If \"CHAP_MUTUAL\" is selected for target discovery, it is",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"tag": schema.Int64Attribute{
+				Computed: true,
+				Description: "Numeric tag used to associate this credential with iSCSI targets.",
+			},
+			"user": schema.StringAttribute{
+				Computed: true,
+				Description: "Username for iSCSI CHAP authentication.",
+			},
+			"secret": schema.StringAttribute{
+				Computed: true,
+				Description: "Password/secret for iSCSI CHAP authentication.",
+			},
+			"peeruser": schema.StringAttribute{
+				Computed: true,
+				Description: "Username for mutual CHAP authentication or empty string if not configured.",
+			},
+			"peersecret": schema.StringAttribute{
+				Computed: true,
+				Description: "Password/secret for mutual CHAP authentication or empty string if not configured.",
+			},
+			"discovery_auth": schema.StringAttribute{
+				Computed: true,
+				Description: "Authentication method for target discovery. If \"CHAP_MUTUAL\" is selected for target discovery, it is",
+			},
 					},
 				},
 			},
@@ -122,9 +122,7 @@ func (d *IscsiAuthsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["tag"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Tag = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Tag = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["user"]; ok && v != nil {
 			itemModel.User = types.StringValue(fmt.Sprintf("%v", v))
@@ -148,12 +146,12 @@ func (d *IscsiAuthsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"discovery_auth": types.StringType,
-			"id":             types.StringType,
-			"peersecret":     types.StringType,
-			"peeruser":       types.StringType,
-			"secret":         types.StringType,
-			"tag":            types.Int64Type,
-			"user":           types.StringType,
+			"id": types.StringType,
+			"peersecret": types.StringType,
+			"peeruser": types.StringType,
+			"secret": types.StringType,
+			"tag": types.Int64Type,
+			"user": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

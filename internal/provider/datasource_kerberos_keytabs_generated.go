@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,7 +27,7 @@ type KerberosKeytabsDataSourceModel struct {
 }
 
 type KerberosKeytabsItemModel struct {
-	ID   types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	File types.String `tfsdk:"file"`
 }
@@ -41,19 +41,19 @@ func (d *KerberosKeytabsDataSource) Schema(ctx context.Context, req datasource.S
 		Description: "Query kerberos_keytabs",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of kerberos_keytabs resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the ",
-						},
-						"file": schema.StringAttribute{
-							Computed:    true,
-							Description: "Base64 encoded kerberos keytab entries to append to the system keytab. ",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the ",
+			},
+			"file": schema.StringAttribute{
+				Computed: true,
+				Description: "Base64 encoded kerberos keytab entries to append to the system keytab. ",
+			},
 					},
 				},
 			},
@@ -114,7 +114,7 @@ func (d *KerberosKeytabsDataSource) Read(ctx context.Context, req datasource.Rea
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"file": types.StringType,
-			"id":   types.StringType,
+			"id": types.StringType,
 			"name": types.StringType,
 		},
 	}, items)

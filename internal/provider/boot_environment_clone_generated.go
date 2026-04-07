@@ -16,7 +16,7 @@ type BootEnvironmentCloneResource struct {
 }
 
 type BootEnvironmentCloneResourceModel struct {
-	ID     types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Target types.String `tfsdk:"target"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *BootEnvironmentCloneResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute boot.environment.clone",
 		Attributes: map[string]schema.Attribute{
-			"id":     schema.StringAttribute{Required: true, MarkdownDescription: "Name of the existing boot environment to clone from."},
+			"id": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the existing boot environment to clone from."},
 			"target": schema.StringAttribute{Required: true, MarkdownDescription: "Name for the new cloned boot environment."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -105,7 +105,7 @@ func (r *BootEnvironmentCloneResource) Create(ctx context.Context, req resource.
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

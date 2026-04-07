@@ -3,15 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+"strconv"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type ApiKeyResource struct {
@@ -19,11 +19,11 @@ type ApiKeyResource struct {
 }
 
 type ApiKeyResourceModel struct {
-	ID        types.String `tfsdk:"id"`
-	Name      types.String `tfsdk:"name"`
-	Username  types.String `tfsdk:"username"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Username types.String `tfsdk:"username"`
 	ExpiresAt types.String `tfsdk:"expires_at"`
-	Reset     types.Bool   `tfsdk:"reset"`
+	Reset types.Bool `tfsdk:"reset"`
 }
 
 func NewApiKeyResource() resource.Resource {
@@ -44,24 +44,24 @@ func (r *ApiKeyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Human-readable name for the API key.",
 			},
 			"username": schema.StringAttribute{
-				Required:      true,
-				Optional:      false,
-				Description:   "",
+				Required: true,
+				Optional: false,
+				Description: "",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"expires_at": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Expiration timestamp for the API key or `null` for no expiration.",
 			},
 			"reset": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
+				Optional: true,
+				Computed: true,
 				Description: "Whether to regenerate a new API key value for this entry.",
 			},
 		},
@@ -120,6 +120,7 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -137,37 +138,37 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["expires_at"]; ok {
-		if v == nil {
-			data.ExpiresAt = types.StringNull()
-		} else {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
-				data.ExpiresAt = types.StringValue(val)
+				data.Name = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
+		if v, ok := resultMap["expires_at"]; ok {
+			if v == nil {
+				data.ExpiresAt = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ExpiresAt = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -205,37 +206,37 @@ func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["expires_at"]; ok {
-		if v == nil {
-			data.ExpiresAt = types.StringNull()
-		} else {
+		if v, ok := resultMap["name"]; ok {
 			switch val := v.(type) {
 			case string:
-				data.ExpiresAt = types.StringValue(val)
+				data.Name = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-	}
+		if v, ok := resultMap["expires_at"]; ok {
+			if v == nil {
+				data.ExpiresAt = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ExpiresAt = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -279,6 +280,51 @@ func (r *ApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("api_key.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back api_key: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["expires_at"]; ok {
+			if v == nil {
+				data.ExpiresAt = types.StringNull()
+			} else {
+				switch val := v.(type) {
+				case string:
+					data.ExpiresAt = types.StringValue(val)
+				case map[string]interface{}:
+					if strVal, ok := val["value"]; ok && strVal != nil {
+						data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", strVal))
+					}
+				default:
+					data.ExpiresAt = types.StringValue(fmt.Sprintf("%v", v))
+				}
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

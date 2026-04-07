@@ -16,7 +16,7 @@ type Cloud_BackupDelete_SnapshotResource struct {
 }
 
 type Cloud_BackupDelete_SnapshotResourceModel struct {
-	ID         types.Int64  `tfsdk:"id"`
+	ID types.Int64 `tfsdk:"id"`
 	SnapshotId types.String `tfsdk:"snapshot_id"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *Cloud_BackupDelete_SnapshotResource) Schema(ctx context.Context, req re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Delete snapshot `snapshot_id` created by the cloud backup job `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":          schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID."},
 			"snapshot_id": schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to delete."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -104,7 +104,7 @@ func (r *Cloud_BackupDelete_SnapshotResource) Create(ctx context.Context, req re
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

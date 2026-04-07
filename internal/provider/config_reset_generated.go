@@ -88,9 +88,7 @@ func (r *ConfigResetResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Reboot.IsNull() && !data.Reboot.IsUnknown() {
-		params["reboot"] = data.Reboot.ValueBool()
-	}
+	if !data.Reboot.IsNull() && !data.Reboot.IsUnknown() { params["reboot"] = data.Reboot.ValueBool() }
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -104,7 +102,7 @@ func (r *ConfigResetResource) Create(ctx context.Context, req resource.CreateReq
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

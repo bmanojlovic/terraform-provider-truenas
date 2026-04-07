@@ -88,9 +88,7 @@ func (r *SystemGeneralUi_RestartResource) Create(ctx context.Context, req resour
 
 	// Build parameters
 	paramsArr := []interface{}{}
-	if !data.Delay.IsNull() {
-		paramsArr = append(paramsArr, data.Delay.ValueInt64())
-	}
+	if !data.Delay.IsNull() { paramsArr = append(paramsArr, data.Delay.ValueInt64()) }
 
 	// Execute action
 	result, err := r.client.Call("system.general.ui_restart", paramsArr)
@@ -103,7 +101,7 @@ func (r *SystemGeneralUi_RestartResource) Create(ctx context.Context, req resour
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type PrivilegesDataSourceModel struct {
 }
 
 type PrivilegesItemModel struct {
-	ID          types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	BuiltinName types.String `tfsdk:"builtin_name"`
-	Name        types.String `tfsdk:"name"`
-	WebShell    types.Bool   `tfsdk:"web_shell"`
+	Name types.String `tfsdk:"name"`
+	WebShell types.Bool `tfsdk:"web_shell"`
 }
 
 func (d *PrivilegesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,23 +42,23 @@ func (d *PrivilegesDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Query privileges",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of privileges resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"builtin_name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Name of the built-in privilege if this is a system privilege. `null` for custom privileges.",
-						},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Display name of the privilege.",
-						},
-						"web_shell": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether this privilege grants access to the web shell.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"builtin_name": schema.StringAttribute{
+				Computed: true,
+				Description: "Name of the built-in privilege if this is a system privilege. `null` for custom privileges.",
+			},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Display name of the privilege.",
+			},
+			"web_shell": schema.BoolAttribute{
+				Computed: true,
+				Description: "Whether this privilege grants access to the web shell.",
+			},
 					},
 				},
 			},
@@ -113,9 +113,7 @@ func (d *PrivilegesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			itemModel.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["web_shell"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.WebShell = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.WebShell = types.BoolValue(bv) }
 		}
 		items = append(items, itemModel)
 	}
@@ -124,9 +122,9 @@ func (d *PrivilegesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"builtin_name": types.StringType,
-			"id":           types.StringType,
-			"name":         types.StringType,
-			"web_shell":    types.BoolType,
+			"id": types.StringType,
+			"name": types.StringType,
+			"web_shell": types.BoolType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

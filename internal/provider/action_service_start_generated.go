@@ -94,9 +94,7 @@ func (r *ActionServiceStartResource) Create(ctx context.Context, req resource.Cr
 	params = append(params, data.Service.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
-			params = append(params, optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
 	}
 
 	// Execute action
@@ -110,7 +108,7 @@ func (r *ActionServiceStartResource) Create(ctx context.Context, req resource.Cr
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

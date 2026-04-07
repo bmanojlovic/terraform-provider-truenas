@@ -17,8 +17,8 @@ type ActionCoreBulkResource struct {
 }
 
 type ActionCoreBulkResourceModel struct {
-	Method      types.String `tfsdk:"method"`
-	Params      types.String `tfsdk:"params"`
+	Method types.String `tfsdk:"method"`
+	Params types.String `tfsdk:"params"`
 	Description types.String `tfsdk:"description"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -41,8 +41,8 @@ func (r *ActionCoreBulkResource) Schema(ctx context.Context, req resource.Schema
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Will sequentially call `method` with arguments from the `params` list. For example, running      call(\"core.bulk\", \"zfs.snapshot.delete\", [[\"tank@snap-1\", true], [\"tank@snap-2\", false]])  will",
 		Attributes: map[string]schema.Attribute{
-			"method":      schema.StringAttribute{Required: true, MarkdownDescription: "Method name to execute for each parameter set."},
-			"params":      schema.StringAttribute{Required: true, MarkdownDescription: "Array of parameter arrays, each representing one method call."},
+			"method": schema.StringAttribute{Required: true, MarkdownDescription: "Method name to execute for each parameter set."},
+			"params": schema.StringAttribute{Required: true, MarkdownDescription: "Array of parameter arrays, each representing one method call."},
 			"description": schema.StringAttribute{Optional: true, MarkdownDescription: "Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\")."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -95,12 +95,8 @@ func (r *ActionCoreBulkResource) Create(ctx context.Context, req resource.Create
 	params := []interface{}{}
 	params = append(params, data.Method.ValueString())
 	var paramsVal interface{}
-	if err := json.Unmarshal([]byte(data.Params.ValueString()), &paramsVal); err == nil {
-		params = append(params, paramsVal)
-	}
-	if !data.Description.IsNull() {
-		params = append(params, data.Description.ValueString())
-	}
+	if err := json.Unmarshal([]byte(data.Params.ValueString()), &paramsVal); err == nil { params = append(params, paramsVal) }
+	if !data.Description.IsNull() { params = append(params, data.Description.ValueString()) }
 
 	// Execute action
 	result, err := r.client.Call("core.bulk", params)
@@ -113,7 +109,7 @@ func (r *ActionCoreBulkResource) Create(ctx context.Context, req resource.Create
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

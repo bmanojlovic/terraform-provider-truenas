@@ -16,8 +16,8 @@ type CronjobRunResource struct {
 }
 
 type CronjobRunResourceModel struct {
-	ID           types.Int64 `tfsdk:"id"`
-	SkipDisabled types.Bool  `tfsdk:"skip_disabled"`
+	ID types.Int64 `tfsdk:"id"`
+	SkipDisabled types.Bool `tfsdk:"skip_disabled"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,7 @@ func (r *CronjobRunResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Job to run cronjob task of `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":            schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cron job to run immediately."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cron job to run immediately."},
 			"skip_disabled": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to skip execution if the cron job is disabled."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,9 +91,7 @@ func (r *CronjobRunResource) Create(ctx context.Context, req resource.CreateRequ
 	// Build parameters
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.ID.ValueInt64())
-	if !data.SkipDisabled.IsNull() {
-		paramsArr = append(paramsArr, data.SkipDisabled.ValueBool())
-	}
+	if !data.SkipDisabled.IsNull() { paramsArr = append(paramsArr, data.SkipDisabled.ValueBool()) }
 
 	// Execute action
 	result, err := r.client.Call("cronjob.run", paramsArr)
@@ -106,7 +104,7 @@ func (r *CronjobRunResource) Create(ctx context.Context, req resource.CreateRequ
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

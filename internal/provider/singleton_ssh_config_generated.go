@@ -16,14 +16,14 @@ type SshConfigResource struct {
 }
 
 type SshConfigResourceModel struct {
-	Tcpport         types.Int64  `tfsdk:"tcpport"`
-	Passwordauth    types.Bool   `tfsdk:"passwordauth"`
-	Kerberosauth    types.Bool   `tfsdk:"kerberosauth"`
-	Tcpfwd          types.Bool   `tfsdk:"tcpfwd"`
-	Compression     types.Bool   `tfsdk:"compression"`
-	SftpLogLevel    types.String `tfsdk:"sftp_log_level"`
+	Tcpport types.Int64 `tfsdk:"tcpport"`
+	Passwordauth types.Bool `tfsdk:"passwordauth"`
+	Kerberosauth types.Bool `tfsdk:"kerberosauth"`
+	Tcpfwd types.Bool `tfsdk:"tcpfwd"`
+	Compression types.Bool `tfsdk:"compression"`
+	SftpLogLevel types.String `tfsdk:"sftp_log_level"`
 	SftpLogFacility types.String `tfsdk:"sftp_log_facility"`
-	Options         types.String `tfsdk:"options"`
+	Options types.String `tfsdk:"options"`
 }
 
 func NewSshConfigResource() resource.Resource {
@@ -38,14 +38,14 @@ func (r *SshConfigResource) Schema(ctx context.Context, req resource.SchemaReque
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "SSH service configuration",
 		Attributes: map[string]schema.Attribute{
-			"tcpport":           schema.Int64Attribute{Optional: true, Computed: true, MarkdownDescription: "TCP port number for SSH connections."},
-			"passwordauth":      schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether password authentication is enabled."},
-			"kerberosauth":      schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether Kerberos authentication is enabled."},
-			"tcpfwd":            schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether TCP forwarding is enabled."},
-			"compression":       schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether compression is enabled for SSH connections."},
-			"sftp_log_level":    schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: "Logging level for SFTP subsystem (empty string means default)."},
+			"tcpport": schema.Int64Attribute{Optional: true, Computed: true, MarkdownDescription: "TCP port number for SSH connections."},
+			"passwordauth": schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether password authentication is enabled."},
+			"kerberosauth": schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether Kerberos authentication is enabled."},
+			"tcpfwd": schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether TCP forwarding is enabled."},
+			"compression": schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Whether compression is enabled for SSH connections."},
+			"sftp_log_level": schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: "Logging level for SFTP subsystem (empty string means default)."},
 			"sftp_log_facility": schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: "Syslog facility for SFTP logging (empty string means default)."},
-			"options":           schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: "Additional SSH daemon configuration options."},
+			"options": schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: "Additional SSH daemon configuration options."},
 		},
 	}
 }
@@ -71,30 +71,14 @@ func (r *SshConfigResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Build update parameters
 	params := map[string]interface{}{}
-	if !data.Tcpport.IsNull() && !data.Tcpport.IsUnknown() {
-		params["tcpport"] = data.Tcpport.ValueInt64()
-	}
-	if !data.Passwordauth.IsNull() && !data.Passwordauth.IsUnknown() {
-		params["passwordauth"] = data.Passwordauth.ValueBool()
-	}
-	if !data.Kerberosauth.IsNull() && !data.Kerberosauth.IsUnknown() {
-		params["kerberosauth"] = data.Kerberosauth.ValueBool()
-	}
-	if !data.Tcpfwd.IsNull() && !data.Tcpfwd.IsUnknown() {
-		params["tcpfwd"] = data.Tcpfwd.ValueBool()
-	}
-	if !data.Compression.IsNull() && !data.Compression.IsUnknown() {
-		params["compression"] = data.Compression.ValueBool()
-	}
-	if !data.SftpLogLevel.IsNull() && !data.SftpLogLevel.IsUnknown() {
-		params["sftp_log_level"] = data.SftpLogLevel.ValueString()
-	}
-	if !data.SftpLogFacility.IsNull() && !data.SftpLogFacility.IsUnknown() {
-		params["sftp_log_facility"] = data.SftpLogFacility.ValueString()
-	}
-	if !data.Options.IsNull() && !data.Options.IsUnknown() {
-		params["options"] = data.Options.ValueString()
-	}
+	if !data.Tcpport.IsNull() && !data.Tcpport.IsUnknown() { params["tcpport"] = data.Tcpport.ValueInt64() }
+	if !data.Passwordauth.IsNull() && !data.Passwordauth.IsUnknown() { params["passwordauth"] = data.Passwordauth.ValueBool() }
+	if !data.Kerberosauth.IsNull() && !data.Kerberosauth.IsUnknown() { params["kerberosauth"] = data.Kerberosauth.ValueBool() }
+	if !data.Tcpfwd.IsNull() && !data.Tcpfwd.IsUnknown() { params["tcpfwd"] = data.Tcpfwd.ValueBool() }
+	if !data.Compression.IsNull() && !data.Compression.IsUnknown() { params["compression"] = data.Compression.ValueBool() }
+	if !data.SftpLogLevel.IsNull() && !data.SftpLogLevel.IsUnknown() { params["sftp_log_level"] = data.SftpLogLevel.ValueString() }
+	if !data.SftpLogFacility.IsNull() && !data.SftpLogFacility.IsUnknown() { params["sftp_log_facility"] = data.SftpLogFacility.ValueString() }
+	if !data.Options.IsNull() && !data.Options.IsUnknown() { params["options"] = data.Options.ValueString() }
 	paramsArr := []interface{}{params}
 
 	// Apply configuration
@@ -111,74 +95,14 @@ func (r *SshConfigResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 	if m, ok := result.(map[string]interface{}); ok {
-		if v, ok := m["tcpport"]; ok {
-			if v == nil {
-				data.Tcpport = types.Int64Null()
-			} else if f, ok := v.(float64); ok {
-				data.Tcpport = types.Int64Value(int64(f))
-			}
-		}
-		if v, ok := m["passwordauth"]; ok {
-			if v == nil {
-				data.Passwordauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Passwordauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["kerberosauth"]; ok {
-			if v == nil {
-				data.Kerberosauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Kerberosauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["tcpfwd"]; ok {
-			if v == nil {
-				data.Tcpfwd = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Tcpfwd = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["compression"]; ok {
-			if v == nil {
-				data.Compression = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Compression = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["sftp_log_level"]; ok {
-			if v == nil {
-				data.SftpLogLevel = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogLevel = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogLevel = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["sftp_log_facility"]; ok {
-			if v == nil {
-				data.SftpLogFacility = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogFacility = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogFacility = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["options"]; ok {
-			if v == nil {
-				data.Options = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.Options = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.Options = types.StringValue(string(j))
-				}
-			}
-		}
+		if v, ok := m["tcpport"]; ok { if v == nil { data.Tcpport = types.Int64Null() } else if f, ok := v.(float64); ok { data.Tcpport = types.Int64Value(int64(f)) } }
+		if v, ok := m["passwordauth"]; ok { if v == nil { data.Passwordauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Passwordauth = types.BoolValue(b) } }
+		if v, ok := m["kerberosauth"]; ok { if v == nil { data.Kerberosauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Kerberosauth = types.BoolValue(b) } }
+		if v, ok := m["tcpfwd"]; ok { if v == nil { data.Tcpfwd = types.BoolNull() } else if b, ok := v.(bool); ok { data.Tcpfwd = types.BoolValue(b) } }
+		if v, ok := m["compression"]; ok { if v == nil { data.Compression = types.BoolNull() } else if b, ok := v.(bool); ok { data.Compression = types.BoolValue(b) } }
+		if v, ok := m["sftp_log_level"]; ok { if v == nil { data.SftpLogLevel = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogLevel = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogLevel = types.StringValue(string(j)) } } }
+		if v, ok := m["sftp_log_facility"]; ok { if v == nil { data.SftpLogFacility = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogFacility = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogFacility = types.StringValue(string(j)) } } }
+		if v, ok := m["options"]; ok { if v == nil { data.Options = types.StringNull() } else if s, ok := v.(string); ok { data.Options = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.Options = types.StringValue(string(j)) } } }
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -200,74 +124,14 @@ func (r *SshConfigResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	// Map result to state
 	if m, ok := result.(map[string]interface{}); ok {
-		if v, ok := m["tcpport"]; ok {
-			if v == nil {
-				data.Tcpport = types.Int64Null()
-			} else if f, ok := v.(float64); ok {
-				data.Tcpport = types.Int64Value(int64(f))
-			}
-		}
-		if v, ok := m["passwordauth"]; ok {
-			if v == nil {
-				data.Passwordauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Passwordauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["kerberosauth"]; ok {
-			if v == nil {
-				data.Kerberosauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Kerberosauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["tcpfwd"]; ok {
-			if v == nil {
-				data.Tcpfwd = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Tcpfwd = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["compression"]; ok {
-			if v == nil {
-				data.Compression = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Compression = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["sftp_log_level"]; ok {
-			if v == nil {
-				data.SftpLogLevel = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogLevel = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogLevel = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["sftp_log_facility"]; ok {
-			if v == nil {
-				data.SftpLogFacility = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogFacility = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogFacility = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["options"]; ok {
-			if v == nil {
-				data.Options = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.Options = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.Options = types.StringValue(string(j))
-				}
-			}
-		}
+		if v, ok := m["tcpport"]; ok { if v == nil { data.Tcpport = types.Int64Null() } else if f, ok := v.(float64); ok { data.Tcpport = types.Int64Value(int64(f)) } }
+		if v, ok := m["passwordauth"]; ok { if v == nil { data.Passwordauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Passwordauth = types.BoolValue(b) } }
+		if v, ok := m["kerberosauth"]; ok { if v == nil { data.Kerberosauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Kerberosauth = types.BoolValue(b) } }
+		if v, ok := m["tcpfwd"]; ok { if v == nil { data.Tcpfwd = types.BoolNull() } else if b, ok := v.(bool); ok { data.Tcpfwd = types.BoolValue(b) } }
+		if v, ok := m["compression"]; ok { if v == nil { data.Compression = types.BoolNull() } else if b, ok := v.(bool); ok { data.Compression = types.BoolValue(b) } }
+		if v, ok := m["sftp_log_level"]; ok { if v == nil { data.SftpLogLevel = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogLevel = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogLevel = types.StringValue(string(j)) } } }
+		if v, ok := m["sftp_log_facility"]; ok { if v == nil { data.SftpLogFacility = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogFacility = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogFacility = types.StringValue(string(j)) } } }
+		if v, ok := m["options"]; ok { if v == nil { data.Options = types.StringNull() } else if s, ok := v.(string); ok { data.Options = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.Options = types.StringValue(string(j)) } } }
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -282,30 +146,14 @@ func (r *SshConfigResource) Update(ctx context.Context, req resource.UpdateReque
 
 	// Build update parameters
 	params := map[string]interface{}{}
-	if !data.Tcpport.IsNull() && !data.Tcpport.IsUnknown() {
-		params["tcpport"] = data.Tcpport.ValueInt64()
-	}
-	if !data.Passwordauth.IsNull() && !data.Passwordauth.IsUnknown() {
-		params["passwordauth"] = data.Passwordauth.ValueBool()
-	}
-	if !data.Kerberosauth.IsNull() && !data.Kerberosauth.IsUnknown() {
-		params["kerberosauth"] = data.Kerberosauth.ValueBool()
-	}
-	if !data.Tcpfwd.IsNull() && !data.Tcpfwd.IsUnknown() {
-		params["tcpfwd"] = data.Tcpfwd.ValueBool()
-	}
-	if !data.Compression.IsNull() && !data.Compression.IsUnknown() {
-		params["compression"] = data.Compression.ValueBool()
-	}
-	if !data.SftpLogLevel.IsNull() && !data.SftpLogLevel.IsUnknown() {
-		params["sftp_log_level"] = data.SftpLogLevel.ValueString()
-	}
-	if !data.SftpLogFacility.IsNull() && !data.SftpLogFacility.IsUnknown() {
-		params["sftp_log_facility"] = data.SftpLogFacility.ValueString()
-	}
-	if !data.Options.IsNull() && !data.Options.IsUnknown() {
-		params["options"] = data.Options.ValueString()
-	}
+	if !data.Tcpport.IsNull() && !data.Tcpport.IsUnknown() { params["tcpport"] = data.Tcpport.ValueInt64() }
+	if !data.Passwordauth.IsNull() && !data.Passwordauth.IsUnknown() { params["passwordauth"] = data.Passwordauth.ValueBool() }
+	if !data.Kerberosauth.IsNull() && !data.Kerberosauth.IsUnknown() { params["kerberosauth"] = data.Kerberosauth.ValueBool() }
+	if !data.Tcpfwd.IsNull() && !data.Tcpfwd.IsUnknown() { params["tcpfwd"] = data.Tcpfwd.ValueBool() }
+	if !data.Compression.IsNull() && !data.Compression.IsUnknown() { params["compression"] = data.Compression.ValueBool() }
+	if !data.SftpLogLevel.IsNull() && !data.SftpLogLevel.IsUnknown() { params["sftp_log_level"] = data.SftpLogLevel.ValueString() }
+	if !data.SftpLogFacility.IsNull() && !data.SftpLogFacility.IsUnknown() { params["sftp_log_facility"] = data.SftpLogFacility.ValueString() }
+	if !data.Options.IsNull() && !data.Options.IsUnknown() { params["options"] = data.Options.ValueString() }
 	paramsArr := []interface{}{params}
 
 	// Apply configuration
@@ -322,74 +170,14 @@ func (r *SshConfigResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 	if m, ok := result.(map[string]interface{}); ok {
-		if v, ok := m["tcpport"]; ok {
-			if v == nil {
-				data.Tcpport = types.Int64Null()
-			} else if f, ok := v.(float64); ok {
-				data.Tcpport = types.Int64Value(int64(f))
-			}
-		}
-		if v, ok := m["passwordauth"]; ok {
-			if v == nil {
-				data.Passwordauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Passwordauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["kerberosauth"]; ok {
-			if v == nil {
-				data.Kerberosauth = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Kerberosauth = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["tcpfwd"]; ok {
-			if v == nil {
-				data.Tcpfwd = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Tcpfwd = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["compression"]; ok {
-			if v == nil {
-				data.Compression = types.BoolNull()
-			} else if b, ok := v.(bool); ok {
-				data.Compression = types.BoolValue(b)
-			}
-		}
-		if v, ok := m["sftp_log_level"]; ok {
-			if v == nil {
-				data.SftpLogLevel = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogLevel = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogLevel = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["sftp_log_facility"]; ok {
-			if v == nil {
-				data.SftpLogFacility = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.SftpLogFacility = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.SftpLogFacility = types.StringValue(string(j))
-				}
-			}
-		}
-		if v, ok := m["options"]; ok {
-			if v == nil {
-				data.Options = types.StringNull()
-			} else if s, ok := v.(string); ok {
-				data.Options = types.StringValue(s)
-			} else {
-				if j, e := json.Marshal(v); e == nil {
-					data.Options = types.StringValue(string(j))
-				}
-			}
-		}
+		if v, ok := m["tcpport"]; ok { if v == nil { data.Tcpport = types.Int64Null() } else if f, ok := v.(float64); ok { data.Tcpport = types.Int64Value(int64(f)) } }
+		if v, ok := m["passwordauth"]; ok { if v == nil { data.Passwordauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Passwordauth = types.BoolValue(b) } }
+		if v, ok := m["kerberosauth"]; ok { if v == nil { data.Kerberosauth = types.BoolNull() } else if b, ok := v.(bool); ok { data.Kerberosauth = types.BoolValue(b) } }
+		if v, ok := m["tcpfwd"]; ok { if v == nil { data.Tcpfwd = types.BoolNull() } else if b, ok := v.(bool); ok { data.Tcpfwd = types.BoolValue(b) } }
+		if v, ok := m["compression"]; ok { if v == nil { data.Compression = types.BoolNull() } else if b, ok := v.(bool); ok { data.Compression = types.BoolValue(b) } }
+		if v, ok := m["sftp_log_level"]; ok { if v == nil { data.SftpLogLevel = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogLevel = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogLevel = types.StringValue(string(j)) } } }
+		if v, ok := m["sftp_log_facility"]; ok { if v == nil { data.SftpLogFacility = types.StringNull() } else if s, ok := v.(string); ok { data.SftpLogFacility = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.SftpLogFacility = types.StringValue(string(j)) } } }
+		if v, ok := m["options"]; ok { if v == nil { data.Options = types.StringNull() } else if s, ok := v.(string); ok { data.Options = types.StringValue(s) } else { if j, e := json.Marshal(v); e == nil { data.Options = types.StringValue(string(j)) } } }
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

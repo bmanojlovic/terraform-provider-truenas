@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,8 +27,8 @@ type NvmetHostSubsyssDataSourceModel struct {
 }
 
 type NvmetHostSubsyssItemModel struct {
-	ID     types.String `tfsdk:"id"`
-	Host   types.String `tfsdk:"host"`
+	ID types.String `tfsdk:"id"`
+	Host types.String `tfsdk:"host"`
 	Subsys types.String `tfsdk:"subsys"`
 }
 
@@ -41,19 +41,19 @@ func (d *NvmetHostSubsyssDataSource) Schema(ctx context.Context, req datasource.
 		Description: "Query nvmet_host_subsyss",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of nvmet_host_subsyss resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"host": schema.StringAttribute{
-							Computed:    true,
-							Description: "NVMe-oF host that is authorized to access the subsystem.",
-						},
-						"subsys": schema.StringAttribute{
-							Computed:    true,
-							Description: "NVMe-oF subsystem that the host is authorized to access.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"host": schema.StringAttribute{
+				Computed: true,
+				Description: "NVMe-oF host that is authorized to access the subsystem.",
+			},
+			"subsys": schema.StringAttribute{
+				Computed: true,
+				Description: "NVMe-oF subsystem that the host is authorized to access.",
+			},
 					},
 				},
 			},
@@ -113,8 +113,8 @@ func (d *NvmetHostSubsyssDataSource) Read(ctx context.Context, req datasource.Re
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"host":   types.StringType,
-			"id":     types.StringType,
+			"host": types.StringType,
+			"id": types.StringType,
 			"subsys": types.StringType,
 		},
 	}, items)

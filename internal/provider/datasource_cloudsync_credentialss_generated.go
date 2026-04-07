@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,7 +27,7 @@ type CloudsyncCredentialssDataSourceModel struct {
 }
 
 type CloudsyncCredentialssItemModel struct {
-	ID   types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
@@ -40,15 +40,15 @@ func (d *CloudsyncCredentialssDataSource) Schema(ctx context.Context, req dataso
 		Description: "Query cloudsync_credentialss",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of cloudsync_credentialss resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Human-readable name for the cloud credential.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Human-readable name for the cloud credential.",
+			},
 					},
 				},
 			},
@@ -105,7 +105,7 @@ func (d *CloudsyncCredentialssDataSource) Read(ctx context.Context, req datasour
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"id":   types.StringType,
+			"id": types.StringType,
 			"name": types.StringType,
 		},
 	}, items)

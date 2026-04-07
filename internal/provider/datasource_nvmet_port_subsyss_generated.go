@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,8 +27,8 @@ type NvmetPortSubsyssDataSourceModel struct {
 }
 
 type NvmetPortSubsyssItemModel struct {
-	ID     types.String `tfsdk:"id"`
-	Port   types.String `tfsdk:"port"`
+	ID types.String `tfsdk:"id"`
+	Port types.String `tfsdk:"port"`
 	Subsys types.String `tfsdk:"subsys"`
 }
 
@@ -41,19 +41,19 @@ func (d *NvmetPortSubsyssDataSource) Schema(ctx context.Context, req datasource.
 		Description: "Query nvmet_port_subsyss",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of nvmet_port_subsyss resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"port": schema.StringAttribute{
-							Computed:    true,
-							Description: "NVMe-oF port that provides access to the subsystem.",
-						},
-						"subsys": schema.StringAttribute{
-							Computed:    true,
-							Description: "NVMe-oF subsystem that is accessible through the port.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"port": schema.StringAttribute{
+				Computed: true,
+				Description: "NVMe-oF port that provides access to the subsystem.",
+			},
+			"subsys": schema.StringAttribute{
+				Computed: true,
+				Description: "NVMe-oF subsystem that is accessible through the port.",
+			},
 					},
 				},
 			},
@@ -113,8 +113,8 @@ func (d *NvmetPortSubsyssDataSource) Read(ctx context.Context, req datasource.Re
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"id":     types.StringType,
-			"port":   types.StringType,
+			"id": types.StringType,
+			"port": types.StringType,
 			"subsys": types.StringType,
 		},
 	}, items)

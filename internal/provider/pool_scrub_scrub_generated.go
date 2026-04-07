@@ -16,7 +16,7 @@ type PoolScrubScrubResource struct {
 }
 
 type PoolScrubScrubResourceModel struct {
-	Name   types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 	Action types.String `tfsdk:"action"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *PoolScrubScrubResource) Schema(ctx context.Context, req resource.Schema
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Start/Stop/Pause a scrub on pool `name`.",
 		Attributes: map[string]schema.Attribute{
-			"name":   schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to perform scrub action on."},
+			"name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to perform scrub action on."},
 			"action": schema.StringAttribute{Optional: true, MarkdownDescription: "The scrub action to perform on the pool."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,9 +91,7 @@ func (r *PoolScrubScrubResource) Create(ctx context.Context, req resource.Create
 	// Build parameters
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.Name.ValueString())
-	if !data.Action.IsNull() {
-		paramsArr = append(paramsArr, data.Action.ValueString())
-	}
+	if !data.Action.IsNull() { paramsArr = append(paramsArr, data.Action.ValueString()) }
 
 	// Execute action
 	result, err := r.client.Call("pool.scrub.scrub", paramsArr)
@@ -106,7 +104,7 @@ func (r *PoolScrubScrubResource) Create(ctx context.Context, req resource.Create
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

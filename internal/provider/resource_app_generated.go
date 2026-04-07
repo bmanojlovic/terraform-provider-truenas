@@ -2,18 +2,18 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"encoding/json"
+	"time"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
-	"time"
 )
 
 type AppResource struct {
@@ -21,15 +21,15 @@ type AppResource struct {
 }
 
 type AppResourceModel struct {
-	ID                        types.String `tfsdk:"id"`
-	CustomApp                 types.Bool   `tfsdk:"custom_app"`
-	Values                    types.String `tfsdk:"values"`
-	CustomComposeConfig       types.String `tfsdk:"custom_compose_config"`
+	ID types.String `tfsdk:"id"`
+	CustomApp types.Bool `tfsdk:"custom_app"`
+	Values types.String `tfsdk:"values"`
+	CustomComposeConfig types.String `tfsdk:"custom_compose_config"`
 	CustomComposeConfigString types.String `tfsdk:"custom_compose_config_string"`
-	CatalogApp                types.String `tfsdk:"catalog_app"`
-	AppName                   types.String `tfsdk:"app_name"`
-	Train                     types.String `tfsdk:"train"`
-	Version                   types.String `tfsdk:"version"`
+	CatalogApp types.String `tfsdk:"catalog_app"`
+	AppName types.String `tfsdk:"app_name"`
+	Train types.String `tfsdk:"train"`
+	Version types.String `tfsdk:"version"`
 }
 
 func NewAppResource() resource.Resource {
@@ -50,48 +50,48 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"custom_app": schema.BoolAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Whether to create a custom application (`true`) or install from catalog (`false`).",
+				Required: false,
+				Optional: true,
+				Description: "Whether to create a custom application (`true`) or install from catalog (`false`).",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"values": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Updated configuration values for the application.",
 			},
 			"custom_compose_config": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Updated Docker Compose configuration as a structured object.",
 			},
 			"custom_compose_config_string": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Updated Docker Compose configuration as a YAML string.",
 			},
 			"catalog_app": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "Name of the catalog application to install. Required when `custom_app` is `false`.",
+				Required: false,
+				Optional: true,
+				Description: "Name of the catalog application to install. Required when `custom_app` is `false`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"app_name": schema.StringAttribute{
-				Required:      true,
-				Optional:      false,
-				Description:   "Application name must have the following:  * Lowercase alphanumeric characters can be specified. * N",
+				Required: true,
+				Optional: false,
+				Description: "Application name must have the following:  * Lowercase alphanumeric characters can be specified. * N",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"train": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "The catalog train to install from.",
+				Required: false,
+				Optional: true,
+				Description: "The catalog train to install from.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"version": schema.StringAttribute{
-				Required:      false,
-				Optional:      true,
-				Description:   "The version of the application to install.",
+				Required: false,
+				Optional: true,
+				Description: "The version of the application to install.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 		},
@@ -172,6 +172,7 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id := data.ID.ValueString()
 	result, err = r.client.Call("app.get_instance", id)
@@ -185,9 +186,9 @@ func (r *AppResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -221,9 +222,9 @@ func (r *AppResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -273,6 +274,23 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("app.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back app: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

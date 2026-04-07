@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type AlertserviceResource struct {
@@ -18,11 +18,11 @@ type AlertserviceResource struct {
 }
 
 type AlertserviceResourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Name       types.String `tfsdk:"name"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
 	Attributes types.String `tfsdk:"attributes"`
-	Level      types.String `tfsdk:"level"`
-	Enabled    types.Bool   `tfsdk:"enabled"`
+	Level types.String `tfsdk:"level"`
+	Enabled types.Bool `tfsdk:"enabled"`
 }
 
 func NewAlertserviceResource() resource.Resource {
@@ -43,23 +43,23 @@ func (r *AlertserviceResource) Schema(ctx context.Context, req resource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Human-readable name for the alert service.",
 			},
 			"attributes": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Service-specific configuration attributes (credentials, endpoints, etc.).",
 			},
 			"level": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Minimum alert severity level that triggers notifications through this service.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required:    false,
-				Optional:    true,
+				Required: false,
+				Optional: true,
 				Description: "Whether the alert service is active and will send notifications.",
 			},
 		},
@@ -123,6 +123,7 @@ func (r *AlertserviceResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -140,45 +141,45 @@ func (r *AlertserviceResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["attributes"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Attributes = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["level"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Level = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Level = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Level = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["level"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Level = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Level = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Level = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -216,45 +217,45 @@ func (r *AlertserviceResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["attributes"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Attributes = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["level"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Level = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Level = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Level = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
+		if v, ok := resultMap["level"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Level = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Level = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Level = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -306,6 +307,59 @@ func (r *AlertserviceResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("alertservice.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back alertservice: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["level"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Level = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Level = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Level = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

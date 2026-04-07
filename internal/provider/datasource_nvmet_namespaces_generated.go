@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,16 +27,16 @@ type NvmetNamespacesDataSourceModel struct {
 }
 
 type NvmetNamespacesItemModel struct {
-	ID          types.String `tfsdk:"id"`
-	Nsid        types.Int64  `tfsdk:"nsid"`
-	Subsys      types.String `tfsdk:"subsys"`
-	DeviceType  types.String `tfsdk:"device_type"`
-	DevicePath  types.String `tfsdk:"device_path"`
-	Filesize    types.Int64  `tfsdk:"filesize"`
-	DeviceUuid  types.String `tfsdk:"device_uuid"`
+	ID types.String `tfsdk:"id"`
+	Nsid types.Int64 `tfsdk:"nsid"`
+	Subsys types.String `tfsdk:"subsys"`
+	DeviceType types.String `tfsdk:"device_type"`
+	DevicePath types.String `tfsdk:"device_path"`
+	Filesize types.Int64 `tfsdk:"filesize"`
+	DeviceUuid types.String `tfsdk:"device_uuid"`
 	DeviceNguid types.String `tfsdk:"device_nguid"`
-	Enabled     types.Bool   `tfsdk:"enabled"`
-	Locked      types.Bool   `tfsdk:"locked"`
+	Enabled types.Bool `tfsdk:"enabled"`
+	Locked types.Bool `tfsdk:"locked"`
 }
 
 func (d *NvmetNamespacesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -48,47 +48,47 @@ func (d *NvmetNamespacesDataSource) Schema(ctx context.Context, req datasource.S
 		Description: "Query nvmet_namespaces",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of nvmet_namespaces resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"nsid": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Namespace ID (NSID).  Each namespace within a subsystem has an associated NSID, unique within that s",
-						},
-						"subsys": schema.StringAttribute{
-							Computed:    true,
-							Description: "NVMe-oF subsystem that contains this namespace.",
-						},
-						"device_type": schema.StringAttribute{
-							Computed:    true,
-							Description: "Type of device (or file) used to implement the namespace. ",
-						},
-						"device_path": schema.StringAttribute{
-							Computed:    true,
-							Description: "Path to the device or file being used to implement the namespace.  When `device_type` is:  * \"ZVOL\":",
-						},
-						"filesize": schema.Int64Attribute{
-							Computed:    true,
-							Description: "When `device_type` is \"FILE\" then this will be the size of the file in bytes.",
-						},
-						"device_uuid": schema.StringAttribute{
-							Computed:    true,
-							Description: "Unique device identifier for the namespace.",
-						},
-						"device_nguid": schema.StringAttribute{
-							Computed:    true,
-							Description: "Namespace Globally Unique Identifier for the namespace.",
-						},
-						"enabled": schema.BoolAttribute{
-							Computed:    true,
-							Description: "If `enabled` is `False` then the namespace will not be accessible.  Some namespace configuration cha",
-						},
-						"locked": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Reflect the locked state of the namespace.  The underlying `device_path` could be an encrypted ZVOL,",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"nsid": schema.Int64Attribute{
+				Computed: true,
+				Description: "Namespace ID (NSID).  Each namespace within a subsystem has an associated NSID, unique within that s",
+			},
+			"subsys": schema.StringAttribute{
+				Computed: true,
+				Description: "NVMe-oF subsystem that contains this namespace.",
+			},
+			"device_type": schema.StringAttribute{
+				Computed: true,
+				Description: "Type of device (or file) used to implement the namespace. ",
+			},
+			"device_path": schema.StringAttribute{
+				Computed: true,
+				Description: "Path to the device or file being used to implement the namespace.  When `device_type` is:  * \"ZVOL\":",
+			},
+			"filesize": schema.Int64Attribute{
+				Computed: true,
+				Description: "When `device_type` is \"FILE\" then this will be the size of the file in bytes.",
+			},
+			"device_uuid": schema.StringAttribute{
+				Computed: true,
+				Description: "Unique device identifier for the namespace.",
+			},
+			"device_nguid": schema.StringAttribute{
+				Computed: true,
+				Description: "Namespace Globally Unique Identifier for the namespace.",
+			},
+			"enabled": schema.BoolAttribute{
+				Computed: true,
+				Description: "If `enabled` is `False` then the namespace will not be accessible.  Some namespace configuration cha",
+			},
+			"locked": schema.BoolAttribute{
+				Computed: true,
+				Description: "Reflect the locked state of the namespace.  The underlying `device_path` could be an encrypted ZVOL,",
+			},
 					},
 				},
 			},
@@ -137,9 +137,7 @@ func (d *NvmetNamespacesDataSource) Read(ctx context.Context, req datasource.Rea
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["nsid"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Nsid = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Nsid = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["subsys"]; ok && v != nil {
 			itemModel.Subsys = types.StringValue(fmt.Sprintf("%v", v))
@@ -151,9 +149,7 @@ func (d *NvmetNamespacesDataSource) Read(ctx context.Context, req datasource.Rea
 			itemModel.DevicePath = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["filesize"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Filesize = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Filesize = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["device_uuid"]; ok && v != nil {
 			itemModel.DeviceUuid = types.StringValue(fmt.Sprintf("%v", v))
@@ -162,14 +158,10 @@ func (d *NvmetNamespacesDataSource) Read(ctx context.Context, req datasource.Rea
 			itemModel.DeviceNguid = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Enabled = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
 		}
 		if v, ok := resultMap["locked"]; ok && v != nil {
-			if bv, ok := v.(bool); ok {
-				itemModel.Locked = types.BoolValue(bv)
-			}
+			if bv, ok := v.(bool); ok { itemModel.Locked = types.BoolValue(bv) }
 		}
 		items = append(items, itemModel)
 	}
@@ -178,15 +170,15 @@ func (d *NvmetNamespacesDataSource) Read(ctx context.Context, req datasource.Rea
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"device_nguid": types.StringType,
-			"device_path":  types.StringType,
-			"device_type":  types.StringType,
-			"device_uuid":  types.StringType,
-			"enabled":      types.BoolType,
-			"filesize":     types.Int64Type,
-			"id":           types.StringType,
-			"locked":       types.BoolType,
-			"nsid":         types.Int64Type,
-			"subsys":       types.StringType,
+			"device_path": types.StringType,
+			"device_type": types.StringType,
+			"device_uuid": types.StringType,
+			"enabled": types.BoolType,
+			"filesize": types.Int64Type,
+			"id": types.StringType,
+			"locked": types.BoolType,
+			"nsid": types.Int64Type,
+			"subsys": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

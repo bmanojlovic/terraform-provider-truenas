@@ -90,9 +90,7 @@ func (r *ActionVirtVolumeImport_ZvolResource) Create(ctx context.Context, req re
 	// Build parameters
 	params := []interface{}{}
 	var virt_volume_import_isoVal interface{}
-	if err := json.Unmarshal([]byte(data.VirtVolumeImportIso.ValueString()), &virt_volume_import_isoVal); err == nil {
-		params = append(params, virt_volume_import_isoVal)
-	}
+	if err := json.Unmarshal([]byte(data.VirtVolumeImportIso.ValueString()), &virt_volume_import_isoVal); err == nil { params = append(params, virt_volume_import_isoVal) }
 
 	// Execute action
 	result, err := r.client.Call("virt.volume.import_zvol", params)
@@ -105,7 +103,7 @@ func (r *ActionVirtVolumeImport_ZvolResource) Create(ctx context.Context, req re
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

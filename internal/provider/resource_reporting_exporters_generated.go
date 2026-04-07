@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+"strconv"
+	"encoding/json"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
-	"strings"
 )
 
 type ReportingExportersResource struct {
@@ -18,10 +18,10 @@ type ReportingExportersResource struct {
 }
 
 type ReportingExportersResourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Enabled    types.Bool   `tfsdk:"enabled"`
+	ID types.String `tfsdk:"id"`
+	Enabled types.Bool `tfsdk:"enabled"`
 	Attributes types.String `tfsdk:"attributes"`
-	Name       types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 }
 
 func NewReportingExportersResource() resource.Resource {
@@ -42,18 +42,18 @@ func (r *ReportingExportersResource) Schema(ctx context.Context, req resource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"enabled": schema.BoolAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Whether this exporter is enabled and active.",
 			},
 			"attributes": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "Specific attributes for the exporter.",
 			},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Optional:    false,
+				Required: true,
+				Optional: false,
 				Description: "User defined name of exporter configuration.",
 			},
 		},
@@ -114,6 +114,7 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
+
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -131,38 +132,36 @@ func (r *ReportingExportersResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["enabled"]; ok {
-		if bv, ok := v.(bool); ok {
-			data.Enabled = types.BoolValue(bv)
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["attributes"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Attributes = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["enabled"]; ok {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -200,38 +199,36 @@ func (r *ReportingExportersResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	if v, ok := resultMap["id"]; ok && v != nil {
-		data.ID = types.StringValue(fmt.Sprintf("%v", v))
-	}
-	if v, ok := resultMap["enabled"]; ok {
-		if bv, ok := v.(bool); ok {
-			data.Enabled = types.BoolValue(bv)
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["attributes"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Attributes = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["enabled"]; ok {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
-	if v, ok := resultMap["name"]; ok {
-		switch val := v.(type) {
-		case string:
-			data.Name = types.StringValue(val)
-		case map[string]interface{}:
-			if strVal, ok := val["value"]; ok && strVal != nil {
-				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
 			}
-		default:
-			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -280,6 +277,50 @@ func (r *ReportingExportersResource) Update(ctx context.Context, req resource.Up
 	}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("reporting.exporters.get_instance", id)
+	if readErr != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back reporting_exporters: %s", readErr))
+		return
+	}
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		resp.Diagnostics.AddError("Parse Error", "Failed to parse API response")
+		return
+	}
+
+		if v, ok := resultMap["id"]; ok && v != nil {
+			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+		}
+		if v, ok := resultMap["enabled"]; ok {
+			if bv, ok := v.(bool); ok { data.Enabled = types.BoolValue(bv) }
+		}
+		if v, ok := resultMap["attributes"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Attributes = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Attributes = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Attributes = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+		if v, ok := resultMap["name"]; ok {
+			switch val := v.(type) {
+			case string:
+				data.Name = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

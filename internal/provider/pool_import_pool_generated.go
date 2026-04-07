@@ -91,9 +91,7 @@ func (r *PoolImport_PoolResource) Create(ctx context.Context, req resource.Creat
 	// Build parameters
 	params := map[string]interface{}{}
 	params["guid"] = data.Guid.ValueString()
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		params["name"] = data.Name.ValueString()
-	}
+	if !data.Name.IsNull() && !data.Name.IsUnknown() { params["name"] = data.Name.ValueString() }
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -107,7 +105,7 @@ func (r *PoolImport_PoolResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

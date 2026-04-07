@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,12 +27,12 @@ type AppRegistrysDataSourceModel struct {
 }
 
 type AppRegistrysItemModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
+	ID types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	Username    types.String `tfsdk:"username"`
-	Password    types.String `tfsdk:"password"`
-	Uri         types.String `tfsdk:"uri"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
+	Uri types.String `tfsdk:"uri"`
 }
 
 func (d *AppRegistrysDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,31 +44,31 @@ func (d *AppRegistrysDataSource) Schema(ctx context.Context, req datasource.Sche
 		Description: "Query app_registrys",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of app_registrys resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Human-readable name for the container registry.",
-						},
-						"description": schema.StringAttribute{
-							Computed:    true,
-							Description: "Optional description of the container registry or `null`.",
-						},
-						"username": schema.StringAttribute{
-							Computed:    true,
-							Description: "Username for registry authentication (masked for security).",
-						},
-						"password": schema.StringAttribute{
-							Computed:    true,
-							Description: "Password or access token for registry authentication (masked for security).",
-						},
-						"uri": schema.StringAttribute{
-							Computed:    true,
-							Description: "Container registry URI endpoint.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Human-readable name for the container registry.",
+			},
+			"description": schema.StringAttribute{
+				Computed: true,
+				Description: "Optional description of the container registry or `null`.",
+			},
+			"username": schema.StringAttribute{
+				Computed: true,
+				Description: "Username for registry authentication (masked for security).",
+			},
+			"password": schema.StringAttribute{
+				Computed: true,
+				Description: "Password or access token for registry authentication (masked for security).",
+			},
+			"uri": schema.StringAttribute{
+				Computed: true,
+				Description: "Container registry URI endpoint.",
+			},
 					},
 				},
 			},
@@ -138,11 +138,11 @@ func (d *AppRegistrysDataSource) Read(ctx context.Context, req datasource.ReadRe
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"description": types.StringType,
-			"id":          types.StringType,
-			"name":        types.StringType,
-			"password":    types.StringType,
-			"uri":         types.StringType,
-			"username":    types.StringType,
+			"id": types.StringType,
+			"name": types.StringType,
+			"password": types.StringType,
+			"uri": types.StringType,
+			"username": types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

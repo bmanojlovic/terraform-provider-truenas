@@ -17,7 +17,7 @@ type ActionCloudsyncSync_OnetimeResource struct {
 }
 
 type ActionCloudsyncSync_OnetimeResourceModel struct {
-	CloudSyncSyncOnetime        types.String `tfsdk:"cloud_sync_sync_onetime"`
+	CloudSyncSyncOnetime types.String `tfsdk:"cloud_sync_sync_onetime"`
 	CloudSyncSyncOnetimeOptions types.String `tfsdk:"cloud_sync_sync_onetime_options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionCloudsyncSync_OnetimeResource) Schema(ctx context.Context, req re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run cloud sync task without creating it.",
 		Attributes: map[string]schema.Attribute{
-			"cloud_sync_sync_onetime":         schema.StringAttribute{Required: true, MarkdownDescription: "Cloud sync task configuration for one-time execution."},
+			"cloud_sync_sync_onetime": schema.StringAttribute{Required: true, MarkdownDescription: "Cloud sync task configuration for one-time execution."},
 			"cloud_sync_sync_onetime_options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the one-time sync operation."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -92,14 +92,10 @@ func (r *ActionCloudsyncSync_OnetimeResource) Create(ctx context.Context, req re
 	// Build parameters
 	params := []interface{}{}
 	var cloud_sync_sync_onetimeVal interface{}
-	if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetime.ValueString()), &cloud_sync_sync_onetimeVal); err == nil {
-		params = append(params, cloud_sync_sync_onetimeVal)
-	}
+	if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetime.ValueString()), &cloud_sync_sync_onetimeVal); err == nil { params = append(params, cloud_sync_sync_onetimeVal) }
 	if !data.CloudSyncSyncOnetimeOptions.IsNull() {
 		var cloud_sync_sync_onetime_optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetimeOptions.ValueString()), &cloud_sync_sync_onetime_optionsVal); err == nil {
-			params = append(params, cloud_sync_sync_onetime_optionsVal)
-		}
+		if err := json.Unmarshal([]byte(data.CloudSyncSyncOnetimeOptions.ValueString()), &cloud_sync_sync_onetime_optionsVal); err == nil { params = append(params, cloud_sync_sync_onetime_optionsVal) }
 	}
 
 	// Execute action
@@ -113,7 +109,7 @@ func (r *ActionCloudsyncSync_OnetimeResource) Create(ctx context.Context, req re
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

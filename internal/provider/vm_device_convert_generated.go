@@ -16,7 +16,7 @@ type VmDeviceConvertResource struct {
 }
 
 type VmDeviceConvertResourceModel struct {
-	Source      types.String `tfsdk:"source"`
+	Source types.String `tfsdk:"source"`
 	Destination types.String `tfsdk:"destination"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *VmDeviceConvertResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Convert between disk images and ZFS volumes. Supported disk image formats         are qcow2, qed, raw, vdi, vhdx, and vmdk. The conversion direction is determined         automatically based on file e",
 		Attributes: map[string]schema.Attribute{
-			"source":      schema.StringAttribute{Required: true, MarkdownDescription: "Source path for the conversion (disk image file or ZFS volume)."},
+			"source": schema.StringAttribute{Required: true, MarkdownDescription: "Source path for the conversion (disk image file or ZFS volume)."},
 			"destination": schema.StringAttribute{Required: true, MarkdownDescription: "Destination path for the conversion (disk image file or ZFS volume)."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -105,7 +105,7 @@ func (r *VmDeviceConvertResource) Create(ctx context.Context, req resource.Creat
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

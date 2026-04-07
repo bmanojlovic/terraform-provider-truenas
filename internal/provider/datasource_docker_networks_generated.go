@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type DockerNetworksDataSourceModel struct {
 }
 
 type DockerNetworksItemModel struct {
-	ID      types.String `tfsdk:"id"`
-	Ipam    types.String `tfsdk:"ipam"`
-	Labels  types.String `tfsdk:"labels"`
+	ID types.String `tfsdk:"id"`
+	Ipam types.String `tfsdk:"ipam"`
+	Labels types.String `tfsdk:"labels"`
 	Created types.String `tfsdk:"created"`
-	Driver  types.String `tfsdk:"driver"`
-	Name    types.String `tfsdk:"name"`
-	Scope   types.String `tfsdk:"scope"`
+	Driver types.String `tfsdk:"driver"`
+	Name types.String `tfsdk:"name"`
+	Scope types.String `tfsdk:"scope"`
 	ShortId types.String `tfsdk:"short_id"`
 }
 
@@ -46,39 +46,39 @@ func (d *DockerNetworksDataSource) Schema(ctx context.Context, req datasource.Sc
 		Description: "Query all docker networks",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of docker_networks resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"ipam": schema.StringAttribute{
-							Computed:    true,
-							Description: "IP Address Management configuration for the network or `null`.",
-						},
-						"labels": schema.StringAttribute{
-							Computed:    true,
-							Description: "Metadata labels attached to the network or `null`.",
-						},
-						"created": schema.StringAttribute{
-							Computed:    true,
-							Description: "Timestamp when the network was created or `null`.",
-						},
-						"driver": schema.StringAttribute{
-							Computed:    true,
-							Description: "Network driver type (bridge, host, overlay, etc.) or `null`.",
-						},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "Human-readable name of the network or `null`.",
-						},
-						"scope": schema.StringAttribute{
-							Computed:    true,
-							Description: "Network scope (local, global, swarm) or `null`.",
-						},
-						"short_id": schema.StringAttribute{
-							Computed:    true,
-							Description: "Shortened network identifier or `null`.",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"ipam": schema.StringAttribute{
+				Computed: true,
+				Description: "IP Address Management configuration for the network or `null`.",
+			},
+			"labels": schema.StringAttribute{
+				Computed: true,
+				Description: "Metadata labels attached to the network or `null`.",
+			},
+			"created": schema.StringAttribute{
+				Computed: true,
+				Description: "Timestamp when the network was created or `null`.",
+			},
+			"driver": schema.StringAttribute{
+				Computed: true,
+				Description: "Network driver type (bridge, host, overlay, etc.) or `null`.",
+			},
+			"name": schema.StringAttribute{
+				Computed: true,
+				Description: "Human-readable name of the network or `null`.",
+			},
+			"scope": schema.StringAttribute{
+				Computed: true,
+				Description: "Network scope (local, global, swarm) or `null`.",
+			},
+			"short_id": schema.StringAttribute{
+				Computed: true,
+				Description: "Shortened network identifier or `null`.",
+			},
 					},
 				},
 			},
@@ -153,13 +153,13 @@ func (d *DockerNetworksDataSource) Read(ctx context.Context, req datasource.Read
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"created":  types.StringType,
-			"driver":   types.StringType,
-			"id":       types.StringType,
-			"ipam":     types.StringType,
-			"labels":   types.StringType,
-			"name":     types.StringType,
-			"scope":    types.StringType,
+			"created": types.StringType,
+			"driver": types.StringType,
+			"id": types.StringType,
+			"ipam": types.StringType,
+			"labels": types.StringType,
+			"name": types.StringType,
+			"scope": types.StringType,
 			"short_id": types.StringType,
 		},
 	}, items)

@@ -17,7 +17,7 @@ type ActionPoolDatasetDestroy_SnapshotsResource struct {
 }
 
 type ActionPoolDatasetDestroy_SnapshotsResourceModel struct {
-	Name      types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 	Snapshots types.String `tfsdk:"snapshots"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolDatasetDestroy_SnapshotsResource) Schema(ctx context.Context,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Destroy specified snapshots of a given dataset.",
 		Attributes: map[string]schema.Attribute{
-			"name":      schema.StringAttribute{Required: true, MarkdownDescription: "The dataset name to destroy snapshots for."},
+			"name": schema.StringAttribute{Required: true, MarkdownDescription: "The dataset name to destroy snapshots for."},
 			"snapshots": schema.StringAttribute{Required: true, MarkdownDescription: "Specification of which snapshots to destroy (all, specific ones, or ranges)."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -93,9 +93,7 @@ func (r *ActionPoolDatasetDestroy_SnapshotsResource) Create(ctx context.Context,
 	params := []interface{}{}
 	params = append(params, data.Name.ValueString())
 	var snapshotsVal interface{}
-	if err := json.Unmarshal([]byte(data.Snapshots.ValueString()), &snapshotsVal); err == nil {
-		params = append(params, snapshotsVal)
-	}
+	if err := json.Unmarshal([]byte(data.Snapshots.ValueString()), &snapshotsVal); err == nil { params = append(params, snapshotsVal) }
 
 	// Execute action
 	result, err := r.client.Call("pool.dataset.destroy_snapshots", params)
@@ -108,7 +106,7 @@ func (r *ActionPoolDatasetDestroy_SnapshotsResource) Create(ctx context.Context,
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-
+		
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -150,6 +150,15 @@ func (r *{resource_name}Resource) Update(ctx context.Context, req resource.Updat
 	}}
 
 	data.ID = state.ID
+
+	// Read back to populate computed fields
+	result, readErr := r.client.Call("{api_name}.get_instance", id)
+	if readErr != nil {{
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Updated but failed to read back {name}: %s", readErr))
+		return
+	}}
+{read_mapping}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }}
 

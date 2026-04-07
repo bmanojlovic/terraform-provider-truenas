@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type VmDevicesDataSourceModel struct {
 }
 
 type VmDevicesItemModel struct {
-	ID         types.String `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Attributes types.String `tfsdk:"attributes"`
-	Vm         types.Int64  `tfsdk:"vm"`
-	Order      types.Int64  `tfsdk:"order"`
+	Vm types.Int64 `tfsdk:"vm"`
+	Order types.Int64 `tfsdk:"order"`
 }
 
 func (d *VmDevicesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,23 +42,23 @@ func (d *VmDevicesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 		Description: "Query vm_devices",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed:    true,
+				Computed: true,
 				Description: "List of vm_devices resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-						"attributes": schema.StringAttribute{
-							Computed:    true,
-							Description: "Device-specific configuration attributes.",
-						},
-						"vm": schema.Int64Attribute{
-							Computed:    true,
-							Description: "ID of the virtual machine this device belongs to.",
-						},
-						"order": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Boot order priority for this device (lower numbers boot first).",
-						},
+			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+			"attributes": schema.StringAttribute{
+				Computed: true,
+				Description: "Device-specific configuration attributes.",
+			},
+			"vm": schema.Int64Attribute{
+				Computed: true,
+				Description: "ID of the virtual machine this device belongs to.",
+			},
+			"order": schema.Int64Attribute{
+				Computed: true,
+				Description: "Boot order priority for this device (lower numbers boot first).",
+			},
 					},
 				},
 			},
@@ -110,14 +110,10 @@ func (d *VmDevicesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			itemModel.Attributes = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["vm"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Vm = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Vm = types.Int64Value(int64(fv)) }
 		}
 		if v, ok := resultMap["order"]; ok && v != nil {
-			if fv, ok := v.(float64); ok {
-				itemModel.Order = types.Int64Value(int64(fv))
-			}
+			if fv, ok := v.(float64); ok { itemModel.Order = types.Int64Value(int64(fv)) }
 		}
 		items = append(items, itemModel)
 	}
@@ -126,9 +122,9 @@ func (d *VmDevicesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"attributes": types.StringType,
-			"id":         types.StringType,
-			"order":      types.Int64Type,
-			"vm":         types.Int64Type,
+			"id": types.StringType,
+			"order": types.Int64Type,
+			"vm": types.Int64Type,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)
