@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type ReportingExporterssDataSourceModel struct {
 }
 
 type ReportingExporterssItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Enabled types.Bool `tfsdk:"enabled"`
+	ID         types.String `tfsdk:"id"`
+	Enabled    types.Bool   `tfsdk:"enabled"`
 	Attributes types.String `tfsdk:"attributes"`
-	Name types.String `tfsdk:"name"`
+	Name       types.String `tfsdk:"name"`
 }
 
 func (d *ReportingExporterssDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,23 +42,23 @@ func (d *ReportingExporterssDataSource) Schema(ctx context.Context, req datasour
 		Description: "Query reporting_exporterss",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of reporting_exporterss resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"enabled": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether this exporter is enabled and active.",
-			},
-			"attributes": schema.StringAttribute{
-				Computed: true,
-				Description: "Specific attributes for the exporter.",
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "User defined name of exporter configuration.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether this exporter is enabled and active.",
+						},
+						"attributes": schema.StringAttribute{
+							Computed:    true,
+							Description: "Specific attributes for the exporter.",
+						},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "User defined name of exporter configuration.",
+						},
 					},
 				},
 			},
@@ -107,7 +107,9 @@ func (d *ReportingExporterssDataSource) Read(ctx context.Context, req datasource
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Enabled = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["attributes"]; ok && v != nil {
 			itemModel.Attributes = types.StringValue(fmt.Sprintf("%v", v))
@@ -122,9 +124,9 @@ func (d *ReportingExporterssDataSource) Read(ctx context.Context, req datasource
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"attributes": types.StringType,
-			"enabled": types.BoolType,
-			"id": types.StringType,
-			"name": types.StringType,
+			"enabled":    types.BoolType,
+			"id":         types.StringType,
+			"name":       types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

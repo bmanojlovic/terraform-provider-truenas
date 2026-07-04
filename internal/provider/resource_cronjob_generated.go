@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
-"strconv"
 	"encoding/json"
+	"fmt"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type CronjobResource struct {
@@ -18,14 +18,14 @@ type CronjobResource struct {
 }
 
 type CronjobResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	Stderr types.Bool `tfsdk:"stderr"`
-	Stdout types.Bool `tfsdk:"stdout"`
-	Schedule types.String `tfsdk:"schedule"`
-	Command types.String `tfsdk:"command"`
+	ID          types.String `tfsdk:"id"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	Stderr      types.Bool   `tfsdk:"stderr"`
+	Stdout      types.Bool   `tfsdk:"stdout"`
+	Schedule    types.String `tfsdk:"schedule"`
+	Command     types.String `tfsdk:"command"`
 	Description types.String `tfsdk:"description"`
-	User types.String `tfsdk:"user"`
+	User        types.String `tfsdk:"user"`
 }
 
 func NewCronjobResource() resource.Resource {
@@ -46,38 +46,38 @@ func (r *CronjobResource) Schema(ctx context.Context, req resource.SchemaRequest
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether the cron job is active and will be executed.",
 			},
 			"stderr": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether to IGNORE standard error (if `false`, it will be added to email).",
 			},
 			"stdout": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether to IGNORE standard output (if `false`, it will be added to email).",
 			},
 			"schedule": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Cron schedule configuration for when the job runs.",
 			},
 			"command": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Shell command or script to execute.",
 			},
 			"description": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Human-readable description of what this cron job does.",
 			},
 			"user": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "System user account to run the command as.",
 			},
 		},
@@ -150,7 +150,6 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -168,33 +167,48 @@ func (r *CronjobResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["command"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Command = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Command = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["command"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Command = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Command = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["user"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.User = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.User = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["user"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.User = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.User = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.User = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Stderr.IsUnknown() {
+		data.Stderr = types.BoolNull()
+	}
+	if data.Stdout.IsUnknown() {
+		data.Stdout = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -232,33 +246,48 @@ func (r *CronjobResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["command"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Command = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Command = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["command"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Command = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Command = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["user"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.User = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.User = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["user"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.User = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.User = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.User = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Stderr.IsUnknown() {
+		data.Stderr = types.BoolNull()
+	}
+	if data.Stdout.IsUnknown() {
+		data.Stdout = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -332,33 +361,48 @@ func (r *CronjobResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["command"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Command = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Command = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["command"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Command = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Command = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Command = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["user"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.User = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.User = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.User = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["user"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.User = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.User = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.User = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Stderr.IsUnknown() {
+		data.Stderr = types.BoolNull()
+	}
+	if data.Stdout.IsUnknown() {
+		data.Stdout = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

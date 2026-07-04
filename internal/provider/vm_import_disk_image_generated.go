@@ -17,7 +17,7 @@ type VmImport_Disk_ImageResource struct {
 
 type VmImport_Disk_ImageResourceModel struct {
 	Diskimg types.String `tfsdk:"diskimg"`
-	Zvol types.String `tfsdk:"zvol"`
+	Zvol    types.String `tfsdk:"zvol"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -40,7 +40,7 @@ func (r *VmImport_Disk_ImageResource) Schema(ctx context.Context, req resource.S
 		MarkdownDescription: "Imports a specified disk image.  Utilized qemu-img with the auto-detect functionality to auto-convert any supported disk image format to RAW -> ZVOL  As of this implementation it supports:  - QCOW2 -",
 		Attributes: map[string]schema.Attribute{
 			"diskimg": schema.StringAttribute{Required: true, MarkdownDescription: "Path to the disk image file to import."},
-			"zvol": schema.StringAttribute{Required: true, MarkdownDescription: "Target ZFS volume path where the disk image will be imported."},
+			"zvol":    schema.StringAttribute{Required: true, MarkdownDescription: "Target ZFS volume path where the disk image will be imported."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -105,7 +105,7 @@ func (r *VmImport_Disk_ImageResource) Create(ctx context.Context, req resource.C
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

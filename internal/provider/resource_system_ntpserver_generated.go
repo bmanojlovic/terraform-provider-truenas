@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type SystemNtpserverResource struct {
@@ -17,14 +17,14 @@ type SystemNtpserverResource struct {
 }
 
 type SystemNtpserverResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID      types.String `tfsdk:"id"`
 	Address types.String `tfsdk:"address"`
-	Burst types.Bool `tfsdk:"burst"`
-	Iburst types.Bool `tfsdk:"iburst"`
-	Prefer types.Bool `tfsdk:"prefer"`
-	Minpoll types.Int64 `tfsdk:"minpoll"`
-	Maxpoll types.Int64 `tfsdk:"maxpoll"`
-	Force types.Bool `tfsdk:"force"`
+	Burst   types.Bool   `tfsdk:"burst"`
+	Iburst  types.Bool   `tfsdk:"iburst"`
+	Prefer  types.Bool   `tfsdk:"prefer"`
+	Minpoll types.Int64  `tfsdk:"minpoll"`
+	Maxpoll types.Int64  `tfsdk:"maxpoll"`
+	Force   types.Bool   `tfsdk:"force"`
 }
 
 func NewSystemNtpserverResource() resource.Resource {
@@ -45,38 +45,38 @@ func (r *SystemNtpserverResource) Schema(ctx context.Context, req resource.Schem
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"address": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Hostname or IP address of the NTP server.",
 			},
 			"burst": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Send a burst of packets when the server is reachable.",
 			},
 			"iburst": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Send a burst of packets when the server is unreachable.",
 			},
 			"prefer": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Mark this server as preferred for time synchronization.",
 			},
 			"minpoll": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Minimum polling interval (log2 seconds).",
 			},
 			"maxpoll": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Maximum polling interval (log2 seconds).",
 			},
 			"force": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Force creation even if the server is unreachable.",
 			},
 		},
@@ -144,7 +144,6 @@ func (r *SystemNtpserverResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -162,21 +161,39 @@ func (r *SystemNtpserverResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["address"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Address = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Address = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["address"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Address = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Address = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Burst.IsUnknown() {
+		data.Burst = types.BoolNull()
+	}
+	if data.Iburst.IsUnknown() {
+		data.Iburst = types.BoolNull()
+	}
+	if data.Prefer.IsUnknown() {
+		data.Prefer = types.BoolNull()
+	}
+	if data.Minpoll.IsUnknown() {
+		data.Minpoll = types.Int64Null()
+	}
+	if data.Maxpoll.IsUnknown() {
+		data.Maxpoll = types.Int64Null()
+	}
+	if data.Force.IsUnknown() {
+		data.Force = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -214,21 +231,39 @@ func (r *SystemNtpserverResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["address"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Address = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Address = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["address"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Address = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Address = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Burst.IsUnknown() {
+		data.Burst = types.BoolNull()
+	}
+	if data.Iburst.IsUnknown() {
+		data.Iburst = types.BoolNull()
+	}
+	if data.Prefer.IsUnknown() {
+		data.Prefer = types.BoolNull()
+	}
+	if data.Minpoll.IsUnknown() {
+		data.Minpoll = types.Int64Null()
+	}
+	if data.Maxpoll.IsUnknown() {
+		data.Maxpoll = types.Int64Null()
+	}
+	if data.Force.IsUnknown() {
+		data.Force = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -297,21 +332,39 @@ func (r *SystemNtpserverResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["address"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Address = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Address = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["address"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Address = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Address = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Address = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Burst.IsUnknown() {
+		data.Burst = types.BoolNull()
+	}
+	if data.Iburst.IsUnknown() {
+		data.Iburst = types.BoolNull()
+	}
+	if data.Prefer.IsUnknown() {
+		data.Prefer = types.BoolNull()
+	}
+	if data.Minpoll.IsUnknown() {
+		data.Minpoll = types.Int64Null()
+	}
+	if data.Maxpoll.IsUnknown() {
+		data.Maxpoll = types.Int64Null()
+	}
+	if data.Force.IsUnknown() {
+		data.Force = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

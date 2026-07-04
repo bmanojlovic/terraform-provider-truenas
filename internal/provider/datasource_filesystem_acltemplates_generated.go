@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,9 +27,9 @@ type FilesystemAcltemplatesDataSourceModel struct {
 }
 
 type FilesystemAcltemplatesItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Builtin types.Bool `tfsdk:"builtin"`
-	Name types.String `tfsdk:"name"`
+	ID      types.String `tfsdk:"id"`
+	Builtin types.Bool   `tfsdk:"builtin"`
+	Name    types.String `tfsdk:"name"`
 	Acltype types.String `tfsdk:"acltype"`
 	Comment types.String `tfsdk:"comment"`
 }
@@ -43,27 +43,27 @@ func (d *FilesystemAcltemplatesDataSource) Schema(ctx context.Context, req datas
 		Description: "Query filesystem_acltemplates",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of filesystem_acltemplates resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"builtin": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether this is a built-in system template or user-created.",
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Human-readable name for the ACL template.",
-			},
-			"acltype": schema.StringAttribute{
-				Computed: true,
-				Description: "ACL type this template provides.",
-			},
-			"comment": schema.StringAttribute{
-				Computed: true,
-				Description: "Optional descriptive comment about the template's purpose.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"builtin": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether this is a built-in system template or user-created.",
+						},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Human-readable name for the ACL template.",
+						},
+						"acltype": schema.StringAttribute{
+							Computed:    true,
+							Description: "ACL type this template provides.",
+						},
+						"comment": schema.StringAttribute{
+							Computed:    true,
+							Description: "Optional descriptive comment about the template's purpose.",
+						},
 					},
 				},
 			},
@@ -112,7 +112,9 @@ func (d *FilesystemAcltemplatesDataSource) Read(ctx context.Context, req datasou
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["builtin"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Builtin = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Builtin = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["name"]; ok && v != nil {
 			itemModel.Name = types.StringValue(fmt.Sprintf("%v", v))
@@ -132,8 +134,8 @@ func (d *FilesystemAcltemplatesDataSource) Read(ctx context.Context, req datasou
 			"acltype": types.StringType,
 			"builtin": types.BoolType,
 			"comment": types.StringType,
-			"id": types.StringType,
-			"name": types.StringType,
+			"id":      types.StringType,
+			"name":    types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

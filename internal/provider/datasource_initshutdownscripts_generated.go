@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type InitshutdownscriptsDataSourceModel struct {
 }
 
 type InitshutdownscriptsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
+	ID      types.String `tfsdk:"id"`
+	Type    types.String `tfsdk:"type"`
 	Command types.String `tfsdk:"command"`
-	Script types.String `tfsdk:"script"`
-	When types.String `tfsdk:"when"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	Timeout types.Int64 `tfsdk:"timeout"`
+	Script  types.String `tfsdk:"script"`
+	When    types.String `tfsdk:"when"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Timeout types.Int64  `tfsdk:"timeout"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -46,39 +46,39 @@ func (d *InitshutdownscriptsDataSource) Schema(ctx context.Context, req datasour
 		Description: "Query initshutdownscripts",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of initshutdownscripts resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"type": schema.StringAttribute{
-				Computed: true,
-				Description: "Type of init/shutdown script to execute.  * `COMMAND`: Execute a single command * `SCRIPT`: Execute ",
-			},
-			"command": schema.StringAttribute{
-				Computed: true,
-				Description: "Must be given if `type=\"COMMAND\"`.",
-			},
-			"script": schema.StringAttribute{
-				Computed: true,
-				Description: "Must be given if `type=\"SCRIPT\"`.",
-			},
-			"when": schema.StringAttribute{
-				Computed: true,
-				Description: "* \"PREINIT\": Early in the boot process before all services have started. * \"POSTINIT\": Late in the b",
-			},
-			"enabled": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether the init/shutdown script is enabled to execute.",
-			},
-			"timeout": schema.Int64Attribute{
-				Computed: true,
-				Description: "An integer time in seconds that the system should wait for the execution of the script/command.  A h",
-			},
-			"comment": schema.StringAttribute{
-				Computed: true,
-				Description: "Optional comment describing the purpose of this script.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Type of init/shutdown script to execute.  * `COMMAND`: Execute a single command * `SCRIPT`: Execute ",
+						},
+						"command": schema.StringAttribute{
+							Computed:    true,
+							Description: "Must be given if `type=\"COMMAND\"`.",
+						},
+						"script": schema.StringAttribute{
+							Computed:    true,
+							Description: "Must be given if `type=\"SCRIPT\"`.",
+						},
+						"when": schema.StringAttribute{
+							Computed:    true,
+							Description: "* \"PREINIT\": Early in the boot process before all services have started. * \"POSTINIT\": Late in the b",
+						},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether the init/shutdown script is enabled to execute.",
+						},
+						"timeout": schema.Int64Attribute{
+							Computed:    true,
+							Description: "An integer time in seconds that the system should wait for the execution of the script/command.  A h",
+						},
+						"comment": schema.StringAttribute{
+							Computed:    true,
+							Description: "Optional comment describing the purpose of this script.",
+						},
 					},
 				},
 			},
@@ -136,10 +136,14 @@ func (d *InitshutdownscriptsDataSource) Read(ctx context.Context, req datasource
 			itemModel.When = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Enabled = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["timeout"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Timeout = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Timeout = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["comment"]; ok && v != nil {
 			itemModel.Comment = types.StringValue(fmt.Sprintf("%v", v))
@@ -156,11 +160,11 @@ func (d *InitshutdownscriptsDataSource) Read(ctx context.Context, req datasource
 			"command": types.StringType,
 			"comment": types.StringType,
 			"enabled": types.BoolType,
-			"id": types.StringType,
-			"script": types.StringType,
+			"id":      types.StringType,
+			"script":  types.StringType,
 			"timeout": types.Int64Type,
-			"type": types.StringType,
-			"when": types.StringType,
+			"type":    types.StringType,
+			"when":    types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

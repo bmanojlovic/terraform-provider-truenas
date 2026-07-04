@@ -3,13 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type IscsiInitiatorResource struct {
@@ -17,9 +18,9 @@ type IscsiInitiatorResource struct {
 }
 
 type IscsiInitiatorResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Initiators types.List `tfsdk:"initiators"`
-	Comment types.String `tfsdk:"comment"`
+	ID         types.String `tfsdk:"id"`
+	Initiators types.List   `tfsdk:"initiators"`
+	Comment    types.String `tfsdk:"comment"`
 }
 
 func NewIscsiInitiatorResource() resource.Resource {
@@ -40,12 +41,12 @@ func (r *IscsiInitiatorResource) Schema(ctx context.Context, req resource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
 			"initiators": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators.",
 			},
 			"comment": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Optional comment describing the authorized initiator group.",
 			},
 		},
@@ -100,7 +101,6 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -118,9 +118,15 @@ func (r *IscsiInitiatorResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if data.Initiators.IsUnknown() {
+		data.Initiators, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -158,9 +164,15 @@ func (r *IscsiInitiatorResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if data.Initiators.IsUnknown() {
+		data.Initiators, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -216,9 +228,15 @@ func (r *IscsiInitiatorResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if data.Initiators.IsUnknown() {
+		data.Initiators, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -41,7 +41,7 @@ func (r *ActionAppUpgradeResource) Schema(ctx context.Context, req resource.Sche
 		MarkdownDescription: "Upgrade `app_name` app to `app_version`.",
 		Attributes: map[string]schema.Attribute{
 			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to upgrade."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the upgrade process including target version and snapshot behavior."},
+			"options":  schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the upgrade process including target version and snapshot behavior."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -94,7 +94,9 @@ func (r *ActionAppUpgradeResource) Create(ctx context.Context, req resource.Crea
 	params = append(params, data.AppName.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionAppUpgradeResource) Create(ctx context.Context, req resource.Crea
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

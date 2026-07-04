@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type FcportsDataSourceModel struct {
 }
 
 type FcportsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Port types.String `tfsdk:"port"`
-	Wwpn types.String `tfsdk:"wwpn"`
-	WwpnB types.String `tfsdk:"wwpn_b"`
+	ID     types.String `tfsdk:"id"`
+	Port   types.String `tfsdk:"port"`
+	Wwpn   types.String `tfsdk:"wwpn"`
+	WwpnB  types.String `tfsdk:"wwpn_b"`
 	Target types.String `tfsdk:"target"`
 }
 
@@ -43,27 +43,27 @@ func (d *FcportsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		Description: "Query fcports",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of fcports resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"port": schema.StringAttribute{
-				Computed: true,
-				Description: "Alias name for the Fibre Channel port.",
-			},
-			"wwpn": schema.StringAttribute{
-				Computed: true,
-				Description: "World Wide Port Name for port A or `null` if not configured.",
-			},
-			"wwpn_b": schema.StringAttribute{
-				Computed: true,
-				Description: "World Wide Port Name for port B or `null` if not configured.",
-			},
-			"target": schema.StringAttribute{
-				Computed: true,
-				Description: "Target configuration object or `null` if not configured.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"port": schema.StringAttribute{
+							Computed:    true,
+							Description: "Alias name for the Fibre Channel port.",
+						},
+						"wwpn": schema.StringAttribute{
+							Computed:    true,
+							Description: "World Wide Port Name for port A or `null` if not configured.",
+						},
+						"wwpn_b": schema.StringAttribute{
+							Computed:    true,
+							Description: "World Wide Port Name for port B or `null` if not configured.",
+						},
+						"target": schema.StringAttribute{
+							Computed:    true,
+							Description: "Target configuration object or `null` if not configured.",
+						},
 					},
 				},
 			},
@@ -129,10 +129,10 @@ func (d *FcportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-			"port": types.StringType,
+			"id":     types.StringType,
+			"port":   types.StringType,
 			"target": types.StringType,
-			"wwpn": types.StringType,
+			"wwpn":   types.StringType,
 			"wwpn_b": types.StringType,
 		},
 	}, items)

@@ -17,7 +17,7 @@ type ActionCloud_BackupSyncResource struct {
 }
 
 type ActionCloud_BackupSyncResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID      types.Int64  `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionCloud_BackupSyncResource) Schema(ctx context.Context, req resourc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run the cloud backup job `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Sync options."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *ActionCloud_BackupSyncResource) Create(ctx context.Context, req resourc
 	params = append(params, data.ID.ValueInt64())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionCloud_BackupSyncResource) Create(ctx context.Context, req resourc
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

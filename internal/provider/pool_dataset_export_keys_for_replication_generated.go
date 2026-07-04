@@ -101,7 +101,7 @@ func (r *PoolDatasetExport_Keys_For_ReplicationResource) Create(ctx context.Cont
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

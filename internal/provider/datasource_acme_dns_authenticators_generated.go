@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,9 +27,9 @@ type AcmeDnsAuthenticatorsDataSourceModel struct {
 }
 
 type AcmeDnsAuthenticatorsItemModel struct {
-	ID types.String `tfsdk:"id"`
+	ID         types.String `tfsdk:"id"`
 	Attributes types.String `tfsdk:"attributes"`
-	Name types.String `tfsdk:"name"`
+	Name       types.String `tfsdk:"name"`
 }
 
 func (d *AcmeDnsAuthenticatorsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -41,19 +41,19 @@ func (d *AcmeDnsAuthenticatorsDataSource) Schema(ctx context.Context, req dataso
 		Description: "Query acme_dns_authenticators",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of acme_dns_authenticators resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"attributes": schema.StringAttribute{
-				Computed: true,
-				Description: "Authentication credentials and configuration (masked for security).",
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Human-readable name for the DNS authenticator.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"attributes": schema.StringAttribute{
+							Computed:    true,
+							Description: "Authentication credentials and configuration (masked for security).",
+						},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Human-readable name for the DNS authenticator.",
+						},
 					},
 				},
 			},
@@ -114,8 +114,8 @@ func (d *AcmeDnsAuthenticatorsDataSource) Read(ctx context.Context, req datasour
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"attributes": types.StringType,
-			"id": types.StringType,
-			"name": types.StringType,
+			"id":         types.StringType,
+			"name":       types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

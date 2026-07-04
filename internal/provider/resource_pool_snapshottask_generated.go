@@ -2,15 +2,16 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
-"strconv"
 	"encoding/json"
+	"fmt"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type PoolSnapshottaskResource struct {
@@ -18,17 +19,17 @@ type PoolSnapshottaskResource struct {
 }
 
 type PoolSnapshottaskResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Dataset types.String `tfsdk:"dataset"`
-	Recursive types.Bool `tfsdk:"recursive"`
-	LifetimeValue types.Int64 `tfsdk:"lifetime_value"`
-	LifetimeUnit types.String `tfsdk:"lifetime_unit"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	Exclude types.List `tfsdk:"exclude"`
-	NamingSchema types.String `tfsdk:"naming_schema"`
-	AllowEmpty types.Bool `tfsdk:"allow_empty"`
-	Schedule types.String `tfsdk:"schedule"`
-	FixateRemovalDate types.Bool `tfsdk:"fixate_removal_date"`
+	ID                types.String `tfsdk:"id"`
+	Dataset           types.String `tfsdk:"dataset"`
+	Recursive         types.Bool   `tfsdk:"recursive"`
+	LifetimeValue     types.Int64  `tfsdk:"lifetime_value"`
+	LifetimeUnit      types.String `tfsdk:"lifetime_unit"`
+	Enabled           types.Bool   `tfsdk:"enabled"`
+	Exclude           types.List   `tfsdk:"exclude"`
+	NamingSchema      types.String `tfsdk:"naming_schema"`
+	AllowEmpty        types.Bool   `tfsdk:"allow_empty"`
+	Schedule          types.String `tfsdk:"schedule"`
+	FixateRemovalDate types.Bool   `tfsdk:"fixate_removal_date"`
 }
 
 func NewPoolSnapshottaskResource() resource.Resource {
@@ -49,54 +50,54 @@ func (r *PoolSnapshottaskResource) Schema(ctx context.Context, req resource.Sche
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"dataset": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "The dataset to take snapshots of.",
 			},
 			"recursive": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether to recursively snapshot child datasets.",
 			},
 			"lifetime_value": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Number of time units to retain snapshots. `lifetime_unit` gives the time unit.",
 			},
 			"lifetime_unit": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Unit of time for snapshot retention.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether this periodic snapshot task is enabled.",
 			},
 			"exclude": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Array of dataset patterns to exclude from recursive snapshots.",
 			},
 			"naming_schema": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Naming pattern for generated snapshots using strftime format.",
 			},
 			"allow_empty": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether to take snapshots even if no data has changed.",
 			},
 			"schedule": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Cron schedule for when snapshots should be taken.",
 			},
 			"fixate_removal_date": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Whether to fix the removal date of existing snapshots when retention settings change.",
 			},
 		},
@@ -180,7 +181,6 @@ func (r *PoolSnapshottaskResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -198,21 +198,45 @@ func (r *PoolSnapshottaskResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["dataset"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Dataset = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dataset"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Dataset = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Recursive.IsUnknown() {
+		data.Recursive = types.BoolNull()
+	}
+	if data.LifetimeValue.IsUnknown() {
+		data.LifetimeValue = types.Int64Null()
+	}
+	if data.LifetimeUnit.IsUnknown() {
+		data.LifetimeUnit = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Exclude.IsUnknown() {
+		data.Exclude, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.NamingSchema.IsUnknown() {
+		data.NamingSchema = types.StringNull()
+	}
+	if data.AllowEmpty.IsUnknown() {
+		data.AllowEmpty = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -250,21 +274,45 @@ func (r *PoolSnapshottaskResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["dataset"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Dataset = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dataset"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Dataset = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Recursive.IsUnknown() {
+		data.Recursive = types.BoolNull()
+	}
+	if data.LifetimeValue.IsUnknown() {
+		data.LifetimeValue = types.Int64Null()
+	}
+	if data.LifetimeUnit.IsUnknown() {
+		data.LifetimeUnit = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Exclude.IsUnknown() {
+		data.Exclude, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.NamingSchema.IsUnknown() {
+		data.NamingSchema = types.StringNull()
+	}
+	if data.AllowEmpty.IsUnknown() {
+		data.AllowEmpty = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -349,21 +397,45 @@ func (r *PoolSnapshottaskResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["dataset"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Dataset = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dataset"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Dataset = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Dataset = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Dataset = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Recursive.IsUnknown() {
+		data.Recursive = types.BoolNull()
+	}
+	if data.LifetimeValue.IsUnknown() {
+		data.LifetimeValue = types.Int64Null()
+	}
+	if data.LifetimeUnit.IsUnknown() {
+		data.LifetimeUnit = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Exclude.IsUnknown() {
+		data.Exclude, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.NamingSchema.IsUnknown() {
+		data.NamingSchema = types.StringNull()
+	}
+	if data.AllowEmpty.IsUnknown() {
+		data.AllowEmpty = types.BoolNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

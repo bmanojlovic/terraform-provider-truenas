@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,12 +27,12 @@ type AlertservicesDataSourceModel struct {
 }
 
 type AlertservicesItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
 	Attributes types.String `tfsdk:"attributes"`
-	Level types.String `tfsdk:"level"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	TypeTitle types.String `tfsdk:"type__title"`
+	Level      types.String `tfsdk:"level"`
+	Enabled    types.Bool   `tfsdk:"enabled"`
+	TypeTitle  types.String `tfsdk:"type__title"`
 }
 
 func (d *AlertservicesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,31 +44,31 @@ func (d *AlertservicesDataSource) Schema(ctx context.Context, req datasource.Sch
 		Description: "Query alertservices",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of alertservices resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Human-readable name for the alert service.",
-			},
-			"attributes": schema.StringAttribute{
-				Computed: true,
-				Description: "Service-specific configuration attributes (credentials, endpoints, etc.).",
-			},
-			"level": schema.StringAttribute{
-				Computed: true,
-				Description: "Minimum alert severity level that triggers notifications through this service.",
-			},
-			"enabled": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether the alert service is active and will send notifications.",
-			},
-			"type__title": schema.StringAttribute{
-				Computed: true,
-				Description: "Human-readable title for the alert service type.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Human-readable name for the alert service.",
+						},
+						"attributes": schema.StringAttribute{
+							Computed:    true,
+							Description: "Service-specific configuration attributes (credentials, endpoints, etc.).",
+						},
+						"level": schema.StringAttribute{
+							Computed:    true,
+							Description: "Minimum alert severity level that triggers notifications through this service.",
+						},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether the alert service is active and will send notifications.",
+						},
+						"type__title": schema.StringAttribute{
+							Computed:    true,
+							Description: "Human-readable title for the alert service type.",
+						},
 					},
 				},
 			},
@@ -123,7 +123,9 @@ func (d *AlertservicesDataSource) Read(ctx context.Context, req datasource.ReadR
 			itemModel.Level = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Enabled = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["id"]; ok && v != nil {
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
@@ -137,11 +139,11 @@ func (d *AlertservicesDataSource) Read(ctx context.Context, req datasource.ReadR
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"attributes": types.StringType,
-			"enabled": types.BoolType,
-			"id": types.StringType,
-			"level": types.StringType,
-			"name": types.StringType,
+			"attributes":  types.StringType,
+			"enabled":     types.BoolType,
+			"id":          types.StringType,
+			"level":       types.StringType,
+			"name":        types.StringType,
 			"type__title": types.StringType,
 		},
 	}, items)

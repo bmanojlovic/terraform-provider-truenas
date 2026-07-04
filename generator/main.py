@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 from generator.schema import get_tf_type, merge_anyof_schema, has_complex_objects, get_array_item_schema, is_complex_object, to_field_name, is_flattenable, flatten_schema
-from generator.codegen import gen_schema_attrs, gen_fields, gen_create_params, gen_read_mapping
+from generator.codegen import gen_schema_attrs, gen_fields, gen_create_params, gen_read_mapping, will_read_field
 from generator.docs import gen_resource_docs, gen_datasource_docs, gen_action_docs
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -131,15 +131,26 @@ def gen_resource(base_name, methods, templates, config):
         stop_call = f"data.ID.ValueString()" if id_is_string else f"func() int {{ id, _ := strconv.Atoi(data.ID.ValueString()); return id }}()"
         predelete = f'\n\t_, _ = r.client.Call("{api_name}.stop", {stop_call})\n\ttime.Sleep(2 * time.Second)\n'
 
+    # Get response fields from get_instance (to know which create-only fields are readable)
+    get_spec = methods.get(f"{base_name}.get_instance", {})
+    response_fields = set()
+    get_returns = get_spec.get("returns", [])
+    if get_returns:
+        ret_schema = get_returns[0] if isinstance(get_returns, list) else get_returns
+        response_fields = set(ret_schema.get("properties", {}).keys())
+
     # Imports
     needs_strconv = not id_is_string or (has_start and not id_is_string) or (has_stop and not id_is_string)
     # Check if we need attr import (for List fields that are read)
     # Only import if List fields are required or have default:null
+    # Check if we need attr import (for List fields that are read OR null-set)
     has_list_to_read = any(
-        get_tf_type(p) == "List" 
-        for n, p in properties.items() 
-        if n not in ("provider", "id") and n not in create_only 
-        and (n in required or (p.get("default") is None and "default" in p))
+        get_tf_type(p) == "List"
+        for n, p in properties.items()
+        if n not in ("provider", "id") and (
+            will_read_field(n, properties, create_only, set(required), response_fields)
+            or n not in set(required)  # optional Lists get null-setter too
+        )
     )
     has_json = has_complex_objects(properties)
 
@@ -159,15 +170,16 @@ def gen_resource(base_name, methods, templates, config):
     # Use = if err was already declared (int IDs declare err in strconv.Atoi)
     delete_err_assign = "_, err =" if not id_is_string else "_, err :="
 
+
     template = templates["resource_vm_device.go"] if api_name == "vm.device" else templates["resource.go"]
 
     return template.format(
         resource_name=resource_name, name=tf_name, api_name=api_name, description=desc,
         fields=gen_fields(properties, has_start),
-        schema_attrs=gen_schema_attrs(properties, required, has_start, create_only),
+        schema_attrs=gen_schema_attrs(properties, required, has_start, create_only, response_fields),
         create_params=gen_create_params(properties),
         update_params=gen_create_params(update_props or properties),
-        read_mapping=gen_read_mapping(create_properties, create_only=create_only, required=set(required)),  # Use create_properties
+        read_mapping=gen_read_mapping(create_properties, create_only=create_only, required=set(required), response_fields=response_fields, field_mapping=config.get('resources', {}).get('field_mapping', {}).get(base_name, {})),  # Use create_properties
         lifecycle_code=lifecycle, predelete_code=predelete,
         id_read_code=id_read, id_read_code_create=id_read_create, id_update_code=id_update, id_delete_code=id_delete,
         delete_err_assign=delete_err_assign,

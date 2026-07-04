@@ -13,6 +13,14 @@ resources:
     vm.device:
       zvol: true
 
+  # Field mapping: when API response uses a different field name than the TF attribute.
+  # Format: resource_api_name: { tf_attribute: api_response_field }
+  # Used during Read/readback to populate TF state from the correct API field.
+  field_mapping:
+    pool.snapshot:
+      name: snapshot_name
+      dataset: dataset
+
 # Datasources: explicit list with get_instance support
 datasources:
   - vm
@@ -185,6 +193,14 @@ actions:
 
     boot.detach:
       description: "Detach a disk from the boot pool."
+
+    pool.snapshot.clone:
+      description: "Clone a snapshot to a new dataset/zvol."
+      example: |
+        resource "truenas_action_pool_snapshot_clone" "clone" {
+          snapshot    = "tank/source@snap1"
+          dataset_dst = "tank/destination"
+        }
 
     vm.clone:
       description: "Clone an existing VM."

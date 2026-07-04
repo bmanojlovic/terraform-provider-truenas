@@ -102,7 +102,7 @@ func (p *TrueNASProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-NewAcmeDnsAuthenticatorResource,
+		NewAcmeDnsAuthenticatorResource,
 		NewAlertserviceResource,
 		NewApiKeyResource,
 		NewAppResource,
@@ -269,6 +269,7 @@ NewAcmeDnsAuthenticatorResource,
 		NewPoolDatasetExport_Keys_For_ReplicationResource,
 		NewPoolScrubRunResource,
 		NewPoolScrubScrubResource,
+		NewPoolSnapshotCloneResource,
 		NewPoolSnapshottaskRunResource,
 		NewReplicationRunResource,
 		NewRsynctaskRunResource,

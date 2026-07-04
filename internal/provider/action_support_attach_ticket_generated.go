@@ -122,7 +122,7 @@ func (r *ActionSupportAttach_TicketResource) Create(ctx context.Context, req res
 	if jobID, ok := result.(float64); ok {
 		data.JobID = types.Int64Value(int64(jobID))
 	}
-	
+
 	// Actions are fire-and-forget - mark as success immediately
 	data.State = types.StringValue("SUBMITTED")
 	data.Progress = types.Float64Value(0.0)

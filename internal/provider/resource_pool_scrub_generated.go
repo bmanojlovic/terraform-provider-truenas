@@ -2,15 +2,15 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
-"strconv"
 	"encoding/json"
+	"fmt"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type PoolScrubResource struct {
@@ -18,12 +18,12 @@ type PoolScrubResource struct {
 }
 
 type PoolScrubResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Pool types.Int64 `tfsdk:"pool"`
-	Threshold types.Int64 `tfsdk:"threshold"`
+	ID          types.String `tfsdk:"id"`
+	Pool        types.Int64  `tfsdk:"pool"`
+	Threshold   types.Int64  `tfsdk:"threshold"`
 	Description types.String `tfsdk:"description"`
-	Schedule types.String `tfsdk:"schedule"`
-	Enabled types.Bool `tfsdk:"enabled"`
+	Schedule    types.String `tfsdk:"schedule"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
 }
 
 func NewPoolScrubResource() resource.Resource {
@@ -44,28 +44,28 @@ func (r *PoolScrubResource) Schema(ctx context.Context, req resource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"pool": schema.Int64Attribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ID of the pool to scrub.",
 			},
 			"threshold": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Days before a scrub is due when a scrub should automatically start.",
 			},
 			"description": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Description or notes for this scrub schedule.",
 			},
 			"schedule": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Cron schedule for when scrubs should run.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether this scrub schedule is enabled.",
 			},
 		},
@@ -132,7 +132,6 @@ func (r *PoolScrubResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -150,19 +149,33 @@ func (r *PoolScrubResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["pool"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Pool = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Pool = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["pool"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Pool = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Pool = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
+	if data.Threshold.IsUnknown() {
+		data.Threshold = types.Int64Null()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -200,19 +213,33 @@ func (r *PoolScrubResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["pool"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Pool = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Pool = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["pool"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Pool = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Pool = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
+	if data.Threshold.IsUnknown() {
+		data.Threshold = types.Int64Null()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -280,19 +307,33 @@ func (r *PoolScrubResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["pool"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Pool = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Pool = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["pool"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Pool = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Pool = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
+	if data.Threshold.IsUnknown() {
+		data.Threshold = types.Int64Null()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.Schedule.IsUnknown() {
+		data.Schedule = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

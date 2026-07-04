@@ -17,8 +17,8 @@ type DirectoryservicesLeaveResource struct {
 
 type DirectoryservicesLeaveResourceModel struct {
 	CredentialCredentialType types.String `tfsdk:"credential_credential_type"`
-	CredentialUsername types.String `tfsdk:"credential_username"`
-	CredentialPassword types.String `tfsdk:"credential_password"`
+	CredentialUsername       types.String `tfsdk:"credential_username"`
+	CredentialPassword       types.String `tfsdk:"credential_password"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -41,8 +41,8 @@ func (r *DirectoryservicesLeaveResource) Schema(ctx context.Context, req resourc
 		MarkdownDescription: "Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directo",
 		Attributes: map[string]schema.Attribute{
 			"credential_credential_type": schema.StringAttribute{Required: true, MarkdownDescription: "Credential type identifier for Kerberos user authentication."},
-			"credential_username": schema.StringAttribute{Required: true, MarkdownDescription: "Username of the account to use to create a kerberos ticket for authentication to directory services. This     account must exist on the domain controller. "},
-			"credential_password": schema.StringAttribute{Required: true, MarkdownDescription: "The password for the user account that will obtain the kerberos ticket. "},
+			"credential_username":        schema.StringAttribute{Required: true, MarkdownDescription: "Username of the account to use to create a kerberos ticket for authentication to directory services. This     account must exist on the domain controller. "},
+			"credential_password":        schema.StringAttribute{Required: true, MarkdownDescription: "The password for the user account that will obtain the kerberos ticket. "},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -93,10 +93,18 @@ func (r *DirectoryservicesLeaveResource) Create(ctx context.Context, req resourc
 	// Build parameters
 	params := map[string]interface{}{}
 	credentialOpts := map[string]interface{}{}
-	if !data.CredentialCredentialType.IsNull() { credentialOpts["credential_type"] = data.CredentialCredentialType.ValueString() }
-	if !data.CredentialUsername.IsNull() { credentialOpts["username"] = data.CredentialUsername.ValueString() }
-	if !data.CredentialPassword.IsNull() { credentialOpts["password"] = data.CredentialPassword.ValueString() }
-	if len(credentialOpts) > 0 { params["credential"] = credentialOpts }
+	if !data.CredentialCredentialType.IsNull() {
+		credentialOpts["credential_type"] = data.CredentialCredentialType.ValueString()
+	}
+	if !data.CredentialUsername.IsNull() {
+		credentialOpts["username"] = data.CredentialUsername.ValueString()
+	}
+	if !data.CredentialPassword.IsNull() {
+		credentialOpts["password"] = data.CredentialPassword.ValueString()
+	}
+	if len(credentialOpts) > 0 {
+		params["credential"] = credentialOpts
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -110,7 +118,7 @@ func (r *DirectoryservicesLeaveResource) Create(ctx context.Context, req resourc
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

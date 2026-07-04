@@ -17,7 +17,7 @@ type ActionPoolSnapshotRollbackResource struct {
 }
 
 type ActionPoolSnapshotRollbackResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID      types.String `tfsdk:"id"`
 	Options types.String `tfsdk:"options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionPoolSnapshotRollbackResource) Schema(ctx context.Context, req res
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute pool.snapshot.rollback",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to rollback to."},
+			"id":      schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to rollback to."},
 			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling snapshot rollback behavior."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *ActionPoolSnapshotRollbackResource) Create(ctx context.Context, req res
 	params = append(params, data.ID.ValueString())
 	if !data.Options.IsNull() {
 		var optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil { params = append(params, optionsVal) }
+		if err := json.Unmarshal([]byte(data.Options.ValueString()), &optionsVal); err == nil {
+			params = append(params, optionsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionPoolSnapshotRollbackResource) Create(ctx context.Context, req res
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

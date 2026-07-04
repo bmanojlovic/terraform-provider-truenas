@@ -11,12 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type VmRestartResource struct {
+type PoolSnapshotCloneResource struct {
 	client *client.Client
 }
 
-type VmRestartResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+type PoolSnapshotCloneResourceModel struct {
+	Snapshot   types.String `tfsdk:"snapshot"`
+	DatasetDst types.String `tfsdk:"dataset_dst"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -26,19 +27,20 @@ type VmRestartResourceModel struct {
 	Error    types.String  `tfsdk:"error"`
 }
 
-func NewVmRestartResource() resource.Resource {
-	return &VmRestartResource{}
+func NewPoolSnapshotCloneResource() resource.Resource {
+	return &PoolSnapshotCloneResource{}
 }
 
-func (r *VmRestartResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_vm_restart"
+func (r *PoolSnapshotCloneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pool_snapshot_clone"
 }
 
-func (r *VmRestartResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *PoolSnapshotCloneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Restart a VM.",
+		MarkdownDescription: "Clone a given snapshot to a new dataset.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to restart."},
+			"snapshot":    schema.StringAttribute{Required: true, MarkdownDescription: "Full name of the snapshot to clone from."},
+			"dataset_dst": schema.StringAttribute{Required: true, MarkdownDescription: "Name for the new dataset created from the snapshot."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -67,7 +69,7 @@ func (r *VmRestartResource) Schema(ctx context.Context, req resource.SchemaReque
 	}
 }
 
-func (r *VmRestartResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *PoolSnapshotCloneResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -79,26 +81,28 @@ func (r *VmRestartResource) Configure(ctx context.Context, req resource.Configur
 	r.client = client
 }
 
-func (r *VmRestartResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data VmRestartResourceModel
+func (r *PoolSnapshotCloneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data PoolSnapshotCloneResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Build parameters
-	paramsArr := []interface{}{}
-	paramsArr = append(paramsArr, data.ID.ValueInt64())
+	params := map[string]interface{}{}
+	params["snapshot"] = data.Snapshot.ValueString()
+	params["dataset_dst"] = data.DatasetDst.ValueString()
+	paramsArr := []interface{}{params}
 
 	// Execute action
-	result, err := r.client.Call("vm.restart", paramsArr)
+	result, err := r.client.Call("pool.snapshot.clone", paramsArr)
 	if err != nil {
-		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute vm.restart: %s", err.Error()))
+		resp.Diagnostics.AddError("Action Failed", fmt.Sprintf("Failed to execute pool.snapshot.clone: %s", err.Error()))
 		return
 	}
 
 	// Check if result is a job ID
-	if jobID, ok := result.(float64); ok && true {
+	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
 
@@ -127,20 +131,20 @@ func (r *VmRestartResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// Generate ID from timestamp
-	data.ActionID = types.StringValue(fmt.Sprintf("vm.restart-%d", time.Now().Unix()))
+	data.ActionID = types.StringValue(fmt.Sprintf("pool.snapshot.clone-%d", time.Now().Unix()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *VmRestartResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *PoolSnapshotCloneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Actions are immutable - just return current state
-	var data VmRestartResourceModel
+	var data PoolSnapshotCloneResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 }
 
-func (r *VmRestartResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *PoolSnapshotCloneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.AddError("Update Not Supported", "Actions cannot be updated, only recreated")
 }
 
-func (r *VmRestartResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *PoolSnapshotCloneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// No-op - actions cannot be undone
 }

@@ -16,8 +16,8 @@ type BootEnvironmentKeepResource struct {
 }
 
 type BootEnvironmentKeepResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Value types.Bool `tfsdk:"value"`
+	ID    types.String `tfsdk:"id"`
+	Value types.Bool   `tfsdk:"value"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,7 @@ func (r *BootEnvironmentKeepResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute boot.environment.keep",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the boot environment to modify."},
+			"id":    schema.StringAttribute{Required: true, MarkdownDescription: "Name of the boot environment to modify."},
 			"value": schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to protect this boot environment from automatic deletion."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -105,7 +105,7 @@ func (r *BootEnvironmentKeepResource) Create(ctx context.Context, req resource.C
 	if jobID, ok := result.(float64); ok && false {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

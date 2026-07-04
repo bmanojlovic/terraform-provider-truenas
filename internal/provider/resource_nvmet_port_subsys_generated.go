@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type NvmetPortSubsysResource struct {
@@ -17,9 +17,9 @@ type NvmetPortSubsysResource struct {
 }
 
 type NvmetPortSubsysResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	PortId types.Int64 `tfsdk:"port_id"`
-	SubsysId types.Int64 `tfsdk:"subsys_id"`
+	ID       types.String `tfsdk:"id"`
+	PortId   types.Int64  `tfsdk:"port_id"`
+	SubsysId types.Int64  `tfsdk:"subsys_id"`
 }
 
 func NewNvmetPortSubsysResource() resource.Resource {
@@ -40,13 +40,13 @@ func (r *NvmetPortSubsysResource) Schema(ctx context.Context, req resource.Schem
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"port_id": schema.Int64Attribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ID of the NVMe-oF port to associate.",
 			},
 			"subsys_id": schema.Int64Attribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ID of the NVMe-oF subsystem to make accessible.",
 			},
 		},
@@ -99,7 +99,6 @@ func (r *NvmetPortSubsysResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -117,29 +116,33 @@ func (r *NvmetPortSubsysResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["port_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.PortId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.PortId = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.PortId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.PortId = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["subsys_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.SubsysId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+	}
+	if v, ok := resultMap["subsys_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.SubsysId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.SubsysId = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -177,29 +180,33 @@ func (r *NvmetPortSubsysResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["port_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.PortId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.PortId = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.PortId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.PortId = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["subsys_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.SubsysId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+	}
+	if v, ok := resultMap["subsys_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.SubsysId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.SubsysId = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -253,29 +260,33 @@ func (r *NvmetPortSubsysResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["port_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.PortId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.PortId = types.Int64Value(int64(fv)) }
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.PortId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.PortId = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["subsys_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.SubsysId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.SubsysId = types.Int64Value(int64(fv)) }
+	}
+	if v, ok := resultMap["subsys_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.SubsysId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.SubsysId = types.Int64Value(int64(fv))
 				}
 			}
 		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

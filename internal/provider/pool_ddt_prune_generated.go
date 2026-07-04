@@ -16,9 +16,9 @@ type PoolDdt_PruneResource struct {
 }
 
 type PoolDdt_PruneResourceModel struct {
-	PoolName types.String `tfsdk:"pool_name"`
-	Percentage types.Int64 `tfsdk:"percentage"`
-	Days types.Int64 `tfsdk:"days"`
+	PoolName   types.String `tfsdk:"pool_name"`
+	Percentage types.Int64  `tfsdk:"percentage"`
+	Days       types.Int64  `tfsdk:"days"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -40,9 +40,9 @@ func (r *PoolDdt_PruneResource) Schema(ctx context.Context, req resource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prune DDT entries in pool `pool_name` based on the specified options.  `percentage` is the percentage of DDT entries to prune.  `days` is the number of days to prune DDT entries.",
 		Attributes: map[string]schema.Attribute{
-			"pool_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prune deduplication table entries from."},
+			"pool_name":  schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prune deduplication table entries from."},
 			"percentage": schema.Int64Attribute{Optional: true, MarkdownDescription: "Percentage of deduplication table entries to prune."},
-			"days": schema.Int64Attribute{Optional: true, MarkdownDescription: "Remove entries older than this many days."},
+			"days":       schema.Int64Attribute{Optional: true, MarkdownDescription: "Remove entries older than this many days."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
@@ -93,8 +93,12 @@ func (r *PoolDdt_PruneResource) Create(ctx context.Context, req resource.CreateR
 	// Build parameters
 	params := map[string]interface{}{}
 	params["pool_name"] = data.PoolName.ValueString()
-	if !data.Percentage.IsNull() && !data.Percentage.IsUnknown() { params["percentage"] = data.Percentage.ValueInt64() }
-	if !data.Days.IsNull() && !data.Days.IsUnknown() { params["days"] = data.Days.ValueInt64() }
+	if !data.Percentage.IsNull() && !data.Percentage.IsUnknown() {
+		params["percentage"] = data.Percentage.ValueInt64()
+	}
+	if !data.Days.IsNull() && !data.Days.IsUnknown() {
+		params["days"] = data.Days.ValueInt64()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -108,7 +112,7 @@ func (r *PoolDdt_PruneResource) Create(ctx context.Context, req resource.CreateR
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

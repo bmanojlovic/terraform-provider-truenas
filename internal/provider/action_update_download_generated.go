@@ -16,7 +16,7 @@ type ActionUpdateDownloadResource struct {
 }
 
 type ActionUpdateDownloadResourceModel struct {
-	Train types.String `tfsdk:"train"`
+	Train   types.String `tfsdk:"train"`
 	Version types.String `tfsdk:"version"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -39,7 +39,7 @@ func (r *ActionUpdateDownloadResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Download updates.",
 		Attributes: map[string]schema.Attribute{
-			"train": schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
+			"train":   schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
 			"version": schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to download. `null` to download the latest version from the specified train."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -90,8 +90,12 @@ func (r *ActionUpdateDownloadResource) Create(ctx context.Context, req resource.
 
 	// Build parameters
 	params := []interface{}{}
-	if !data.Train.IsNull() { params = append(params, data.Train.ValueString()) }
-	if !data.Version.IsNull() { params = append(params, data.Version.ValueString()) }
+	if !data.Train.IsNull() {
+		params = append(params, data.Train.ValueString())
+	}
+	if !data.Version.IsNull() {
+		params = append(params, data.Version.ValueString())
+	}
 
 	// Execute action
 	result, err := r.client.Call("update.download", params)
@@ -104,7 +108,7 @@ func (r *ActionUpdateDownloadResource) Create(ctx context.Context, req resource.
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -3,16 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type UserResource struct {
@@ -20,28 +21,28 @@ type UserResource struct {
 }
 
 type UserResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Uid types.Int64 `tfsdk:"uid"`
-	Username types.String `tfsdk:"username"`
-	Home types.String `tfsdk:"home"`
-	Shell types.String `tfsdk:"shell"`
-	FullName types.String `tfsdk:"full_name"`
-	Smb types.Bool `tfsdk:"smb"`
-	UsernsIdmap types.Int64 `tfsdk:"userns_idmap"`
-	Group types.Int64 `tfsdk:"group"`
-	Groups types.List `tfsdk:"groups"`
-	PasswordDisabled types.Bool `tfsdk:"password_disabled"`
-	SshPasswordEnabled types.Bool `tfsdk:"ssh_password_enabled"`
-	Sshpubkey types.String `tfsdk:"sshpubkey"`
-	Locked types.Bool `tfsdk:"locked"`
-	SudoCommands types.List `tfsdk:"sudo_commands"`
-	SudoCommandsNopasswd types.List `tfsdk:"sudo_commands_nopasswd"`
-	Email types.String `tfsdk:"email"`
-	GroupCreate types.Bool `tfsdk:"group_create"`
-	HomeCreate types.Bool `tfsdk:"home_create"`
-	HomeMode types.String `tfsdk:"home_mode"`
-	Password types.String `tfsdk:"password"`
-	RandomPassword types.Bool `tfsdk:"random_password"`
+	ID                   types.String `tfsdk:"id"`
+	Uid                  types.Int64  `tfsdk:"uid"`
+	Username             types.String `tfsdk:"username"`
+	Home                 types.String `tfsdk:"home"`
+	Shell                types.String `tfsdk:"shell"`
+	FullName             types.String `tfsdk:"full_name"`
+	Smb                  types.Bool   `tfsdk:"smb"`
+	UsernsIdmap          types.Int64  `tfsdk:"userns_idmap"`
+	Group                types.Int64  `tfsdk:"group"`
+	Groups               types.List   `tfsdk:"groups"`
+	PasswordDisabled     types.Bool   `tfsdk:"password_disabled"`
+	SshPasswordEnabled   types.Bool   `tfsdk:"ssh_password_enabled"`
+	Sshpubkey            types.String `tfsdk:"sshpubkey"`
+	Locked               types.Bool   `tfsdk:"locked"`
+	SudoCommands         types.List   `tfsdk:"sudo_commands"`
+	SudoCommandsNopasswd types.List   `tfsdk:"sudo_commands_nopasswd"`
+	Email                types.String `tfsdk:"email"`
+	GroupCreate          types.Bool   `tfsdk:"group_create"`
+	HomeCreate           types.Bool   `tfsdk:"home_create"`
+	HomeMode             types.String `tfsdk:"home_mode"`
+	Password             types.String `tfsdk:"password"`
+	RandomPassword       types.Bool   `tfsdk:"random_password"`
 }
 
 func NewUserResource() resource.Resource {
@@ -62,113 +63,113 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"uid": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "UNIX UID. If not provided, it is automatically filled with the next one available.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "UNIX UID. If not provided, it is automatically filled with the next one available.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"username": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "String used to uniquely identify the user on the server. In order to be portable across     systems,",
 			},
 			"home": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The local file system path for the user account's home directory. Typically, this is required only i",
 			},
 			"shell": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Available choices can be retrieved with `user.shell_choices`.",
 			},
 			"full_name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Comment field to provide additional information about the user account. Typically, this is     the f",
 			},
 			"smb": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The user account may be used to access SMB shares. If set to `true` then TrueNAS stores an NT hash o",
 			},
 			"userns_idmap": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Specifies the subuid mapping for this user. If DIRECT then the UID will be     directly mapped to al",
 			},
 			"group": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The group entry `id` for the user's primary group. This is not the same as the Unix group `gid` valu",
 			},
 			"groups": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Array of additional groups to which the user belongs. NOTE: Groups are identified by their group ent",
 			},
 			"password_disabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If set to `true` password authentication for the user account is disabled.  NOTE: Users with passwor",
 			},
 			"ssh_password_enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Allow the user to authenticate to the TrueNAS SSH server using a password.  WARNING: The established",
 			},
 			"sshpubkey": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "SSH public keys corresponding to private keys that authenticate this user to the TrueNAS SSH server.",
 			},
 			"locked": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If set to `true` the account is locked. The account cannot be used to authenticate to the TrueNAS se",
 			},
 			"sudo_commands": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "An array of commands the user may execute with elevated privileges. User is prompted for password   ",
 			},
 			"sudo_commands_nopasswd": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "An array of commands the user may execute with elevated privileges. User is *not* prompted for passw",
 			},
 			"email": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and",
 			},
 			"group_create": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				Description: "If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary g",
+				Required:      false,
+				Optional:      true,
+				Description:   "If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary g",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"home_create": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Create a new home directory for the user in the specified `home` path. ",
 			},
 			"home_mode": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "Filesystem permission to set on the user's home directory. ",
 			},
 			"password": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Required:    false,
+				Optional:    true,
 				Description: "The password for the user account. This is required if `random_password` is not set. ",
 			},
 			"random_password": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Generate a random 20 character password for the user.",
 			},
 		},
@@ -284,7 +285,6 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -302,105 +302,182 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Username = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Username = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["full_name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.FullName = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["userns_idmap"]; ok {
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["uid"]; ok {
+		if v == nil {
+			data.Uid = types.Int64Null()
+		} else {
 			switch val := v.(type) {
 			case float64:
-				data.UsernsIdmap = types.Int64Value(int64(val))
+				data.Uid = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["group"]; ok {
-			if v == nil {
-				data.Group = types.Int64Null()
-			} else {
-				switch val := v.(type) {
-				case float64:
-					data.Group = types.Int64Value(int64(val))
-				case map[string]interface{}:
-					if parsed, ok := val["parsed"]; ok && parsed != nil {
-						if fv, ok := parsed.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+					if fv, ok := parsed.(float64); ok {
+						data.Uid = types.Int64Value(int64(fv))
 					}
 				}
 			}
 		}
-		if v, ok := resultMap["sshpubkey"]; ok {
-			if v == nil {
-				data.Sshpubkey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Sshpubkey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["full_name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.FullName = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.UsernsIdmap = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.UsernsIdmap = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["email"]; ok {
-			if v == nil {
-				data.Email = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Email = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["group"]; ok {
+		if v == nil {
+			data.Group = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.Group = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.Group = types.Int64Value(int64(fv))
 					}
-				default:
-					data.Email = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["password"]; ok {
-			if v == nil {
-				data.Password = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Password = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Password = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["sshpubkey"]; ok {
+		if v == nil {
+			data.Sshpubkey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Sshpubkey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["password"]; ok {
+		if v == nil {
+			data.Password = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if data.Uid.IsUnknown() {
+		data.Uid = types.Int64Null()
+	}
+	if data.Home.IsUnknown() {
+		data.Home = types.StringNull()
+	}
+	if data.Shell.IsUnknown() {
+		data.Shell = types.StringNull()
+	}
+	if data.Smb.IsUnknown() {
+		data.Smb = types.BoolNull()
+	}
+	if data.UsernsIdmap.IsUnknown() {
+		data.UsernsIdmap = types.Int64Null()
+	}
+	if data.Group.IsUnknown() {
+		data.Group = types.Int64Null()
+	}
+	if data.Groups.IsUnknown() {
+		data.Groups, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.PasswordDisabled.IsUnknown() {
+		data.PasswordDisabled = types.BoolNull()
+	}
+	if data.SshPasswordEnabled.IsUnknown() {
+		data.SshPasswordEnabled = types.BoolNull()
+	}
+	if data.Sshpubkey.IsUnknown() {
+		data.Sshpubkey = types.StringNull()
+	}
+	if data.Locked.IsUnknown() {
+		data.Locked = types.BoolNull()
+	}
+	if data.SudoCommands.IsUnknown() {
+		data.SudoCommands, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.SudoCommandsNopasswd.IsUnknown() {
+		data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.GroupCreate.IsUnknown() {
+		data.GroupCreate = types.BoolNull()
+	}
+	if data.HomeCreate.IsUnknown() {
+		data.HomeCreate = types.BoolNull()
+	}
+	if data.HomeMode.IsUnknown() {
+		data.HomeMode = types.StringNull()
+	}
+	if data.Password.IsUnknown() {
+		data.Password = types.StringNull()
+	}
+	if data.RandomPassword.IsUnknown() {
+		data.RandomPassword = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -438,105 +515,182 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Username = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Username = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["full_name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.FullName = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["userns_idmap"]; ok {
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["uid"]; ok {
+		if v == nil {
+			data.Uid = types.Int64Null()
+		} else {
 			switch val := v.(type) {
 			case float64:
-				data.UsernsIdmap = types.Int64Value(int64(val))
+				data.Uid = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["group"]; ok {
-			if v == nil {
-				data.Group = types.Int64Null()
-			} else {
-				switch val := v.(type) {
-				case float64:
-					data.Group = types.Int64Value(int64(val))
-				case map[string]interface{}:
-					if parsed, ok := val["parsed"]; ok && parsed != nil {
-						if fv, ok := parsed.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+					if fv, ok := parsed.(float64); ok {
+						data.Uid = types.Int64Value(int64(fv))
 					}
 				}
 			}
 		}
-		if v, ok := resultMap["sshpubkey"]; ok {
-			if v == nil {
-				data.Sshpubkey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Sshpubkey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["full_name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.FullName = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.UsernsIdmap = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.UsernsIdmap = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["email"]; ok {
-			if v == nil {
-				data.Email = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Email = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["group"]; ok {
+		if v == nil {
+			data.Group = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.Group = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.Group = types.Int64Value(int64(fv))
 					}
-				default:
-					data.Email = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["password"]; ok {
-			if v == nil {
-				data.Password = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Password = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Password = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["sshpubkey"]; ok {
+		if v == nil {
+			data.Sshpubkey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Sshpubkey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["password"]; ok {
+		if v == nil {
+			data.Password = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if data.Uid.IsUnknown() {
+		data.Uid = types.Int64Null()
+	}
+	if data.Home.IsUnknown() {
+		data.Home = types.StringNull()
+	}
+	if data.Shell.IsUnknown() {
+		data.Shell = types.StringNull()
+	}
+	if data.Smb.IsUnknown() {
+		data.Smb = types.BoolNull()
+	}
+	if data.UsernsIdmap.IsUnknown() {
+		data.UsernsIdmap = types.Int64Null()
+	}
+	if data.Group.IsUnknown() {
+		data.Group = types.Int64Null()
+	}
+	if data.Groups.IsUnknown() {
+		data.Groups, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.PasswordDisabled.IsUnknown() {
+		data.PasswordDisabled = types.BoolNull()
+	}
+	if data.SshPasswordEnabled.IsUnknown() {
+		data.SshPasswordEnabled = types.BoolNull()
+	}
+	if data.Sshpubkey.IsUnknown() {
+		data.Sshpubkey = types.StringNull()
+	}
+	if data.Locked.IsUnknown() {
+		data.Locked = types.BoolNull()
+	}
+	if data.SudoCommands.IsUnknown() {
+		data.SudoCommands, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.SudoCommandsNopasswd.IsUnknown() {
+		data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.GroupCreate.IsUnknown() {
+		data.GroupCreate = types.BoolNull()
+	}
+	if data.HomeCreate.IsUnknown() {
+		data.HomeCreate = types.BoolNull()
+	}
+	if data.HomeMode.IsUnknown() {
+		data.HomeMode = types.StringNull()
+	}
+	if data.Password.IsUnknown() {
+		data.Password = types.StringNull()
+	}
+	if data.RandomPassword.IsUnknown() {
+		data.RandomPassword = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -647,105 +801,182 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Username = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Username = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["full_name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.FullName = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.FullName = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["userns_idmap"]; ok {
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["uid"]; ok {
+		if v == nil {
+			data.Uid = types.Int64Null()
+		} else {
 			switch val := v.(type) {
 			case float64:
-				data.UsernsIdmap = types.Int64Value(int64(val))
+				data.Uid = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.UsernsIdmap = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["group"]; ok {
-			if v == nil {
-				data.Group = types.Int64Null()
-			} else {
-				switch val := v.(type) {
-				case float64:
-					data.Group = types.Int64Value(int64(val))
-				case map[string]interface{}:
-					if parsed, ok := val["parsed"]; ok && parsed != nil {
-						if fv, ok := parsed.(float64); ok { data.Group = types.Int64Value(int64(fv)) }
+					if fv, ok := parsed.(float64); ok {
+						data.Uid = types.Int64Value(int64(fv))
 					}
 				}
 			}
 		}
-		if v, ok := resultMap["sshpubkey"]; ok {
-			if v == nil {
-				data.Sshpubkey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Sshpubkey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Username = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Username = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Username = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["full_name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.FullName = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.FullName = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.FullName = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["userns_idmap"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.UsernsIdmap = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.UsernsIdmap = types.Int64Value(int64(fv))
 				}
 			}
 		}
-		if v, ok := resultMap["email"]; ok {
-			if v == nil {
-				data.Email = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Email = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["group"]; ok {
+		if v == nil {
+			data.Group = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.Group = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.Group = types.Int64Value(int64(fv))
 					}
-				default:
-					data.Email = types.StringValue(fmt.Sprintf("%v", v))
 				}
 			}
 		}
-		if v, ok := resultMap["password"]; ok {
-			if v == nil {
-				data.Password = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Password = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Password = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["sshpubkey"]; ok {
+		if v == nil {
+			data.Sshpubkey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Sshpubkey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.Sshpubkey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["password"]; ok {
+		if v == nil {
+			data.Password = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Password = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Password = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Password = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if data.Uid.IsUnknown() {
+		data.Uid = types.Int64Null()
+	}
+	if data.Home.IsUnknown() {
+		data.Home = types.StringNull()
+	}
+	if data.Shell.IsUnknown() {
+		data.Shell = types.StringNull()
+	}
+	if data.Smb.IsUnknown() {
+		data.Smb = types.BoolNull()
+	}
+	if data.UsernsIdmap.IsUnknown() {
+		data.UsernsIdmap = types.Int64Null()
+	}
+	if data.Group.IsUnknown() {
+		data.Group = types.Int64Null()
+	}
+	if data.Groups.IsUnknown() {
+		data.Groups, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.PasswordDisabled.IsUnknown() {
+		data.PasswordDisabled = types.BoolNull()
+	}
+	if data.SshPasswordEnabled.IsUnknown() {
+		data.SshPasswordEnabled = types.BoolNull()
+	}
+	if data.Sshpubkey.IsUnknown() {
+		data.Sshpubkey = types.StringNull()
+	}
+	if data.Locked.IsUnknown() {
+		data.Locked = types.BoolNull()
+	}
+	if data.SudoCommands.IsUnknown() {
+		data.SudoCommands, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.SudoCommandsNopasswd.IsUnknown() {
+		data.SudoCommandsNopasswd, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.GroupCreate.IsUnknown() {
+		data.GroupCreate = types.BoolNull()
+	}
+	if data.HomeCreate.IsUnknown() {
+		data.HomeCreate = types.BoolNull()
+	}
+	if data.HomeMode.IsUnknown() {
+		data.HomeMode = types.StringNull()
+	}
+	if data.Password.IsUnknown() {
+		data.Password = types.StringNull()
+	}
+	if data.RandomPassword.IsUnknown() {
+		data.RandomPassword = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

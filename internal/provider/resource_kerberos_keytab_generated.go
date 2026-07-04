@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type KerberosKeytabResource struct {
@@ -17,7 +17,7 @@ type KerberosKeytabResource struct {
 }
 
 type KerberosKeytabResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	File types.String `tfsdk:"file"`
 }
@@ -40,13 +40,13 @@ func (r *KerberosKeytabResource) Schema(ctx context.Context, req resource.Schema
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Name of the kerberos keytab entry. This is an identifier for the keytab and not     the name of the ",
 			},
 			"file": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Base64 encoded kerberos keytab entries to append to the system keytab. ",
 			},
 		},
@@ -99,7 +99,6 @@ func (r *KerberosKeytabResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -117,37 +116,37 @@ func (r *KerberosKeytabResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["file"]; ok {
+		if v == nil {
+			data.File = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.File = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.File = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.File = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["file"]; ok {
-			if v == nil {
-				data.File = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.File = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.File = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.File = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -185,37 +184,37 @@ func (r *KerberosKeytabResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["file"]; ok {
+		if v == nil {
+			data.File = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.File = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.File = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.File = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["file"]; ok {
-			if v == nil {
-				data.File = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.File = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.File = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.File = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -269,37 +268,37 @@ func (r *KerberosKeytabResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["file"]; ok {
+		if v == nil {
+			data.File = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.File = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.File = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.File = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["file"]; ok {
-			if v == nil {
-				data.File = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.File = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.File = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.File = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

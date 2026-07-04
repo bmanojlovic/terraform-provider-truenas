@@ -19,7 +19,7 @@ type ActionMailSendResource struct {
 
 type ActionMailSendResourceModel struct {
 	Message types.String `tfsdk:"message"`
-	Config types.String `tfsdk:"config"`
+	Config  types.String `tfsdk:"config"`
 	// File upload (optional)
 	FileContent types.String `tfsdk:"file_content"`
 	// Computed outputs
@@ -44,7 +44,7 @@ func (r *ActionMailSendResource) Schema(ctx context.Context, req resource.Schema
 		MarkdownDescription: "Sends mail using configured mail settings.",
 		Attributes: map[string]schema.Attribute{
 			"message": schema.StringAttribute{Required: true, MarkdownDescription: "Email message content and configuration."},
-			"config": schema.StringAttribute{Optional: true, MarkdownDescription: "Optional mail configuration overrides for this message."},
+			"config":  schema.StringAttribute{Optional: true, MarkdownDescription: "Optional mail configuration overrides for this message."},
 			"file_content": schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
@@ -100,7 +100,9 @@ func (r *ActionMailSendResource) Create(ctx context.Context, req resource.Create
 	// Build parameters
 	params := make(map[string]interface{})
 	params["message"] = data.Message.ValueString()
-	if !data.Config.IsNull() { params["config"] = data.Config.ValueString() }
+	if !data.Config.IsNull() {
+		params["config"] = data.Config.ValueString()
+	}
 
 	// Prepare file content if provided
 	var fileContent []byte
@@ -125,7 +127,7 @@ func (r *ActionMailSendResource) Create(ctx context.Context, req resource.Create
 	if jobID, ok := result.(float64); ok {
 		data.JobID = types.Int64Value(int64(jobID))
 	}
-	
+
 	// Actions are fire-and-forget - mark as success immediately
 	data.State = types.StringValue("SUBMITTED")
 	data.Progress = types.Float64Value(0.0)

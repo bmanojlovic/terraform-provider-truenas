@@ -16,8 +16,8 @@ type FailoverRebootOther_NodeResource struct {
 }
 
 type FailoverRebootOther_NodeResourceModel struct {
-	Reason types.String `tfsdk:"reason"`
-	Graceful types.Bool `tfsdk:"graceful"`
+	Reason   types.String `tfsdk:"reason"`
+	Graceful types.Bool   `tfsdk:"graceful"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,7 @@ func (r *FailoverRebootOther_NodeResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Reboot the other node and wait for it to come back online.  NOTE: This makes very few checks on HA systems. You need to     know what you're doing before calling this.",
 		Attributes: map[string]schema.Attribute{
-			"reason": schema.StringAttribute{Optional: true, MarkdownDescription: "Reason for the system reboot."},
+			"reason":   schema.StringAttribute{Optional: true, MarkdownDescription: "Reason for the system reboot."},
 			"graceful": schema.BoolAttribute{Optional: true, MarkdownDescription: "If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` will be     called on the other node to forcefully reboot and simulate a failover event unless t"},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -90,8 +90,12 @@ func (r *FailoverRebootOther_NodeResource) Create(ctx context.Context, req resou
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Reason.IsNull() && !data.Reason.IsUnknown() { params["reason"] = data.Reason.ValueString() }
-	if !data.Graceful.IsNull() && !data.Graceful.IsUnknown() { params["graceful"] = data.Graceful.ValueBool() }
+	if !data.Reason.IsNull() && !data.Reason.IsUnknown() {
+		params["reason"] = data.Reason.ValueString()
+	}
+	if !data.Graceful.IsNull() && !data.Graceful.IsUnknown() {
+		params["graceful"] = data.Graceful.ValueBool()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -105,7 +109,7 @@ func (r *FailoverRebootOther_NodeResource) Create(ctx context.Context, req resou
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -3,9 +3,10 @@
 from .schema import get_tf_type, to_field_name, is_complex_object, has_complex_objects, get_array_item_schema, merge_anyof_schema
 
 
-def gen_schema_attrs(properties, required, has_start=False, create_only=None):
+def gen_schema_attrs(properties, required, has_start=False, create_only=None, response_fields=None):
     """Generate schema attributes."""
     create_only = create_only or set()
+    response_fields = response_fields or set()
     lines = []
 
     if not has_start and not required:  # datasource
@@ -38,7 +39,11 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None):
             lines.append("\t\t\t\tComputed: true,")
         else:
             is_auto = not is_req and isinstance(prop, dict) and "generate" in prop.get("description", "").lower()
-            if is_auto:
+            # Mark as Computed if:
+            # - description says "generate" (auto-generated field), OR
+            # - in response_fields AND NOT required (server may provide default)
+            has_server_default = not is_req and name in response_fields
+            if is_auto or has_server_default:
                 lines.append("\t\t\t\tOptional: true,")
                 lines.append("\t\t\t\tComputed: true,")
             else:
@@ -135,23 +140,31 @@ def gen_create_params(properties):
     return "\n".join(lines)
 
 
-def gen_read_mapping(properties, skip_id=False, create_only=None, required=None):
+def will_read_field(name, properties, create_only, required, response_fields):
+    """Determine if a field will be read from API response (shared logic)."""
+    if name in ("provider", "id"):
+        return False
+    if name in create_only and name not in ("type",):
+        if name in response_fields:
+            return True
+        return False
+    if required is not None:
+        prop = properties.get(name, {})
+        has_null_default = prop.get("default") is None and "default" in prop
+        if name not in required and name not in ("type",) and not has_null_default:
+            return False
+    return True
+
+
+def gen_read_mapping(properties, skip_id=False, create_only=None, required=None, response_fields=None, field_mapping=None):
     """Generate code to map API response to state."""
     create_only = create_only or set()
+    response_fields = response_fields or set()
+    field_mapping = field_mapping or {}
     lines = []
 
     def should_read_field(name):
-        if name in ("provider", "id"):
-            return False
-        if name in create_only and name not in ("name", "type"):
-            return False
-        # Read required fields, or optional fields with default: null (computed values)
-        if required is not None:
-            prop = properties.get(name, {})
-            has_null_default = prop.get("default") is None and "default" in prop
-            if name not in required and name not in ("name", "type") and not has_null_default:
-                return False
-        return True
+        return will_read_field(name, properties, create_only, required, response_fields)
 
     fields_to_read = [n for n in properties if should_read_field(n)]
     has_fields = not skip_id or bool(fields_to_read)
@@ -187,7 +200,9 @@ def gen_read_mapping(properties, skip_id=False, create_only=None, required=None)
             any_of = prop.get("anyOf", [])
             is_nullable = any(t.get("type") == "null" for t in any_of if isinstance(t, dict))
 
-        lines.append(f'\t\tif v, ok := resultMap["{name}"]; ok {{')
+        # Use field_mapping if configured (e.g., TF 'name' reads from API 'snapshot_name')
+        api_field = field_mapping.get(name, name)
+        lines.append(f'\t\tif v, ok := resultMap["{api_field}"]; ok {{')
         
         # Handle null values for nullable fields
         if is_nullable:
@@ -248,5 +263,21 @@ def gen_read_mapping(properties, skip_id=False, create_only=None, required=None)
             lines.append('\t\t\t}')
 
         lines.append("\t\t}")
+
+    # Null any Optional field still Unknown after readback.
+    # Handles: create-only params not in response, AND response fields missing for
+    # polymorphic types (e.g., casesensitivity not returned for VOLUME datasets).
+    all_optional = [
+        n for n in properties
+        if n != "id" and n != "provider" and n not in (required or set())
+    ]
+    for name in all_optional:
+        field = to_field_name(name)
+        tf_type = get_tf_type(properties[name])
+        null_fn = {"String": "StringNull", "Int64": "Int64Null", "Bool": "BoolNull", "Float64": "Float64Null"}.get(tf_type)
+        if null_fn:
+            lines.append(f'\tif data.{field}.IsUnknown() {{ data.{field} = types.{null_fn}() }}')
+        elif tf_type == "List":
+            lines.append(f'\tif data.{field}.IsUnknown() {{ data.{field}, _ = types.ListValue(types.StringType, []attr.Value{{}}) }}')
 
     return "\n".join(lines)

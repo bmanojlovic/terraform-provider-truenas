@@ -17,7 +17,7 @@ type ActionCloudsyncSyncResource struct {
 }
 
 type ActionCloudsyncSyncResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID                   types.Int64  `tfsdk:"id"`
 	CloudSyncSyncOptions types.String `tfsdk:"cloud_sync_sync_options"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionCloudsyncSyncResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run the cloud_sync job `id`, syncing the local data to remote.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to run."},
+			"id":                      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to run."},
 			"cloud_sync_sync_options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the sync operation."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *ActionCloudsyncSyncResource) Create(ctx context.Context, req resource.C
 	params = append(params, data.ID.ValueInt64())
 	if !data.CloudSyncSyncOptions.IsNull() {
 		var cloud_sync_sync_optionsVal interface{}
-		if err := json.Unmarshal([]byte(data.CloudSyncSyncOptions.ValueString()), &cloud_sync_sync_optionsVal); err == nil { params = append(params, cloud_sync_sync_optionsVal) }
+		if err := json.Unmarshal([]byte(data.CloudSyncSyncOptions.ValueString()), &cloud_sync_sync_optionsVal); err == nil {
+			params = append(params, cloud_sync_sync_optionsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionCloudsyncSyncResource) Create(ctx context.Context, req resource.C
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

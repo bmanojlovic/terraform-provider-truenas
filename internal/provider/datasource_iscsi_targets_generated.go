@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,11 +27,11 @@ type IscsiTargetsDataSourceModel struct {
 }
 
 type IscsiTargetsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Alias types.String `tfsdk:"alias"`
-	Mode types.String `tfsdk:"mode"`
-	RelTgtId types.Int64 `tfsdk:"rel_tgt_id"`
+	ID              types.String `tfsdk:"id"`
+	Name            types.String `tfsdk:"name"`
+	Alias           types.String `tfsdk:"alias"`
+	Mode            types.String `tfsdk:"mode"`
+	RelTgtId        types.Int64  `tfsdk:"rel_tgt_id"`
 	IscsiParameters types.String `tfsdk:"iscsi_parameters"`
 }
 
@@ -44,31 +44,31 @@ func (d *IscsiTargetsDataSource) Schema(ctx context.Context, req datasource.Sche
 		Description: "Query iscsi_targets",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of iscsi_targets resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the iSCSI target (maximum 120 characters).",
-			},
-			"alias": schema.StringAttribute{
-				Computed: true,
-				Description: "Optional alias name for the iSCSI target.",
-			},
-			"mode": schema.StringAttribute{
-				Computed: true,
-				Description: "Protocol mode for the target.  * `ISCSI`: iSCSI protocol only * `FC`: Fibre Channel protocol only * ",
-			},
-			"rel_tgt_id": schema.Int64Attribute{
-				Computed: true,
-				Description: "Relative target ID number assigned by the system.",
-			},
-			"iscsi_parameters": schema.StringAttribute{
-				Computed: true,
-				Description: "Optional iSCSI-specific parameters for this target.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the iSCSI target (maximum 120 characters).",
+						},
+						"alias": schema.StringAttribute{
+							Computed:    true,
+							Description: "Optional alias name for the iSCSI target.",
+						},
+						"mode": schema.StringAttribute{
+							Computed:    true,
+							Description: "Protocol mode for the target.  * `ISCSI`: iSCSI protocol only * `FC`: Fibre Channel protocol only * ",
+						},
+						"rel_tgt_id": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Relative target ID number assigned by the system.",
+						},
+						"iscsi_parameters": schema.StringAttribute{
+							Computed:    true,
+							Description: "Optional iSCSI-specific parameters for this target.",
+						},
 					},
 				},
 			},
@@ -126,7 +126,9 @@ func (d *IscsiTargetsDataSource) Read(ctx context.Context, req datasource.ReadRe
 			itemModel.Mode = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["rel_tgt_id"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.RelTgtId = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.RelTgtId = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["iscsi_parameters"]; ok && v != nil {
 			itemModel.IscsiParameters = types.StringValue(fmt.Sprintf("%v", v))
@@ -137,12 +139,12 @@ func (d *IscsiTargetsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"alias": types.StringType,
-			"id": types.StringType,
+			"alias":            types.StringType,
+			"id":               types.StringType,
 			"iscsi_parameters": types.StringType,
-			"mode": types.StringType,
-			"name": types.StringType,
-			"rel_tgt_id": types.Int64Type,
+			"mode":             types.StringType,
+			"name":             types.StringType,
+			"rel_tgt_id":       types.Int64Type,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

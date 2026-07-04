@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type PoolScrubsDataSourceModel struct {
 }
 
 type PoolScrubsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Pool types.Int64 `tfsdk:"pool"`
-	Threshold types.Int64 `tfsdk:"threshold"`
+	ID          types.String `tfsdk:"id"`
+	Pool        types.Int64  `tfsdk:"pool"`
+	Threshold   types.Int64  `tfsdk:"threshold"`
 	Description types.String `tfsdk:"description"`
-	Schedule types.String `tfsdk:"schedule"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	PoolName types.String `tfsdk:"pool_name"`
+	Schedule    types.String `tfsdk:"schedule"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	PoolName    types.String `tfsdk:"pool_name"`
 }
 
 func (d *PoolScrubsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -45,35 +45,35 @@ func (d *PoolScrubsDataSource) Schema(ctx context.Context, req datasource.Schema
 		Description: "Query pool_scrubs",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of pool_scrubs resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"pool": schema.Int64Attribute{
-				Computed: true,
-				Description: "ID of the pool to scrub.",
-			},
-			"threshold": schema.Int64Attribute{
-				Computed: true,
-				Description: "Days before a scrub is due when a scrub should automatically start.",
-			},
-			"description": schema.StringAttribute{
-				Computed: true,
-				Description: "Description or notes for this scrub schedule.",
-			},
-			"schedule": schema.StringAttribute{
-				Computed: true,
-				Description: "Cron schedule for when scrubs should run.",
-			},
-			"enabled": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether this scrub schedule is enabled.",
-			},
-			"pool_name": schema.StringAttribute{
-				Computed: true,
-				Description: "Name of the pool being scrubbed.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"pool": schema.Int64Attribute{
+							Computed:    true,
+							Description: "ID of the pool to scrub.",
+						},
+						"threshold": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Days before a scrub is due when a scrub should automatically start.",
+						},
+						"description": schema.StringAttribute{
+							Computed:    true,
+							Description: "Description or notes for this scrub schedule.",
+						},
+						"schedule": schema.StringAttribute{
+							Computed:    true,
+							Description: "Cron schedule for when scrubs should run.",
+						},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether this scrub schedule is enabled.",
+						},
+						"pool_name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the pool being scrubbed.",
+						},
 					},
 				},
 			},
@@ -119,10 +119,14 @@ func (d *PoolScrubsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 		itemModel := PoolScrubsItemModel{}
 		if v, ok := resultMap["pool"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Pool = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Pool = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["threshold"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Threshold = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Threshold = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["description"]; ok && v != nil {
 			itemModel.Description = types.StringValue(fmt.Sprintf("%v", v))
@@ -131,7 +135,9 @@ func (d *PoolScrubsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			itemModel.Schedule = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["enabled"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Enabled = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Enabled = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["id"]; ok && v != nil {
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
@@ -146,12 +152,12 @@ func (d *PoolScrubsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"description": types.StringType,
-			"enabled": types.BoolType,
-			"id": types.StringType,
-			"pool": types.Int64Type,
-			"pool_name": types.StringType,
-			"schedule": types.StringType,
-			"threshold": types.Int64Type,
+			"enabled":     types.BoolType,
+			"id":          types.StringType,
+			"pool":        types.Int64Type,
+			"pool_name":   types.StringType,
+			"schedule":    types.StringType,
+			"threshold":   types.Int64Type,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

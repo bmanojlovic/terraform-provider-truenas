@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,13 +27,13 @@ type AppImagesDataSourceModel struct {
 }
 
 type AppImagesItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Size types.Int64 `tfsdk:"size"`
-	Dangling types.Bool `tfsdk:"dangling"`
-	UpdateAvailable types.Bool `tfsdk:"update_available"`
-	Created types.String `tfsdk:"created"`
-	Author types.String `tfsdk:"author"`
-	Comment types.String `tfsdk:"comment"`
+	ID              types.String `tfsdk:"id"`
+	Size            types.Int64  `tfsdk:"size"`
+	Dangling        types.Bool   `tfsdk:"dangling"`
+	UpdateAvailable types.Bool   `tfsdk:"update_available"`
+	Created         types.String `tfsdk:"created"`
+	Author          types.String `tfsdk:"author"`
+	Comment         types.String `tfsdk:"comment"`
 }
 
 func (d *AppImagesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -45,35 +45,35 @@ func (d *AppImagesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 		Description: "Query all docker images with `query-filters` and `query-options`.",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of app_images resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"size": schema.Int64Attribute{
-				Computed: true,
-				Description: "Size of the container image in bytes.",
-			},
-			"dangling": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether this is a dangling image (no tags or references).",
-			},
-			"update_available": schema.BoolAttribute{
-				Computed: true,
-				Description: "Whether a newer version of this image is available for download.",
-			},
-			"created": schema.StringAttribute{
-				Computed: true,
-				Description: "Timestamp when the container image was created (ISO format).",
-			},
-			"author": schema.StringAttribute{
-				Computed: true,
-				Description: "Author or maintainer of the container image.",
-			},
-			"comment": schema.StringAttribute{
-				Computed: true,
-				Description: "Comment or description provided by the image author.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"size": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Size of the container image in bytes.",
+						},
+						"dangling": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether this is a dangling image (no tags or references).",
+						},
+						"update_available": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Whether a newer version of this image is available for download.",
+						},
+						"created": schema.StringAttribute{
+							Computed:    true,
+							Description: "Timestamp when the container image was created (ISO format).",
+						},
+						"author": schema.StringAttribute{
+							Computed:    true,
+							Description: "Author or maintainer of the container image.",
+						},
+						"comment": schema.StringAttribute{
+							Computed:    true,
+							Description: "Comment or description provided by the image author.",
+						},
 					},
 				},
 			},
@@ -122,13 +122,19 @@ func (d *AppImagesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["size"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Size = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Size = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["dangling"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.Dangling = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.Dangling = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["update_available"]; ok && v != nil {
-			if bv, ok := v.(bool); ok { itemModel.UpdateAvailable = types.BoolValue(bv) }
+			if bv, ok := v.(bool); ok {
+				itemModel.UpdateAvailable = types.BoolValue(bv)
+			}
 		}
 		if v, ok := resultMap["created"]; ok && v != nil {
 			itemModel.Created = types.StringValue(fmt.Sprintf("%v", v))
@@ -145,12 +151,12 @@ func (d *AppImagesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	// Convert to types.List
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"author": types.StringType,
-			"comment": types.StringType,
-			"created": types.StringType,
-			"dangling": types.BoolType,
-			"id": types.StringType,
-			"size": types.Int64Type,
+			"author":           types.StringType,
+			"comment":          types.StringType,
+			"created":          types.StringType,
+			"dangling":         types.BoolType,
+			"id":               types.StringType,
+			"size":             types.Int64Type,
 			"update_available": types.BoolType,
 		},
 	}, items)

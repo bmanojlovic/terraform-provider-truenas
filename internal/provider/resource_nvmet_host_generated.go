@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type NvmetHostResource struct {
@@ -17,12 +17,12 @@ type NvmetHostResource struct {
 }
 
 type NvmetHostResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Hostnqn types.String `tfsdk:"hostnqn"`
-	DhchapKey types.String `tfsdk:"dhchap_key"`
+	ID            types.String `tfsdk:"id"`
+	Hostnqn       types.String `tfsdk:"hostnqn"`
+	DhchapKey     types.String `tfsdk:"dhchap_key"`
 	DhchapCtrlKey types.String `tfsdk:"dhchap_ctrl_key"`
 	DhchapDhgroup types.String `tfsdk:"dhchap_dhgroup"`
-	DhchapHash types.String `tfsdk:"dhchap_hash"`
+	DhchapHash    types.String `tfsdk:"dhchap_hash"`
 }
 
 func NewNvmetHostResource() resource.Resource {
@@ -43,28 +43,28 @@ func (r *NvmetHostResource) Schema(ctx context.Context, req resource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"hostnqn": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "NQN of the host that will connect to this TrueNAS. ",
 			},
 			"dhchap_key": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If set, the secret that the host must present when connecting.  A suitable secret can be generated u",
 			},
 			"dhchap_ctrl_key": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Direct",
 			},
 			"dhchap_dhgroup": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication",
 			},
 			"dhchap_hash": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selecte",
 			},
 		},
@@ -126,7 +126,6 @@ func (r *NvmetHostResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -144,69 +143,81 @@ func (r *NvmetHostResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["hostnqn"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Hostnqn = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["hostnqn"]; ok {
+	}
+	if v, ok := resultMap["dhchap_key"]; ok {
+		if v == nil {
+			data.DhchapKey = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Hostnqn = types.StringValue(val)
+				data.DhchapKey = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
+				data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_key"]; ok {
-			if v == nil {
-				data.DhchapKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_ctrl_key"]; ok {
+		if v == nil {
+			data.DhchapCtrlKey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapCtrlKey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_ctrl_key"]; ok {
-			if v == nil {
-				data.DhchapCtrlKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapCtrlKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_dhgroup"]; ok {
+		if v == nil {
+			data.DhchapDhgroup = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapDhgroup = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_dhgroup"]; ok {
-			if v == nil {
-				data.DhchapDhgroup = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapDhgroup = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
+	if data.DhchapKey.IsUnknown() {
+		data.DhchapKey = types.StringNull()
+	}
+	if data.DhchapCtrlKey.IsUnknown() {
+		data.DhchapCtrlKey = types.StringNull()
+	}
+	if data.DhchapDhgroup.IsUnknown() {
+		data.DhchapDhgroup = types.StringNull()
+	}
+	if data.DhchapHash.IsUnknown() {
+		data.DhchapHash = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -244,69 +255,81 @@ func (r *NvmetHostResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["hostnqn"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Hostnqn = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["hostnqn"]; ok {
+	}
+	if v, ok := resultMap["dhchap_key"]; ok {
+		if v == nil {
+			data.DhchapKey = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Hostnqn = types.StringValue(val)
+				data.DhchapKey = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
+				data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_key"]; ok {
-			if v == nil {
-				data.DhchapKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_ctrl_key"]; ok {
+		if v == nil {
+			data.DhchapCtrlKey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapCtrlKey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_ctrl_key"]; ok {
-			if v == nil {
-				data.DhchapCtrlKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapCtrlKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_dhgroup"]; ok {
+		if v == nil {
+			data.DhchapDhgroup = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapDhgroup = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_dhgroup"]; ok {
-			if v == nil {
-				data.DhchapDhgroup = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapDhgroup = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
+	if data.DhchapKey.IsUnknown() {
+		data.DhchapKey = types.StringNull()
+	}
+	if data.DhchapCtrlKey.IsUnknown() {
+		data.DhchapCtrlKey = types.StringNull()
+	}
+	if data.DhchapDhgroup.IsUnknown() {
+		data.DhchapDhgroup = types.StringNull()
+	}
+	if data.DhchapHash.IsUnknown() {
+		data.DhchapHash = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -369,69 +392,81 @@ func (r *NvmetHostResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["hostnqn"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Hostnqn = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["hostnqn"]; ok {
+	}
+	if v, ok := resultMap["dhchap_key"]; ok {
+		if v == nil {
+			data.DhchapKey = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Hostnqn = types.StringValue(val)
+				data.DhchapKey = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Hostnqn = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Hostnqn = types.StringValue(fmt.Sprintf("%v", v))
+				data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_key"]; ok {
-			if v == nil {
-				data.DhchapKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_ctrl_key"]; ok {
+		if v == nil {
+			data.DhchapCtrlKey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapCtrlKey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_ctrl_key"]; ok {
-			if v == nil {
-				data.DhchapCtrlKey = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapCtrlKey = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapCtrlKey = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["dhchap_dhgroup"]; ok {
+		if v == nil {
+			data.DhchapDhgroup = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.DhchapDhgroup = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
+			default:
+				data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["dhchap_dhgroup"]; ok {
-			if v == nil {
-				data.DhchapDhgroup = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.DhchapDhgroup = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.DhchapDhgroup = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
+	}
+	if data.DhchapKey.IsUnknown() {
+		data.DhchapKey = types.StringNull()
+	}
+	if data.DhchapCtrlKey.IsUnknown() {
+		data.DhchapCtrlKey = types.StringNull()
+	}
+	if data.DhchapDhgroup.IsUnknown() {
+		data.DhchapDhgroup = types.StringNull()
+	}
+	if data.DhchapHash.IsUnknown() {
+		data.DhchapHash = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -24,38 +24,38 @@ type VmDataSource struct {
 }
 
 type VmDataSourceModel struct {
-	ID types.String `tfsdk:"id"`
-	CommandLineArgs types.String `tfsdk:"command_line_args"`
-	CpuMode types.String `tfsdk:"cpu_mode"`
-	CpuModel types.String `tfsdk:"cpu_model"`
-	Name types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Vcpus types.Int64 `tfsdk:"vcpus"`
-	Cores types.Int64 `tfsdk:"cores"`
-	Threads types.Int64 `tfsdk:"threads"`
-	Cpuset types.String `tfsdk:"cpuset"`
-	Nodeset types.String `tfsdk:"nodeset"`
-	EnableCpuTopologyExtension types.Bool `tfsdk:"enable_cpu_topology_extension"`
-	PinVcpus types.Bool `tfsdk:"pin_vcpus"`
-	SuspendOnSnapshot types.Bool `tfsdk:"suspend_on_snapshot"`
-	TrustedPlatformModule types.Bool `tfsdk:"trusted_platform_module"`
-	Memory types.Int64 `tfsdk:"memory"`
-	MinMemory types.Int64 `tfsdk:"min_memory"`
-	HypervEnlightenments types.Bool `tfsdk:"hyperv_enlightenments"`
-	Bootloader types.String `tfsdk:"bootloader"`
-	BootloaderOvmf types.String `tfsdk:"bootloader_ovmf"`
-	Autostart types.Bool `tfsdk:"autostart"`
-	HideFromMsr types.Bool `tfsdk:"hide_from_msr"`
-	EnsureDisplayDevice types.Bool `tfsdk:"ensure_display_device"`
-	Time types.String `tfsdk:"time"`
-	ShutdownTimeout types.Int64 `tfsdk:"shutdown_timeout"`
-	ArchType types.String `tfsdk:"arch_type"`
-	MachineType types.String `tfsdk:"machine_type"`
-	Uuid types.String `tfsdk:"uuid"`
-	Devices types.List `tfsdk:"devices"`
-	DisplayAvailable types.Bool `tfsdk:"display_available"`
-	Status types.String `tfsdk:"status"`
-	EnableSecureBoot types.Bool `tfsdk:"enable_secure_boot"`
+	ID                         types.String `tfsdk:"id"`
+	CommandLineArgs            types.String `tfsdk:"command_line_args"`
+	CpuMode                    types.String `tfsdk:"cpu_mode"`
+	CpuModel                   types.String `tfsdk:"cpu_model"`
+	Name                       types.String `tfsdk:"name"`
+	Description                types.String `tfsdk:"description"`
+	Vcpus                      types.Int64  `tfsdk:"vcpus"`
+	Cores                      types.Int64  `tfsdk:"cores"`
+	Threads                    types.Int64  `tfsdk:"threads"`
+	Cpuset                     types.String `tfsdk:"cpuset"`
+	Nodeset                    types.String `tfsdk:"nodeset"`
+	EnableCpuTopologyExtension types.Bool   `tfsdk:"enable_cpu_topology_extension"`
+	PinVcpus                   types.Bool   `tfsdk:"pin_vcpus"`
+	SuspendOnSnapshot          types.Bool   `tfsdk:"suspend_on_snapshot"`
+	TrustedPlatformModule      types.Bool   `tfsdk:"trusted_platform_module"`
+	Memory                     types.Int64  `tfsdk:"memory"`
+	MinMemory                  types.Int64  `tfsdk:"min_memory"`
+	HypervEnlightenments       types.Bool   `tfsdk:"hyperv_enlightenments"`
+	Bootloader                 types.String `tfsdk:"bootloader"`
+	BootloaderOvmf             types.String `tfsdk:"bootloader_ovmf"`
+	Autostart                  types.Bool   `tfsdk:"autostart"`
+	HideFromMsr                types.Bool   `tfsdk:"hide_from_msr"`
+	EnsureDisplayDevice        types.Bool   `tfsdk:"ensure_display_device"`
+	Time                       types.String `tfsdk:"time"`
+	ShutdownTimeout            types.Int64  `tfsdk:"shutdown_timeout"`
+	ArchType                   types.String `tfsdk:"arch_type"`
+	MachineType                types.String `tfsdk:"machine_type"`
+	Uuid                       types.String `tfsdk:"uuid"`
+	Devices                    types.List   `tfsdk:"devices"`
+	DisplayAvailable           types.Bool   `tfsdk:"display_available"`
+	Status                     types.String `tfsdk:"status"`
+	EnableSecureBoot           types.Bool   `tfsdk:"enable_secure_boot"`
 }
 
 func (d *VmDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -68,128 +68,128 @@ func (d *VmDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
 			"command_line_args": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Additional command line arguments passed to the VM hypervisor.",
 			},
 			"cpu_mode": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "CPU virtualization mode.  * `CUSTOM`: Use specified model. * `HOST-MODEL`: Mirror host CPU. * `HOST-",
 			},
 			"cpu_model": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Specific CPU model to emulate. `null` to use hypervisor default.",
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Display name of the virtual machine.",
 			},
 			"description": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Optional description or notes about the virtual machine.",
 			},
 			"vcpus": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Number of virtual CPUs allocated to the VM.",
 			},
 			"cores": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Number of CPU cores per socket.",
 			},
 			"threads": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Number of threads per CPU core.",
 			},
 			"cpuset": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Set of host CPU cores to pin VM CPUs to. `null` for no pinning.",
 			},
 			"nodeset": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Set of NUMA nodes to constrain VM memory allocation. `null` for no constraints.",
 			},
 			"enable_cpu_topology_extension": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to expose detailed CPU topology information to the guest OS.",
 			},
 			"pin_vcpus": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexib",
 			},
 			"suspend_on_snapshot": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to suspend the VM when taking snapshots.",
 			},
 			"trusted_platform_module": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to enable virtual Trusted Platform Module (TPM) for the VM.",
 			},
 			"memory": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Amount of memory allocated to the VM in megabytes.",
 			},
 			"min_memory": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Minimum memory allocation for dynamic memory ballooning in megabytes. Allows VM memory to shrink    ",
 			},
 			"hyperv_enlightenments": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to enable Hyper-V enlightenments for improved Windows guest performance.",
 			},
 			"bootloader": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Boot firmware type. `UEFI` for modern UEFI, `UEFI_CSM` for legacy BIOS compatibility.",
 			},
 			"bootloader_ovmf": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "OVMF firmware file to use for UEFI boot.",
 			},
 			"autostart": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to automatically start the VM when the host system boots.",
 			},
 			"hide_from_msr": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to hide hypervisor signatures from guest OS MSR access.",
 			},
 			"ensure_display_device": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to ensure at least one display device is configured for the VM.",
 			},
 			"time": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time.",
 			},
 			"shutdown_timeout": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Maximum time in seconds to wait for graceful shutdown before forcing power off. Default 90s balances",
 			},
 			"arch_type": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Guest architecture type. `null` to use hypervisor default.",
 			},
 			"machine_type": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Virtual machine type/chipset. `null` to use hypervisor default.",
 			},
 			"uuid": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Unique UUID for the VM. `null` to auto-generate.",
 			},
 			"devices": schema.ListAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Array of virtual devices attached to this VM.",
 			},
 			"display_available": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether at least one display device is available for this VM.",
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Current runtime status information for the VM.",
 			},
 			"enable_secure_boot": schema.BoolAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "Whether to enable UEFI Secure Boot for enhanced security.",
 			},
 		},
@@ -227,299 +227,426 @@ func (d *VmDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		return
 	}
 
-		if v, ok := resultMap["command_line_args"]; ok {
+	if v, ok := resultMap["command_line_args"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.CommandLineArgs = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.CommandLineArgs = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.CommandLineArgs = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["cpu_mode"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.CpuMode = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.CpuMode = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.CpuMode = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["cpu_model"]; ok {
+		if v == nil {
+			data.CpuModel = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.CommandLineArgs = types.StringValue(val)
+				data.CpuModel = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.CommandLineArgs = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.CommandLineArgs = types.StringValue(fmt.Sprintf("%v", v))
+				data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["cpu_mode"]; ok {
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["description"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Description = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Description = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["vcpus"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Vcpus = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Vcpus = types.Int64Value(int64(fv))
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["cores"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Cores = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Cores = types.Int64Value(int64(fv))
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["threads"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Threads = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Threads = types.Int64Value(int64(fv))
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["cpuset"]; ok {
+		if v == nil {
+			data.Cpuset = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.CpuMode = types.StringValue(val)
+				data.Cpuset = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.CpuMode = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.CpuMode = types.StringValue(fmt.Sprintf("%v", v))
+				data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["cpu_model"]; ok {
-			if v == nil {
-				data.CpuModel = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.CpuModel = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.CpuModel = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.CpuModel = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["nodeset"]; ok {
+		if v == nil {
+			data.Nodeset = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Nodeset = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["description"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Description = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Description = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["enable_cpu_topology_extension"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.EnableCpuTopologyExtension = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["pin_vcpus"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.PinVcpus = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["suspend_on_snapshot"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.SuspendOnSnapshot = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["trusted_platform_module"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.TrustedPlatformModule = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["memory"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.Memory = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.Memory = types.Int64Value(int64(fv))
 				}
-			default:
-				data.Description = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["vcpus"]; ok {
+	}
+	if v, ok := resultMap["min_memory"]; ok {
+		if v == nil {
+			data.MinMemory = types.Int64Null()
+		} else {
 			switch val := v.(type) {
 			case float64:
-				data.Vcpus = types.Int64Value(int64(val))
+				data.MinMemory = types.Int64Value(int64(val))
 			case map[string]interface{}:
 				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Vcpus = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["cores"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Cores = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Cores = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["threads"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Threads = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Threads = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["cpuset"]; ok {
-			if v == nil {
-				data.Cpuset = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Cpuset = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Cpuset = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Cpuset = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
-		if v, ok := resultMap["nodeset"]; ok {
-			if v == nil {
-				data.Nodeset = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Nodeset = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Nodeset = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Nodeset = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
-		if v, ok := resultMap["enable_cpu_topology_extension"]; ok {
-			if bv, ok := v.(bool); ok { data.EnableCpuTopologyExtension = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["pin_vcpus"]; ok {
-			if bv, ok := v.(bool); ok { data.PinVcpus = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["suspend_on_snapshot"]; ok {
-			if bv, ok := v.(bool); ok { data.SuspendOnSnapshot = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["trusted_platform_module"]; ok {
-			if bv, ok := v.(bool); ok { data.TrustedPlatformModule = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["memory"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.Memory = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.Memory = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
-		if v, ok := resultMap["min_memory"]; ok {
-			if v == nil {
-				data.MinMemory = types.Int64Null()
-			} else {
-				switch val := v.(type) {
-				case float64:
-					data.MinMemory = types.Int64Value(int64(val))
-				case map[string]interface{}:
-					if parsed, ok := val["parsed"]; ok && parsed != nil {
-						if fv, ok := parsed.(float64); ok { data.MinMemory = types.Int64Value(int64(fv)) }
+					if fv, ok := parsed.(float64); ok {
+						data.MinMemory = types.Int64Value(int64(fv))
 					}
 				}
 			}
 		}
-		if v, ok := resultMap["hyperv_enlightenments"]; ok {
-			if bv, ok := v.(bool); ok { data.HypervEnlightenments = types.BoolValue(bv) }
+	}
+	if v, ok := resultMap["hyperv_enlightenments"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.HypervEnlightenments = types.BoolValue(bv)
 		}
-		if v, ok := resultMap["bootloader"]; ok {
+	}
+	if v, ok := resultMap["bootloader"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Bootloader = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Bootloader = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Bootloader = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["bootloader_ovmf"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.BootloaderOvmf = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.BootloaderOvmf = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.BootloaderOvmf = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["autostart"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.Autostart = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["hide_from_msr"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.HideFromMsr = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["ensure_display_device"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.EnsureDisplayDevice = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["time"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Time = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Time = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Time = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["shutdown_timeout"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.ShutdownTimeout = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.ShutdownTimeout = types.Int64Value(int64(fv))
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["arch_type"]; ok {
+		if v == nil {
+			data.ArchType = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Bootloader = types.StringValue(val)
+				data.ArchType = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Bootloader = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Bootloader = types.StringValue(fmt.Sprintf("%v", v))
+				data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["bootloader_ovmf"]; ok {
+	}
+	if v, ok := resultMap["machine_type"]; ok {
+		if v == nil {
+			data.MachineType = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.BootloaderOvmf = types.StringValue(val)
+				data.MachineType = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.BootloaderOvmf = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.BootloaderOvmf = types.StringValue(fmt.Sprintf("%v", v))
+				data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["autostart"]; ok {
-			if bv, ok := v.(bool); ok { data.Autostart = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["hide_from_msr"]; ok {
-			if bv, ok := v.(bool); ok { data.HideFromMsr = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["ensure_display_device"]; ok {
-			if bv, ok := v.(bool); ok { data.EnsureDisplayDevice = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["time"]; ok {
+	}
+	if v, ok := resultMap["uuid"]; ok {
+		if v == nil {
+			data.Uuid = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Time = types.StringValue(val)
+				data.Uuid = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Time = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Time = types.StringValue(fmt.Sprintf("%v", v))
+				data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["shutdown_timeout"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.ShutdownTimeout = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.ShutdownTimeout = types.Int64Value(int64(fv)) }
-				}
+	}
+	if v, ok := resultMap["devices"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Devices, _ = types.ListValue(types.StringType, strVals)
 		}
-		if v, ok := resultMap["arch_type"]; ok {
-			if v == nil {
-				data.ArchType = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.ArchType = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.ArchType = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.ArchType = types.StringValue(fmt.Sprintf("%v", v))
-				}
+	}
+	if v, ok := resultMap["display_available"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.DisplayAvailable = types.BoolValue(bv)
+		}
+	}
+	if v, ok := resultMap["status"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Status = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Status = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Status = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["machine_type"]; ok {
-			if v == nil {
-				data.MachineType = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.MachineType = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.MachineType = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.MachineType = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
+	}
+	if v, ok := resultMap["enable_secure_boot"]; ok {
+		if bv, ok := v.(bool); ok {
+			data.EnableSecureBoot = types.BoolValue(bv)
 		}
-		if v, ok := resultMap["uuid"]; ok {
-			if v == nil {
-				data.Uuid = types.StringNull()
-			} else {
-				switch val := v.(type) {
-				case string:
-					data.Uuid = types.StringValue(val)
-				case map[string]interface{}:
-					if strVal, ok := val["value"]; ok && strVal != nil {
-						data.Uuid = types.StringValue(fmt.Sprintf("%v", strVal))
-					}
-				default:
-					data.Uuid = types.StringValue(fmt.Sprintf("%v", v))
-				}
-			}
-		}
-		if v, ok := resultMap["devices"]; ok {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Devices, _ = types.ListValue(types.StringType, strVals)
-			}
-		}
-		if v, ok := resultMap["display_available"]; ok {
-			if bv, ok := v.(bool); ok { data.DisplayAvailable = types.BoolValue(bv) }
-		}
-		if v, ok := resultMap["status"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Status = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Status = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Status = types.StringValue(fmt.Sprintf("%v", v))
-			}
-		}
-		if v, ok := resultMap["enable_secure_boot"]; ok {
-			if bv, ok := v.(bool); ok { data.EnableSecureBoot = types.BoolValue(bv) }
-		}
+	}
+	if data.CommandLineArgs.IsUnknown() {
+		data.CommandLineArgs = types.StringNull()
+	}
+	if data.CpuMode.IsUnknown() {
+		data.CpuMode = types.StringNull()
+	}
+	if data.CpuModel.IsUnknown() {
+		data.CpuModel = types.StringNull()
+	}
+	if data.Name.IsUnknown() {
+		data.Name = types.StringNull()
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.Vcpus.IsUnknown() {
+		data.Vcpus = types.Int64Null()
+	}
+	if data.Cores.IsUnknown() {
+		data.Cores = types.Int64Null()
+	}
+	if data.Threads.IsUnknown() {
+		data.Threads = types.Int64Null()
+	}
+	if data.Cpuset.IsUnknown() {
+		data.Cpuset = types.StringNull()
+	}
+	if data.Nodeset.IsUnknown() {
+		data.Nodeset = types.StringNull()
+	}
+	if data.EnableCpuTopologyExtension.IsUnknown() {
+		data.EnableCpuTopologyExtension = types.BoolNull()
+	}
+	if data.PinVcpus.IsUnknown() {
+		data.PinVcpus = types.BoolNull()
+	}
+	if data.SuspendOnSnapshot.IsUnknown() {
+		data.SuspendOnSnapshot = types.BoolNull()
+	}
+	if data.TrustedPlatformModule.IsUnknown() {
+		data.TrustedPlatformModule = types.BoolNull()
+	}
+	if data.Memory.IsUnknown() {
+		data.Memory = types.Int64Null()
+	}
+	if data.MinMemory.IsUnknown() {
+		data.MinMemory = types.Int64Null()
+	}
+	if data.HypervEnlightenments.IsUnknown() {
+		data.HypervEnlightenments = types.BoolNull()
+	}
+	if data.Bootloader.IsUnknown() {
+		data.Bootloader = types.StringNull()
+	}
+	if data.BootloaderOvmf.IsUnknown() {
+		data.BootloaderOvmf = types.StringNull()
+	}
+	if data.Autostart.IsUnknown() {
+		data.Autostart = types.BoolNull()
+	}
+	if data.HideFromMsr.IsUnknown() {
+		data.HideFromMsr = types.BoolNull()
+	}
+	if data.EnsureDisplayDevice.IsUnknown() {
+		data.EnsureDisplayDevice = types.BoolNull()
+	}
+	if data.Time.IsUnknown() {
+		data.Time = types.StringNull()
+	}
+	if data.ShutdownTimeout.IsUnknown() {
+		data.ShutdownTimeout = types.Int64Null()
+	}
+	if data.ArchType.IsUnknown() {
+		data.ArchType = types.StringNull()
+	}
+	if data.MachineType.IsUnknown() {
+		data.MachineType = types.StringNull()
+	}
+	if data.Uuid.IsUnknown() {
+		data.Uuid = types.StringNull()
+	}
+	if data.Devices.IsUnknown() {
+		data.Devices, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.DisplayAvailable.IsUnknown() {
+		data.DisplayAvailable = types.BoolNull()
+	}
+	if data.Status.IsUnknown() {
+		data.Status = types.StringNull()
+	}
+	if data.EnableSecureBoot.IsUnknown() {
+		data.EnableSecureBoot = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

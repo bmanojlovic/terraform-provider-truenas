@@ -3,15 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type TunableResource struct {
@@ -19,13 +19,13 @@ type TunableResource struct {
 }
 
 type TunableResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
-	Var types.String `tfsdk:"var"`
-	Value types.String `tfsdk:"value"`
-	Comment types.String `tfsdk:"comment"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	UpdateInitramfs types.Bool `tfsdk:"update_initramfs"`
+	ID              types.String `tfsdk:"id"`
+	Type            types.String `tfsdk:"type"`
+	Var             types.String `tfsdk:"var"`
+	Value           types.String `tfsdk:"value"`
+	Comment         types.String `tfsdk:"comment"`
+	Enabled         types.Bool   `tfsdk:"enabled"`
+	UpdateInitramfs types.Bool   `tfsdk:"update_initramfs"`
 }
 
 func NewTunableResource() resource.Resource {
@@ -46,35 +46,35 @@ func (r *TunableResource) Schema(ctx context.Context, req resource.SchemaRequest
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"type": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "* `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (",
+				Optional:      true,
+				Computed:      true,
+				Description:   "* `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"var": schema.StringAttribute{
-				Required: true,
-				Optional: false,
-				Description: "Name or identifier of the system parameter to tune.",
+				Required:      true,
+				Optional:      false,
+				Description:   "Name or identifier of the system parameter to tune.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"value": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Value to assign to the tunable parameter.",
 			},
 			"comment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Optional descriptive comment explaining the purpose of this tunable.",
 			},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether this tunable is active and should be applied.",
 			},
 			"update_initramfs": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "If `false`, then initramfs will not be updated after creating a ZFS tunable and you will need to run",
 			},
 		},
@@ -139,7 +139,6 @@ func (r *TunableResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -157,33 +156,57 @@ func (r *TunableResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["value"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Value = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Value = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["var"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Var = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Var = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Var = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if v, ok := resultMap["value"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Value = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Value = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if data.Type.IsUnknown() {
+		data.Type = types.StringNull()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.UpdateInitramfs.IsUnknown() {
+		data.UpdateInitramfs = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -221,33 +244,57 @@ func (r *TunableResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["value"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Value = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Value = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["var"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Var = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Var = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Var = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if v, ok := resultMap["value"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Value = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Value = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if data.Type.IsUnknown() {
+		data.Type = types.StringNull()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.UpdateInitramfs.IsUnknown() {
+		data.UpdateInitramfs = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -307,33 +354,57 @@ func (r *TunableResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["value"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Value = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Value = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["var"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Var = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Var = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Var = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if v, ok := resultMap["value"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Value = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Value = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Value = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if data.Type.IsUnknown() {
+		data.Type = types.StringNull()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.UpdateInitramfs.IsUnknown() {
+		data.UpdateInitramfs = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

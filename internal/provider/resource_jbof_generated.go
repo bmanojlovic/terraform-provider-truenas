@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type JbofResource struct {
@@ -17,10 +17,10 @@ type JbofResource struct {
 }
 
 type JbofResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Description types.String `tfsdk:"description"`
-	MgmtIp1 types.String `tfsdk:"mgmt_ip1"`
-	MgmtIp2 types.String `tfsdk:"mgmt_ip2"`
+	ID           types.String `tfsdk:"id"`
+	Description  types.String `tfsdk:"description"`
+	MgmtIp1      types.String `tfsdk:"mgmt_ip1"`
+	MgmtIp2      types.String `tfsdk:"mgmt_ip2"`
 	MgmtUsername types.String `tfsdk:"mgmt_username"`
 	MgmtPassword types.String `tfsdk:"mgmt_password"`
 }
@@ -43,28 +43,28 @@ func (r *JbofResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"description": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Optional description of the JBOF.",
 			},
 			"mgmt_ip1": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "IP of first Redfish management interface.",
 			},
 			"mgmt_ip2": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Optional IP of second Redfish management interface.",
 			},
 			"mgmt_username": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Redfish administrative username.",
 			},
 			"mgmt_password": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Redfish administrative password.",
 			},
 		},
@@ -126,7 +126,6 @@ func (r *JbofResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -144,45 +143,51 @@ func (r *JbofResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["mgmt_ip1"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtIp1 = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_ip1"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtIp1 = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtUsername = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtUsername = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_password"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtPassword = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtPassword = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.MgmtIp2.IsUnknown() {
+		data.MgmtIp2 = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -220,45 +225,51 @@ func (r *JbofResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["mgmt_ip1"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtIp1 = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_ip1"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtIp1 = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtUsername = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtUsername = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_password"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtPassword = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtPassword = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.MgmtIp2.IsUnknown() {
+		data.MgmtIp2 = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -321,45 +332,51 @@ func (r *JbofResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["mgmt_ip1"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtIp1 = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_ip1"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtIp1 = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtIp1 = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_username"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtUsername = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_username"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtUsername = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtUsername = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["mgmt_password"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.MgmtPassword = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["mgmt_password"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.MgmtPassword = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.MgmtPassword = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Description.IsUnknown() {
+		data.Description = types.StringNull()
+	}
+	if data.MgmtIp2.IsUnknown() {
+		data.MgmtIp2 = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

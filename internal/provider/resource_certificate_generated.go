@@ -2,19 +2,20 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
-"strconv"
 	"encoding/json"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"fmt"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type CertificateResource struct {
@@ -22,32 +23,32 @@ type CertificateResource struct {
 }
 
 type CertificateResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	CreateType types.String `tfsdk:"create_type"`
-	AddToTrustedStore types.Bool `tfsdk:"add_to_trusted_store"`
-	Certificate types.String `tfsdk:"certificate"`
-	Privatekey types.String `tfsdk:"privatekey"`
-	Csr types.String `tfsdk:"csr"`
-	KeyLength types.Int64 `tfsdk:"key_length"`
-	KeyType types.String `tfsdk:"key_type"`
-	EcCurve types.String `tfsdk:"ec_curve"`
-	Passphrase types.String `tfsdk:"passphrase"`
-	City types.String `tfsdk:"city"`
-	Common types.String `tfsdk:"common"`
-	Country types.String `tfsdk:"country"`
-	Email types.String `tfsdk:"email"`
-	Organization types.String `tfsdk:"organization"`
+	ID                 types.String `tfsdk:"id"`
+	Name               types.String `tfsdk:"name"`
+	CreateType         types.String `tfsdk:"create_type"`
+	AddToTrustedStore  types.Bool   `tfsdk:"add_to_trusted_store"`
+	Certificate        types.String `tfsdk:"certificate"`
+	Privatekey         types.String `tfsdk:"privatekey"`
+	Csr                types.String `tfsdk:"csr"`
+	KeyLength          types.Int64  `tfsdk:"key_length"`
+	KeyType            types.String `tfsdk:"key_type"`
+	EcCurve            types.String `tfsdk:"ec_curve"`
+	Passphrase         types.String `tfsdk:"passphrase"`
+	City               types.String `tfsdk:"city"`
+	Common             types.String `tfsdk:"common"`
+	Country            types.String `tfsdk:"country"`
+	Email              types.String `tfsdk:"email"`
+	Organization       types.String `tfsdk:"organization"`
 	OrganizationalUnit types.String `tfsdk:"organizational_unit"`
-	State types.String `tfsdk:"state"`
-	DigestAlgorithm types.String `tfsdk:"digest_algorithm"`
-	San types.List `tfsdk:"san"`
-	CertExtensions types.String `tfsdk:"cert_extensions"`
-	AcmeDirectoryUri types.String `tfsdk:"acme_directory_uri"`
-	CsrId types.Int64 `tfsdk:"csr_id"`
-	Tos types.Bool `tfsdk:"tos"`
-	DnsMapping types.String `tfsdk:"dns_mapping"`
-	RenewDays types.Int64 `tfsdk:"renew_days"`
+	State              types.String `tfsdk:"state"`
+	DigestAlgorithm    types.String `tfsdk:"digest_algorithm"`
+	San                types.List   `tfsdk:"san"`
+	CertExtensions     types.String `tfsdk:"cert_extensions"`
+	AcmeDirectoryUri   types.String `tfsdk:"acme_directory_uri"`
+	CsrId              types.Int64  `tfsdk:"csr_id"`
+	Tos                types.Bool   `tfsdk:"tos"`
+	DnsMapping         types.String `tfsdk:"dns_mapping"`
+	RenewDays          types.Int64  `tfsdk:"renew_days"`
 }
 
 func NewCertificateResource() resource.Resource {
@@ -68,150 +69,150 @@ func (r *CertificateResource) Schema(ctx context.Context, req resource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Certificate name.",
 			},
 			"create_type": schema.StringAttribute{
-				Required: true,
-				Optional: false,
-				Description: "Type of certificate creation operation.",
+				Required:      true,
+				Optional:      false,
+				Description:   "Type of certificate creation operation.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"add_to_trusted_store": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether to add this certificate to the trusted certificate store.",
 			},
 			"certificate": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded certificate to import or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "PEM-encoded certificate to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"privatekey": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded private key to import or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "PEM-encoded private key to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"csr": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "PEM-encoded certificate signing request to import or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "PEM-encoded certificate signing request to import or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"key_length": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "RSA key length in bits or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "RSA key length in bits or `null`.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"key_type": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Description: "Type of cryptographic key to generate.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Type of cryptographic key to generate.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"ec_curve": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Elliptic curve to use for EC keys.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Elliptic curve to use for EC keys.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"passphrase": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Passphrase to protect the private key or `null`.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Passphrase to protect the private key or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"city": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "City or locality name for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "City or locality name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"common": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Common name for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Common name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"country": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Country name for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Country name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"email": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Email address for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Email address for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"organization": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Organization name for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Organization name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"organizational_unit": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Organizational unit for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Organizational unit for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"state": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "State or province name for certificate subject or `null`.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "State or province name for certificate subject or `null`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"digest_algorithm": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Hash algorithm for certificate signing.",
+				Optional:      true,
+				Computed:      true,
+				Description:   "Hash algorithm for certificate signing.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"san": schema.ListAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 				Description: "Subject alternative names for the certificate.",
 			},
 			"cert_extensions": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Certificate extensions configuration.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Certificate extensions configuration.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"acme_directory_uri": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "ACME directory URI to be used for ACME certificate creation.",
+				Required:      false,
+				Optional:      true,
+				Description:   "ACME directory URI to be used for ACME certificate creation.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"csr_id": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
-				Description: "CSR to be used for ACME certificate creation.",
+				Required:      false,
+				Optional:      true,
+				Description:   "CSR to be used for ACME certificate creation.",
 				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"tos": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
-				Description: "Set this when creating an ACME certificate to accept terms of service of the ACME service.",
+				Required:      false,
+				Optional:      true,
+				Description:   "Set this when creating an ACME certificate to accept terms of service of the ACME service.",
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
 			},
 			"dns_mapping": schema.StringAttribute{
-				Required: false,
-				Optional: true,
-				Description: "A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the",
+				Required:      false,
+				Optional:      true,
+				Description:   "A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"renew_days": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Days before expiration to attempt renewal.",
 			},
 		},
@@ -345,7 +346,6 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -363,21 +363,299 @@ func (r *CertificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["certificate"]; ok {
+		if v == nil {
+			data.Certificate = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Certificate = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Certificate = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Certificate = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["privatekey"]; ok {
+		if v == nil {
+			data.Privatekey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Privatekey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Privatekey = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Privatekey = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["CSR"]; ok {
+		if v == nil {
+			data.Csr = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Csr = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Csr = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Csr = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["key_length"]; ok {
+		if v == nil {
+			data.KeyLength = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.KeyLength = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.KeyLength = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["key_type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.KeyType = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.KeyType = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.KeyType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["city"]; ok {
+		if v == nil {
+			data.City = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.City = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.City = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.City = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["common"]; ok {
+		if v == nil {
+			data.Common = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Common = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Common = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Common = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["country"]; ok {
+		if v == nil {
+			data.Country = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Country = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Country = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Country = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organization"]; ok {
+		if v == nil {
+			data.Organization = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Organization = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Organization = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Organization = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organizational_unit"]; ok {
+		if v == nil {
+			data.OrganizationalUnit = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.OrganizationalUnit = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["state"]; ok {
+		if v == nil {
+			data.State = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.State = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.State = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.State = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["digest_algorithm"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.DigestAlgorithm = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["san"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
+			}
+			data.San, _ = types.ListValue(types.StringType, strVals)
+		}
+	}
+	if data.AddToTrustedStore.IsUnknown() {
+		data.AddToTrustedStore = types.BoolNull()
+	}
+	if data.Certificate.IsUnknown() {
+		data.Certificate = types.StringNull()
+	}
+	if data.Privatekey.IsUnknown() {
+		data.Privatekey = types.StringNull()
+	}
+	if data.Csr.IsUnknown() {
+		data.Csr = types.StringNull()
+	}
+	if data.KeyLength.IsUnknown() {
+		data.KeyLength = types.Int64Null()
+	}
+	if data.KeyType.IsUnknown() {
+		data.KeyType = types.StringNull()
+	}
+	if data.EcCurve.IsUnknown() {
+		data.EcCurve = types.StringNull()
+	}
+	if data.Passphrase.IsUnknown() {
+		data.Passphrase = types.StringNull()
+	}
+	if data.City.IsUnknown() {
+		data.City = types.StringNull()
+	}
+	if data.Common.IsUnknown() {
+		data.Common = types.StringNull()
+	}
+	if data.Country.IsUnknown() {
+		data.Country = types.StringNull()
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.Organization.IsUnknown() {
+		data.Organization = types.StringNull()
+	}
+	if data.OrganizationalUnit.IsUnknown() {
+		data.OrganizationalUnit = types.StringNull()
+	}
+	if data.State.IsUnknown() {
+		data.State = types.StringNull()
+	}
+	if data.DigestAlgorithm.IsUnknown() {
+		data.DigestAlgorithm = types.StringNull()
+	}
+	if data.San.IsUnknown() {
+		data.San, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.CertExtensions.IsUnknown() {
+		data.CertExtensions = types.StringNull()
+	}
+	if data.AcmeDirectoryUri.IsUnknown() {
+		data.AcmeDirectoryUri = types.StringNull()
+	}
+	if data.CsrId.IsUnknown() {
+		data.CsrId = types.Int64Null()
+	}
+	if data.Tos.IsUnknown() {
+		data.Tos = types.BoolNull()
+	}
+	if data.DnsMapping.IsUnknown() {
+		data.DnsMapping = types.StringNull()
+	}
+	if data.RenewDays.IsUnknown() {
+		data.RenewDays = types.Int64Null()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -415,21 +693,299 @@ func (r *CertificateResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["certificate"]; ok {
+		if v == nil {
+			data.Certificate = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Certificate = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Certificate = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Certificate = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["privatekey"]; ok {
+		if v == nil {
+			data.Privatekey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Privatekey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Privatekey = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Privatekey = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["CSR"]; ok {
+		if v == nil {
+			data.Csr = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Csr = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Csr = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Csr = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["key_length"]; ok {
+		if v == nil {
+			data.KeyLength = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.KeyLength = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.KeyLength = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["key_type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.KeyType = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.KeyType = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.KeyType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["city"]; ok {
+		if v == nil {
+			data.City = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.City = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.City = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.City = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["common"]; ok {
+		if v == nil {
+			data.Common = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Common = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Common = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Common = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["country"]; ok {
+		if v == nil {
+			data.Country = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Country = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Country = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Country = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organization"]; ok {
+		if v == nil {
+			data.Organization = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Organization = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Organization = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Organization = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organizational_unit"]; ok {
+		if v == nil {
+			data.OrganizationalUnit = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.OrganizationalUnit = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["state"]; ok {
+		if v == nil {
+			data.State = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.State = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.State = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.State = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["digest_algorithm"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.DigestAlgorithm = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["san"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
+			}
+			data.San, _ = types.ListValue(types.StringType, strVals)
+		}
+	}
+	if data.AddToTrustedStore.IsUnknown() {
+		data.AddToTrustedStore = types.BoolNull()
+	}
+	if data.Certificate.IsUnknown() {
+		data.Certificate = types.StringNull()
+	}
+	if data.Privatekey.IsUnknown() {
+		data.Privatekey = types.StringNull()
+	}
+	if data.Csr.IsUnknown() {
+		data.Csr = types.StringNull()
+	}
+	if data.KeyLength.IsUnknown() {
+		data.KeyLength = types.Int64Null()
+	}
+	if data.KeyType.IsUnknown() {
+		data.KeyType = types.StringNull()
+	}
+	if data.EcCurve.IsUnknown() {
+		data.EcCurve = types.StringNull()
+	}
+	if data.Passphrase.IsUnknown() {
+		data.Passphrase = types.StringNull()
+	}
+	if data.City.IsUnknown() {
+		data.City = types.StringNull()
+	}
+	if data.Common.IsUnknown() {
+		data.Common = types.StringNull()
+	}
+	if data.Country.IsUnknown() {
+		data.Country = types.StringNull()
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.Organization.IsUnknown() {
+		data.Organization = types.StringNull()
+	}
+	if data.OrganizationalUnit.IsUnknown() {
+		data.OrganizationalUnit = types.StringNull()
+	}
+	if data.State.IsUnknown() {
+		data.State = types.StringNull()
+	}
+	if data.DigestAlgorithm.IsUnknown() {
+		data.DigestAlgorithm = types.StringNull()
+	}
+	if data.San.IsUnknown() {
+		data.San, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.CertExtensions.IsUnknown() {
+		data.CertExtensions = types.StringNull()
+	}
+	if data.AcmeDirectoryUri.IsUnknown() {
+		data.AcmeDirectoryUri = types.StringNull()
+	}
+	if data.CsrId.IsUnknown() {
+		data.CsrId = types.Int64Null()
+	}
+	if data.Tos.IsUnknown() {
+		data.Tos = types.BoolNull()
+	}
+	if data.DnsMapping.IsUnknown() {
+		data.DnsMapping = types.StringNull()
+	}
+	if data.RenewDays.IsUnknown() {
+		data.RenewDays = types.Int64Null()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -486,21 +1042,299 @@ func (r *CertificateResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["name"]; ok {
+	}
+	if v, ok := resultMap["certificate"]; ok {
+		if v == nil {
+			data.Certificate = types.StringNull()
+		} else {
 			switch val := v.(type) {
 			case string:
-				data.Name = types.StringValue(val)
+				data.Certificate = types.StringValue(val)
 			case map[string]interface{}:
 				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
+					data.Certificate = types.StringValue(fmt.Sprintf("%v", strVal))
 				}
 			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+				data.Certificate = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
+	}
+	if v, ok := resultMap["privatekey"]; ok {
+		if v == nil {
+			data.Privatekey = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Privatekey = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Privatekey = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Privatekey = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["CSR"]; ok {
+		if v == nil {
+			data.Csr = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Csr = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Csr = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Csr = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["key_length"]; ok {
+		if v == nil {
+			data.KeyLength = types.Int64Null()
+		} else {
+			switch val := v.(type) {
+			case float64:
+				data.KeyLength = types.Int64Value(int64(val))
+			case map[string]interface{}:
+				if parsed, ok := val["parsed"]; ok && parsed != nil {
+					if fv, ok := parsed.(float64); ok {
+						data.KeyLength = types.Int64Value(int64(fv))
+					}
+				}
+			}
+		}
+	}
+	if v, ok := resultMap["key_type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.KeyType = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.KeyType = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.KeyType = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["city"]; ok {
+		if v == nil {
+			data.City = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.City = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.City = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.City = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["common"]; ok {
+		if v == nil {
+			data.Common = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Common = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Common = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Common = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["country"]; ok {
+		if v == nil {
+			data.Country = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Country = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Country = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Country = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["email"]; ok {
+		if v == nil {
+			data.Email = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Email = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Email = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Email = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organization"]; ok {
+		if v == nil {
+			data.Organization = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.Organization = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.Organization = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.Organization = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["organizational_unit"]; ok {
+		if v == nil {
+			data.OrganizationalUnit = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.OrganizationalUnit = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.OrganizationalUnit = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["state"]; ok {
+		if v == nil {
+			data.State = types.StringNull()
+		} else {
+			switch val := v.(type) {
+			case string:
+				data.State = types.StringValue(val)
+			case map[string]interface{}:
+				if strVal, ok := val["value"]; ok && strVal != nil {
+					data.State = types.StringValue(fmt.Sprintf("%v", strVal))
+				}
+			default:
+				data.State = types.StringValue(fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	if v, ok := resultMap["digest_algorithm"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.DigestAlgorithm = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.DigestAlgorithm = types.StringValue(fmt.Sprintf("%v", v))
+		}
+	}
+	if v, ok := resultMap["san"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
+			}
+			data.San, _ = types.ListValue(types.StringType, strVals)
+		}
+	}
+	if data.AddToTrustedStore.IsUnknown() {
+		data.AddToTrustedStore = types.BoolNull()
+	}
+	if data.Certificate.IsUnknown() {
+		data.Certificate = types.StringNull()
+	}
+	if data.Privatekey.IsUnknown() {
+		data.Privatekey = types.StringNull()
+	}
+	if data.Csr.IsUnknown() {
+		data.Csr = types.StringNull()
+	}
+	if data.KeyLength.IsUnknown() {
+		data.KeyLength = types.Int64Null()
+	}
+	if data.KeyType.IsUnknown() {
+		data.KeyType = types.StringNull()
+	}
+	if data.EcCurve.IsUnknown() {
+		data.EcCurve = types.StringNull()
+	}
+	if data.Passphrase.IsUnknown() {
+		data.Passphrase = types.StringNull()
+	}
+	if data.City.IsUnknown() {
+		data.City = types.StringNull()
+	}
+	if data.Common.IsUnknown() {
+		data.Common = types.StringNull()
+	}
+	if data.Country.IsUnknown() {
+		data.Country = types.StringNull()
+	}
+	if data.Email.IsUnknown() {
+		data.Email = types.StringNull()
+	}
+	if data.Organization.IsUnknown() {
+		data.Organization = types.StringNull()
+	}
+	if data.OrganizationalUnit.IsUnknown() {
+		data.OrganizationalUnit = types.StringNull()
+	}
+	if data.State.IsUnknown() {
+		data.State = types.StringNull()
+	}
+	if data.DigestAlgorithm.IsUnknown() {
+		data.DigestAlgorithm = types.StringNull()
+	}
+	if data.San.IsUnknown() {
+		data.San, _ = types.ListValue(types.StringType, []attr.Value{})
+	}
+	if data.CertExtensions.IsUnknown() {
+		data.CertExtensions = types.StringNull()
+	}
+	if data.AcmeDirectoryUri.IsUnknown() {
+		data.AcmeDirectoryUri = types.StringNull()
+	}
+	if data.CsrId.IsUnknown() {
+		data.CsrId = types.Int64Null()
+	}
+	if data.Tos.IsUnknown() {
+		data.Tos = types.BoolNull()
+	}
+	if data.DnsMapping.IsUnknown() {
+		data.DnsMapping = types.StringNull()
+	}
+	if data.RenewDays.IsUnknown() {
+		data.RenewDays = types.Int64Null()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

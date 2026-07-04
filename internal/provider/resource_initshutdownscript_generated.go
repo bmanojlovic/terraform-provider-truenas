@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type InitshutdownscriptResource struct {
@@ -17,13 +17,13 @@ type InitshutdownscriptResource struct {
 }
 
 type InitshutdownscriptResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Type types.String `tfsdk:"type"`
+	ID      types.String `tfsdk:"id"`
+	Type    types.String `tfsdk:"type"`
 	Command types.String `tfsdk:"command"`
-	Script types.String `tfsdk:"script"`
-	When types.String `tfsdk:"when"`
-	Enabled types.Bool `tfsdk:"enabled"`
-	Timeout types.Int64 `tfsdk:"timeout"`
+	Script  types.String `tfsdk:"script"`
+	When    types.String `tfsdk:"when"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Timeout types.Int64  `tfsdk:"timeout"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -45,38 +45,38 @@ func (r *InitshutdownscriptResource) Schema(ctx context.Context, req resource.Sc
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"type": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Type of init/shutdown script to execute.  * `COMMAND`: Execute a single command * `SCRIPT`: Execute ",
 			},
 			"command": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Must be given if `type=\"COMMAND\"`.",
 			},
 			"script": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Must be given if `type=\"SCRIPT\"`.",
 			},
 			"when": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "* \"PREINIT\": Early in the boot process before all services have started. * \"POSTINIT\": Late in the b",
 			},
 			"enabled": schema.BoolAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Whether the init/shutdown script is enabled to execute.",
 			},
 			"timeout": schema.Int64Attribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "An integer time in seconds that the system should wait for the execution of the script/command.  A h",
 			},
 			"comment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Optional comment describing the purpose of this script.",
 			},
 		},
@@ -144,7 +144,6 @@ func (r *InitshutdownscriptResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -162,33 +161,48 @@ func (r *InitshutdownscriptResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["when"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.When = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.When = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.When = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["when"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.When = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.When = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.When = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Command.IsUnknown() {
+		data.Command = types.StringNull()
+	}
+	if data.Script.IsUnknown() {
+		data.Script = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Timeout.IsUnknown() {
+		data.Timeout = types.Int64Null()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -226,33 +240,48 @@ func (r *InitshutdownscriptResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["when"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.When = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.When = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.When = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["when"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.When = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.When = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.When = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Command.IsUnknown() {
+		data.Command = types.StringNull()
+	}
+	if data.Script.IsUnknown() {
+		data.Script = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Timeout.IsUnknown() {
+		data.Timeout = types.Int64Null()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -321,33 +350,48 @@ func (r *InitshutdownscriptResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["type"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Type = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Type = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["type"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Type = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Type = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Type = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["when"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.When = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.When = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.When = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["when"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.When = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.When = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.When = types.StringValue(fmt.Sprintf("%v", v))
 		}
+	}
+	if data.Command.IsUnknown() {
+		data.Command = types.StringNull()
+	}
+	if data.Script.IsUnknown() {
+		data.Script = types.StringNull()
+	}
+	if data.Enabled.IsUnknown() {
+		data.Enabled = types.BoolNull()
+	}
+	if data.Timeout.IsUnknown() {
+		data.Timeout = types.Int64Null()
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

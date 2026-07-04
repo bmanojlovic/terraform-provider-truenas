@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type FcportResource struct {
@@ -17,9 +17,9 @@ type FcportResource struct {
 }
 
 type FcportResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Port types.String `tfsdk:"port"`
-	TargetId types.Int64 `tfsdk:"target_id"`
+	ID       types.String `tfsdk:"id"`
+	Port     types.String `tfsdk:"port"`
+	TargetId types.Int64  `tfsdk:"target_id"`
 }
 
 func NewFcportResource() resource.Resource {
@@ -40,13 +40,13 @@ func (r *FcportResource) Schema(ctx context.Context, req resource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"port": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Alias name for the Fibre Channel port.",
 			},
 			"target_id": schema.Int64Attribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ID of the target to associate with this FC port.",
 			},
 		},
@@ -99,7 +99,6 @@ func (r *FcportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -117,31 +116,33 @@ func (r *FcportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Port = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Port = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["port"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Port = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["target_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.TargetId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.TargetId = types.Int64Value(int64(fv))
 				}
-			default:
-				data.Port = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["target_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.TargetId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.TargetId = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -179,31 +180,33 @@ func (r *FcportResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Port = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Port = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["port"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Port = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["target_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.TargetId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.TargetId = types.Int64Value(int64(fv))
 				}
-			default:
-				data.Port = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["target_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.TargetId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.TargetId = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -257,31 +260,33 @@ func (r *FcportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["port"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Port = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+			}
+		default:
+			data.Port = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["port"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Port = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Port = types.StringValue(fmt.Sprintf("%v", strVal))
+	}
+	if v, ok := resultMap["target_id"]; ok {
+		switch val := v.(type) {
+		case float64:
+			data.TargetId = types.Int64Value(int64(val))
+		case map[string]interface{}:
+			if parsed, ok := val["parsed"]; ok && parsed != nil {
+				if fv, ok := parsed.(float64); ok {
+					data.TargetId = types.Int64Value(int64(fv))
 				}
-			default:
-				data.Port = types.StringValue(fmt.Sprintf("%v", v))
 			}
 		}
-		if v, ok := resultMap["target_id"]; ok {
-			switch val := v.(type) {
-			case float64:
-				data.TargetId = types.Int64Value(int64(val))
-			case map[string]interface{}:
-				if parsed, ok := val["parsed"]; ok && parsed != nil {
-					if fv, ok := parsed.(float64); ok { data.TargetId = types.Int64Value(int64(fv)) }
-				}
-			}
-		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

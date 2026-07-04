@@ -16,8 +16,8 @@ type ConfigSaveResource struct {
 }
 
 type ConfigSaveResourceModel struct {
-	Secretseed types.Bool `tfsdk:"secretseed"`
-	PoolKeys types.Bool `tfsdk:"pool_keys"`
+	Secretseed         types.Bool `tfsdk:"secretseed"`
+	PoolKeys           types.Bool `tfsdk:"pool_keys"`
 	RootAuthorizedKeys types.Bool `tfsdk:"root_authorized_keys"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,8 +40,8 @@ func (r *ConfigSaveResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a tar file of security-sensitive information. These options select which information is included in the tar file:  `secretseed` bool: When true, include password secret seed. `pool_keys` bool:",
 		Attributes: map[string]schema.Attribute{
-			"secretseed": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include the secret seed in the configuration backup."},
-			"pool_keys": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include encryption keys for storage pools in the backup."},
+			"secretseed":           schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include the secret seed in the configuration backup."},
+			"pool_keys":            schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include encryption keys for storage pools in the backup."},
 			"root_authorized_keys": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include root user's SSH authorized keys in the backup."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -92,9 +92,15 @@ func (r *ConfigSaveResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Build parameters
 	params := map[string]interface{}{}
-	if !data.Secretseed.IsNull() && !data.Secretseed.IsUnknown() { params["secretseed"] = data.Secretseed.ValueBool() }
-	if !data.PoolKeys.IsNull() && !data.PoolKeys.IsUnknown() { params["pool_keys"] = data.PoolKeys.ValueBool() }
-	if !data.RootAuthorizedKeys.IsNull() && !data.RootAuthorizedKeys.IsUnknown() { params["root_authorized_keys"] = data.RootAuthorizedKeys.ValueBool() }
+	if !data.Secretseed.IsNull() && !data.Secretseed.IsUnknown() {
+		params["secretseed"] = data.Secretseed.ValueBool()
+	}
+	if !data.PoolKeys.IsNull() && !data.PoolKeys.IsUnknown() {
+		params["pool_keys"] = data.PoolKeys.ValueBool()
+	}
+	if !data.RootAuthorizedKeys.IsNull() && !data.RootAuthorizedKeys.IsUnknown() {
+		params["root_authorized_keys"] = data.RootAuthorizedKeys.ValueBool()
+	}
 	paramsArr := []interface{}{params}
 
 	// Execute action
@@ -108,7 +114,7 @@ func (r *ConfigSaveResource) Create(ctx context.Context, req resource.CreateRequ
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

@@ -3,14 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
-"strconv"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+	"strings"
 )
 
 type FilesystemAcltemplateResource struct {
@@ -18,10 +18,10 @@ type FilesystemAcltemplateResource struct {
 }
 
 type FilesystemAcltemplateResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID      types.String `tfsdk:"id"`
+	Name    types.String `tfsdk:"name"`
 	Acltype types.String `tfsdk:"acltype"`
-	Acl types.List `tfsdk:"acl"`
+	Acl     types.List   `tfsdk:"acl"`
 	Comment types.String `tfsdk:"comment"`
 }
 
@@ -43,24 +43,24 @@ func (r *FilesystemAcltemplateResource) Schema(ctx context.Context, req resource
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
 			"name": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "Human-readable name for the ACL template.",
 			},
 			"acltype": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				Description: "ACL type this template provides.",
 			},
 			"acl": schema.ListAttribute{
-				Required: true,
-				Optional: false,
+				Required:    true,
+				Optional:    false,
 				ElementType: types.StringType,
 				Description: "Array of Access Control Entries defined by this template.",
 			},
 			"comment": schema.StringAttribute{
-				Required: false,
-				Optional: true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Optional descriptive comment about the template's purpose.",
 			},
 		},
@@ -121,7 +121,6 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 		return
 	}
 
-
 	// Read back to populate computed fields
 	id, err := strconv.Atoi(data.ID.ValueString())
 	if err != nil {
@@ -139,40 +138,45 @@ func (r *FilesystemAcltemplateResource) Create(ctx context.Context, req resource
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acltype"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Acltype = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["acltype"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Acltype = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acl"]; ok {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Acl, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["acl"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Acl, _ = types.ListValue(types.StringType, strVals)
 		}
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -210,40 +214,45 @@ func (r *FilesystemAcltemplateResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acltype"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Acltype = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["acltype"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Acltype = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acl"]; ok {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Acl, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["acl"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Acl, _ = types.ListValue(types.StringType, strVals)
 		}
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -305,40 +314,45 @@ func (r *FilesystemAcltemplateResource) Update(ctx context.Context, req resource
 		return
 	}
 
-		if v, ok := resultMap["id"]; ok && v != nil {
-			data.ID = types.StringValue(fmt.Sprintf("%v", v))
-		}
-		if v, ok := resultMap["name"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Name = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Name = types.StringValue(fmt.Sprintf("%v", v))
+	if v, ok := resultMap["id"]; ok && v != nil {
+		data.ID = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["name"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Name = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Name = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Name = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acltype"]; ok {
-			switch val := v.(type) {
-			case string:
-				data.Acltype = types.StringValue(val)
-			case map[string]interface{}:
-				if strVal, ok := val["value"]; ok && strVal != nil {
-					data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
-				}
-			default:
-				data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
+	}
+	if v, ok := resultMap["acltype"]; ok {
+		switch val := v.(type) {
+		case string:
+			data.Acltype = types.StringValue(val)
+		case map[string]interface{}:
+			if strVal, ok := val["value"]; ok && strVal != nil {
+				data.Acltype = types.StringValue(fmt.Sprintf("%v", strVal))
 			}
+		default:
+			data.Acltype = types.StringValue(fmt.Sprintf("%v", v))
 		}
-		if v, ok := resultMap["acl"]; ok {
-			if arr, ok := v.([]interface{}); ok {
-				strVals := make([]attr.Value, len(arr))
-				for i, item := range arr { strVals[i] = types.StringValue(fmt.Sprintf("%v", item)) }
-				data.Acl, _ = types.ListValue(types.StringType, strVals)
+	}
+	if v, ok := resultMap["acl"]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			strVals := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				strVals[i] = types.StringValue(fmt.Sprintf("%v", item))
 			}
+			data.Acl, _ = types.ListValue(types.StringType, strVals)
 		}
+	}
+	if data.Comment.IsUnknown() {
+		data.Comment = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

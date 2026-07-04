@@ -17,7 +17,7 @@ type ActionVirtInstanceRestartResource struct {
 }
 
 type ActionVirtInstanceRestartResourceModel struct {
-	ID types.String `tfsdk:"id"`
+	ID       types.String `tfsdk:"id"`
 	StopArgs types.String `tfsdk:"stop_args"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
@@ -40,7 +40,7 @@ func (r *ActionVirtInstanceRestartResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restart an instance.  Timeout is how long it should wait for the instance to shutdown cleanly.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, MarkdownDescription: "ID of the virtual instance to stop."},
+			"id":        schema.StringAttribute{Required: true, MarkdownDescription: "ID of the virtual instance to stop."},
 			"stop_args": schema.StringAttribute{Optional: true, MarkdownDescription: "Arguments controlling how the instance is stopped."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -94,7 +94,9 @@ func (r *ActionVirtInstanceRestartResource) Create(ctx context.Context, req reso
 	params = append(params, data.ID.ValueString())
 	if !data.StopArgs.IsNull() {
 		var stop_argsVal interface{}
-		if err := json.Unmarshal([]byte(data.StopArgs.ValueString()), &stop_argsVal); err == nil { params = append(params, stop_argsVal) }
+		if err := json.Unmarshal([]byte(data.StopArgs.ValueString()), &stop_argsVal); err == nil {
+			params = append(params, stop_argsVal)
+		}
 	}
 
 	// Execute action
@@ -108,7 +110,7 @@ func (r *ActionVirtInstanceRestartResource) Create(ctx context.Context, req reso
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

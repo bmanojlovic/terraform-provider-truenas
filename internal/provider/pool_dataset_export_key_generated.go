@@ -16,8 +16,8 @@ type PoolDatasetExport_KeyResource struct {
 }
 
 type PoolDatasetExport_KeyResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Download types.Bool `tfsdk:"download"`
+	ID       types.String `tfsdk:"id"`
+	Download types.Bool   `tfsdk:"download"`
 	// Computed outputs
 	ActionID types.String  `tfsdk:"action_id"`
 	JobID    types.Int64   `tfsdk:"job_id"`
@@ -39,7 +39,7 @@ func (r *PoolDatasetExport_KeyResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file where the same file can be used to unlock the dataset, otherwise it will be returned as strin",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to export the encryption key from."},
+			"id":       schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to export the encryption key from."},
 			"download": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to prepare the key for download as a file."},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
@@ -91,7 +91,9 @@ func (r *PoolDatasetExport_KeyResource) Create(ctx context.Context, req resource
 	// Build parameters
 	paramsArr := []interface{}{}
 	paramsArr = append(paramsArr, data.ID.ValueString())
-	if !data.Download.IsNull() { paramsArr = append(paramsArr, data.Download.ValueBool()) }
+	if !data.Download.IsNull() {
+		paramsArr = append(paramsArr, data.Download.ValueBool())
+	}
 
 	// Execute action
 	result, err := r.client.Call("pool.dataset.export_key", paramsArr)
@@ -104,7 +106,7 @@ func (r *PoolDatasetExport_KeyResource) Create(ctx context.Context, req resource
 	if jobID, ok := result.(float64); ok && true {
 		// Background job - wait for completion
 		data.JobID = types.Int64Value(int64(jobID))
-		
+
 		jobResult, err := r.client.WaitForJob(int(jobID), 30*time.Minute)
 		if err != nil {
 			data.State = types.StringValue("FAILED")

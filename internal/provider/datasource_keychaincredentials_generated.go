@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,9 +27,9 @@ type KeychaincredentialsDataSourceModel struct {
 }
 
 type KeychaincredentialsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
+	ID         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Type       types.String `tfsdk:"type"`
 	Attributes types.String `tfsdk:"attributes"`
 }
 
@@ -42,23 +42,23 @@ func (d *KeychaincredentialsDataSource) Schema(ctx context.Context, req datasour
 		Description: "Query keychaincredentials",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of keychaincredentials resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"name": schema.StringAttribute{
-				Computed: true,
-				Description: "Distinguishes this Keychain Credential from others.",
-			},
-			"type": schema.StringAttribute{
-				Computed: true,
-				Description: "Type of credential stored in the keychain.  * `SSH_KEY_PAIR`: SSH public/private key pair * `SSH_CRE",
-			},
-			"attributes": schema.StringAttribute{
-				Computed: true,
-				Description: "Credential-specific configuration and authentication data.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Distinguishes this Keychain Credential from others.",
+						},
+						"type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Type of credential stored in the keychain.  * `SSH_KEY_PAIR`: SSH public/private key pair * `SSH_CRE",
+						},
+						"attributes": schema.StringAttribute{
+							Computed:    true,
+							Description: "Credential-specific configuration and authentication data.",
+						},
 					},
 				},
 			},
@@ -122,9 +122,9 @@ func (d *KeychaincredentialsDataSource) Read(ctx context.Context, req datasource
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"attributes": types.StringType,
-			"id": types.StringType,
-			"name": types.StringType,
-			"type": types.StringType,
+			"id":         types.StringType,
+			"name":       types.StringType,
+			"type":       types.StringType,
 		},
 	}, items)
 	resp.Diagnostics.Append(diags...)

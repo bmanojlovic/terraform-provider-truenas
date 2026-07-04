@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	
+
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 )
 
@@ -27,10 +27,10 @@ type IscsiTargetextentsDataSourceModel struct {
 }
 
 type IscsiTargetextentsItemModel struct {
-	ID types.String `tfsdk:"id"`
-	Target types.Int64 `tfsdk:"target"`
-	Lunid types.Int64 `tfsdk:"lunid"`
-	Extent types.Int64 `tfsdk:"extent"`
+	ID     types.String `tfsdk:"id"`
+	Target types.Int64  `tfsdk:"target"`
+	Lunid  types.Int64  `tfsdk:"lunid"`
+	Extent types.Int64  `tfsdk:"extent"`
 }
 
 func (d *IscsiTargetextentsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,23 +42,23 @@ func (d *IscsiTargetextentsDataSource) Schema(ctx context.Context, req datasourc
 		Description: "Query iscsi_targetextents",
 		Attributes: map[string]schema.Attribute{
 			"items": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
 				Description: "List of iscsi_targetextents resources",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
-			"target": schema.Int64Attribute{
-				Computed: true,
-				Description: "ID of the iSCSI target to associate with the extent.",
-			},
-			"lunid": schema.Int64Attribute{
-				Computed: true,
-				Description: "Logical Unit Number (LUN) ID for presenting the extent to the target.",
-			},
-			"extent": schema.Int64Attribute{
-				Computed: true,
-				Description: "ID of the iSCSI extent to associate with the target.",
-			},
+						"id": schema.StringAttribute{Required: true, Description: "Resource ID"},
+						"target": schema.Int64Attribute{
+							Computed:    true,
+							Description: "ID of the iSCSI target to associate with the extent.",
+						},
+						"lunid": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Logical Unit Number (LUN) ID for presenting the extent to the target.",
+						},
+						"extent": schema.Int64Attribute{
+							Computed:    true,
+							Description: "ID of the iSCSI extent to associate with the target.",
+						},
 					},
 				},
 			},
@@ -107,13 +107,19 @@ func (d *IscsiTargetextentsDataSource) Read(ctx context.Context, req datasource.
 			itemModel.ID = types.StringValue(fmt.Sprintf("%v", v))
 		}
 		if v, ok := resultMap["target"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Target = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Target = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["lunid"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Lunid = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Lunid = types.Int64Value(int64(fv))
+			}
 		}
 		if v, ok := resultMap["extent"]; ok && v != nil {
-			if fv, ok := v.(float64); ok { itemModel.Extent = types.Int64Value(int64(fv)) }
+			if fv, ok := v.(float64); ok {
+				itemModel.Extent = types.Int64Value(int64(fv))
+			}
 		}
 		items = append(items, itemModel)
 	}
@@ -122,8 +128,8 @@ func (d *IscsiTargetextentsDataSource) Read(ctx context.Context, req datasource.
 	itemsValue, diags := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"extent": types.Int64Type,
-			"id": types.StringType,
-			"lunid": types.Int64Type,
+			"id":     types.StringType,
+			"lunid":  types.Int64Type,
 			"target": types.Int64Type,
 		},
 	}, items)
