@@ -1,0 +1,29 @@
+# Cluster identity
+cluster_name = "lab"
+domain       = "example.com"
+
+# Cloud image
+image_url = "https://download.opensuse.org/distribution/leap/16.0/appliances/Leap-16.0-Minimal-VM.x86_64-Cloud.qcow2"
+iso_pool  = "fast"
+
+# Storage pool for VM disks
+pool = "tank"
+
+# Network
+nic_attach       = "eno1"
+master_ip        = "192.168.1.100"
+node_network     = "192.168.1.0/24"
+worker_ip_offset = 101
+gateway          = "192.168.1.1"
+netmask          = "255.255.255.0"
+dns_server       = "192.168.1.1"
+
+# VM resources
+master_vcpus     = 4
+master_memory_mb = 4096
+worker_count     = 2
+worker_vcpus     = 2
+worker_memory_mb = 3072
+
+# SSH
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
