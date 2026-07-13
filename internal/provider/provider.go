@@ -201,6 +201,7 @@ func (p *TrueNASProvider) Resources(ctx context.Context) []func() resource.Resou
 		NewActionServiceRestartResource,
 		NewActionServiceStartResource,
 		NewActionServiceStopResource,
+		NewActionSharingSmbSetaclResource,
 		NewActionSupportAttach_TicketResource,
 		NewActionSupportNew_TicketResource,
 		NewActionSystemRebootResource,

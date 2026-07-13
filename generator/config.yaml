@@ -239,6 +239,18 @@ actions:
     pool.detach:
       description: "Detach a disk from a pool."
 
+    sharing.smb.setacl:
+      description: "Set SMB share ACL entries to control user/group access."
+      example: |
+        resource "truenas_action_sharing_smb_setacl" "myshare" {
+          smb_setacl = jsonencode({
+            share_name = "myshare"
+            share_acl  = [
+              { ae_perm = "FULL", ae_type = "ALLOWED", ae_who_str = "myuser" }
+            ]
+          })
+        }
+
 # Singleton configs: services with only config/update (no create/delete)
 singletons:
   nfs:
