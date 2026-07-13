@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *PoolDdt_PrefetchResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prefetch DDT entries in pool `pool_name`.",
 		Attributes: map[string]schema.Attribute{
-			"pool_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prefetch deduplication table entries for."},
+			"pool_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prefetch deduplication table entries for.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

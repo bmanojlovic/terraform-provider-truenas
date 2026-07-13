@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *BootEnvironmentKeepResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute boot.environment.keep",
 		Attributes: map[string]schema.Attribute{
-			"id":    schema.StringAttribute{Required: true, MarkdownDescription: "Name of the boot environment to modify."},
-			"value": schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to protect this boot environment from automatic deletion."},
+			"id":    schema.StringAttribute{Required: true, MarkdownDescription: "Name of the boot environment to modify.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"value": schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to protect this boot environment from automatic deletion.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

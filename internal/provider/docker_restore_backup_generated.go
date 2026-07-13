@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *DockerRestore_BackupResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restore a backup of existing apps.",
 		Attributes: map[string]schema.Attribute{
-			"backup_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the backup to restore."},
+			"backup_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the backup to restore.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

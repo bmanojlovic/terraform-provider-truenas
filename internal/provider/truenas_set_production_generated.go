@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *TruenasSet_ProductionResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Sets system production state and optionally sends initial debug.",
 		Attributes: map[string]schema.Attribute{
-			"production":   schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to configure the system for production use."},
-			"attach_debug": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to attach debug information when transitioning to production mode."},
+			"production":   schema.BoolAttribute{Required: true, MarkdownDescription: "Whether to configure the system for production use.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"attach_debug": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to attach debug information when transitioning to production mode.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

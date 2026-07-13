@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *ActionPoolScrubResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Performs a scrub action to pool of `id`.  `action` can be either of \"START\", \"STOP\" or \"PAUSE\".",
 		Attributes: map[string]schema.Attribute{
-			"id":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to perform scrub action on."},
-			"action": schema.StringAttribute{Required: true, MarkdownDescription: "The scrub action to perform."},
+			"id":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to perform scrub action on.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"action": schema.StringAttribute{Required: true, MarkdownDescription: "The scrub action to perform.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *ConfigResetResource) Schema(ctx context.Context, req resource.SchemaReq
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Reset database to configuration defaults.  If `reboot` is true this job will reboot the system after its completed with a delay of 10 seconds.",
 		Attributes: map[string]schema.Attribute{
-			"reboot": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to reboot the system after resetting configuration."},
+			"reboot": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to reboot the system after resetting configuration.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

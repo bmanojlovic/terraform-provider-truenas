@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,9 +42,9 @@ func (r *VmExport_Disk_ImageResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Exports a zvol to a formatted VM disk image.  Utilized qemu-img with the conversion functionality to export a zvol to any supported disk image format, from RAW -> ${OTHER}. The resulting file will be",
 		Attributes: map[string]schema.Attribute{
-			"format":    schema.StringAttribute{Required: true, MarkdownDescription: "Output format for the exported disk image (e.g., 'qcow2', 'raw')."},
-			"directory": schema.StringAttribute{Required: true, MarkdownDescription: "Directory path where the exported disk image will be saved."},
-			"zvol":      schema.StringAttribute{Required: true, MarkdownDescription: "Source ZFS volume to export as a disk image."},
+			"format":    schema.StringAttribute{Required: true, MarkdownDescription: "Output format for the exported disk image (e.g., 'qcow2', 'raw').", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"directory": schema.StringAttribute{Required: true, MarkdownDescription: "Directory path where the exported disk image will be saved.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"zvol":      schema.StringAttribute{Required: true, MarkdownDescription: "Source ZFS volume to export as a disk image.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

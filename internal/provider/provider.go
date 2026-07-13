@@ -363,6 +363,9 @@ func (p *TrueNASProvider) DataSources(ctx context.Context) []func() datasource.D
 		NewJbofsDataSource,
 		NewVmwaresDataSource,
 		NewFilesystemAcltemplatesDataSource,
+		NewFilesystemStatDataSource,
+		NewFilesystemStatfsDataSource,
+		NewFilesystemGetZfsAttributesDataSource,
 	}
 }
 

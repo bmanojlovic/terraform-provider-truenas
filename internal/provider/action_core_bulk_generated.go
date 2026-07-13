@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -41,9 +43,9 @@ func (r *ActionCoreBulkResource) Schema(ctx context.Context, req resource.Schema
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Will sequentially call `method` with arguments from the `params` list. For example, running      call(\"core.bulk\", \"zfs.snapshot.delete\", [[\"tank@snap-1\", true], [\"tank@snap-2\", false]])  will",
 		Attributes: map[string]schema.Attribute{
-			"method":      schema.StringAttribute{Required: true, MarkdownDescription: "Method name to execute for each parameter set."},
-			"params":      schema.StringAttribute{Required: true, MarkdownDescription: "Array of parameter arrays, each representing one method call."},
-			"description": schema.StringAttribute{Optional: true, MarkdownDescription: "Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\")."},
+			"method":      schema.StringAttribute{Required: true, MarkdownDescription: "Method name to execute for each parameter set.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"params":      schema.StringAttribute{Required: true, MarkdownDescription: "Array of parameter arrays, each representing one method call.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"description": schema.StringAttribute{Optional: true, MarkdownDescription: "Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\").", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *PoolDatasetExport_KeyResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file where the same file can be used to unlock the dataset, otherwise it will be returned as strin",
 		Attributes: map[string]schema.Attribute{
-			"id":       schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to export the encryption key from."},
-			"download": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to prepare the key for download as a file."},
+			"id":       schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to export the encryption key from.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"download": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to prepare the key for download as a file.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

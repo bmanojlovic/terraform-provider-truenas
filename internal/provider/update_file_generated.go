@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *UpdateFileResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Updates the system using the uploaded .tar file.",
 		Attributes: map[string]schema.Attribute{
-			"resume":      schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
-			"destination": schema.StringAttribute{Optional: true, MarkdownDescription: "Create a temporary location by default."},
+			"resume":      schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"destination": schema.StringAttribute{Optional: true, MarkdownDescription: "Create a temporary location by default.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

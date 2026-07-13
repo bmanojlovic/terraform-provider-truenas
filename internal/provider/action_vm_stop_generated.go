@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionVmStopResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Stops a VM.  For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to stop."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the VM stop process."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the virtual machine to stop.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the VM stop process.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

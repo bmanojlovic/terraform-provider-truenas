@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *PoolSnapshotCloneResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Clone a given snapshot to a new dataset.",
 		Attributes: map[string]schema.Attribute{
-			"snapshot":    schema.StringAttribute{Required: true, MarkdownDescription: "Full name of the snapshot to clone from."},
-			"dataset_dst": schema.StringAttribute{Required: true, MarkdownDescription: "Name for the new dataset created from the snapshot."},
+			"snapshot":    schema.StringAttribute{Required: true, MarkdownDescription: "Full name of the snapshot to clone from.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"dataset_dst": schema.StringAttribute{Required: true, MarkdownDescription: "Name for the new dataset created from the snapshot.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

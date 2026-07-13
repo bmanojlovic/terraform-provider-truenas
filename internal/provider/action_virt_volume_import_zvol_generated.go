@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,7 +41,7 @@ func (r *ActionVirtVolumeImport_ZvolResource) Schema(ctx context.Context, req re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Execute virt.volume.import_zvol",
 		Attributes: map[string]schema.Attribute{
-			"virt_volume_import_iso": schema.StringAttribute{Required: true, MarkdownDescription: "VirtVolumeImportZvolArgs parameters."},
+			"virt_volume_import_iso": schema.StringAttribute{Required: true, MarkdownDescription: "VirtVolumeImportZvolArgs parameters.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

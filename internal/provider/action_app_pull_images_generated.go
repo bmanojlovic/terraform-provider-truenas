@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionAppPull_ImagesResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Pulls docker images for the specified app `name`.",
 		Attributes: map[string]schema.Attribute{
-			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to pull images for."},
-			"options":  schema.StringAttribute{Optional: true, MarkdownDescription: "Options for pulling images including whether to redeploy."},
+			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to pull images for.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options":  schema.StringAttribute{Optional: true, MarkdownDescription: "Options for pulling images including whether to redeploy.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

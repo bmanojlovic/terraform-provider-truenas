@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *InterfaceCommitResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Commit/apply pending interfaces changes.",
 		Attributes: map[string]schema.Attribute{
-			"rollback":        schema.BoolAttribute{Optional: true, MarkdownDescription: "Roll back changes in case they fail to apply."},
-			"checkin_timeout": schema.Int64Attribute{Optional: true, MarkdownDescription: "Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from     the user. If checkin does not happen within this period of time, the changes will get r"},
+			"rollback":        schema.BoolAttribute{Optional: true, MarkdownDescription: "Roll back changes in case they fail to apply.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"checkin_timeout": schema.Int64Attribute{Optional: true, MarkdownDescription: "Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from     the user. If checkin does not happen within this period of time, the changes will get r", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

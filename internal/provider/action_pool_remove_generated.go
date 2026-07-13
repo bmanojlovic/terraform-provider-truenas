@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionPoolRemoveResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Remove a disk from pool of id `id`.  `label` is the vdev guid or device name.  Error codes:      EZFS_NOSPC(2032): out of space to remove a device     EZFS_NODEVICE(2017): no such device in pool     E",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to remove a disk from."},
-			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Disk identifier to remove from the pool."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to remove a disk from.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Disk identifier to remove from the pool.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

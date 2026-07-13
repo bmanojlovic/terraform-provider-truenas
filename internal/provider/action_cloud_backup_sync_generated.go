@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionCloud_BackupSyncResource) Schema(ctx context.Context, req resourc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run the cloud backup job `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Sync options."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "The cloud backup task ID.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Sync options.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

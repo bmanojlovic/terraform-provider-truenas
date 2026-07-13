@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionServiceStartResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Start the service specified by `service`.",
 		Attributes: map[string]schema.Attribute{
-			"service": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the service to start."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the start operation behavior."},
+			"service": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the service to start.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the start operation behavior.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *PoolImport_PoolResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Import a pool found with `pool.import_find`.  Errors:     ENOENT - Pool not found",
 		Attributes: map[string]schema.Attribute{
-			"guid": schema.StringAttribute{Required: true, MarkdownDescription: "GUID of the pool to import."},
-			"name": schema.StringAttribute{Optional: true, MarkdownDescription: "If specified, import the pool using this name."},
+			"guid": schema.StringAttribute{Required: true, MarkdownDescription: "GUID of the pool to import.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"name": schema.StringAttribute{Optional: true, MarkdownDescription: "If specified, import the pool using this name.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,9 +42,9 @@ func (r *ConfigSaveResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a tar file of security-sensitive information. These options select which information is included in the tar file:  `secretseed` bool: When true, include password secret seed. `pool_keys` bool:",
 		Attributes: map[string]schema.Attribute{
-			"secretseed":           schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include the secret seed in the configuration backup."},
-			"pool_keys":            schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include encryption keys for storage pools in the backup."},
-			"root_authorized_keys": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include root user's SSH authorized keys in the backup."},
+			"secretseed":           schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include the secret seed in the configuration backup.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"pool_keys":            schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include encryption keys for storage pools in the backup.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"root_authorized_keys": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to include root user's SSH authorized keys in the backup.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

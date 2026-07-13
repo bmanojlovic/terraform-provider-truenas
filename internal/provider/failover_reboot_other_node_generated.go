@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *FailoverRebootOther_NodeResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Reboot the other node and wait for it to come back online.  NOTE: This makes very few checks on HA systems. You need to     know what you're doing before calling this.",
 		Attributes: map[string]schema.Attribute{
-			"reason":   schema.StringAttribute{Optional: true, MarkdownDescription: "Reason for the system reboot."},
-			"graceful": schema.BoolAttribute{Optional: true, MarkdownDescription: "If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` will be     called on the other node to forcefully reboot and simulate a failover event unless t"},
+			"reason":   schema.StringAttribute{Optional: true, MarkdownDescription: "Reason for the system reboot.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"graceful": schema.BoolAttribute{Optional: true, MarkdownDescription: "If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` will be     called on the other node to forcefully reboot and simulate a failover event unless t", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

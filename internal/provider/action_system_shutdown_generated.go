@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionSystemShutdownResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Shuts down the operating system.  An \"added\" event of name \"system\" and id \"shutdown\" is emitted when shutdown is initiated.",
 		Attributes: map[string]schema.Attribute{
-			"reason":  schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system shutdown."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the shutdown process."},
+			"reason":  schema.StringAttribute{Required: true, MarkdownDescription: "Reason for the system shutdown.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for controlling the shutdown process.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

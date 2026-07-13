@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *PoolScrubRunResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.",
 		Attributes: map[string]schema.Attribute{
-			"name":      schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to run scrub on."},
-			"threshold": schema.Int64Attribute{Optional: true, MarkdownDescription: "Days before a scrub is due when the scrub should start."},
+			"name":      schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to run scrub on.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"threshold": schema.Int64Attribute{Optional: true, MarkdownDescription: "Days before a scrub is due when the scrub should start.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

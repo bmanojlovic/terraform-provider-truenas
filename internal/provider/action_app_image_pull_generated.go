@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,7 +41,7 @@ func (r *ActionAppImagePullResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "`image` is the name of the image to pull. Format for the name is \"registry/repo/image:v1.2.3\" where registry may be omitted and it will default to docker registry in this case. It can or cannot cont",
 		Attributes: map[string]schema.Attribute{
-			"image_pull": schema.StringAttribute{Required: true, MarkdownDescription: "AppImagePullArgs parameters."},
+			"image_pull": schema.StringAttribute{Required: true, MarkdownDescription: "AppImagePullArgs parameters.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

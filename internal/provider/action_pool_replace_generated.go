@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionPoolReplaceResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Replace a disk on a pool.  `label` is the ZFS guid or a device name `disk` is the identifier of a disk If `preserve_settings` is true, then settings (power management, S.M.A.R.T., etc.) of a disk bein",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to replace a disk in."},
-			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk replacement operation."},
+			"id":      schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to replace a disk in.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk replacement operation.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

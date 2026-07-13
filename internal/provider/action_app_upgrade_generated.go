@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionAppUpgradeResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Upgrade `app_name` app to `app_version`.",
 		Attributes: map[string]schema.Attribute{
-			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to upgrade."},
-			"options":  schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the upgrade process including target version and snapshot behavior."},
+			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to upgrade.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options":  schema.StringAttribute{Optional: true, MarkdownDescription: "Options controlling the upgrade process including target version and snapshot behavior.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

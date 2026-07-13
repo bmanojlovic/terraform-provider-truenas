@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionPoolDatasetLockResource) Schema(ctx context.Context, req resource
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Locks `id` dataset. It will unmount the dataset and its children before locking.  After the dataset has been unmounted, system will set immutable flag on the dataset's mountpoint where the dataset was",
 		Attributes: map[string]schema.Attribute{
-			"id":      schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to lock."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for locking the dataset, such as force unmount settings."},
+			"id":      schema.StringAttribute{Required: true, MarkdownDescription: "The dataset ID (full path) to lock.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for locking the dataset, such as force unmount settings.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

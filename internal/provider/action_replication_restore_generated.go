@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionReplicationRestoreResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).",
 		Attributes: map[string]schema.Attribute{
-			"id":                  schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the replication task to restore."},
-			"replication_restore": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration options for restoring the replication task."},
+			"id":                  schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the replication task to restore.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"replication_restore": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration options for restoring the replication task.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

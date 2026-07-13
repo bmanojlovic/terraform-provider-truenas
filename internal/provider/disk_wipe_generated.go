@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,9 +43,9 @@ func (r *DiskWipeResource) Schema(ctx context.Context, req resource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Performs a wipe of a disk `dev`.",
 		Attributes: map[string]schema.Attribute{
-			"dev":       schema.StringAttribute{Required: true, MarkdownDescription: "The device to perform the disk wipe operation on. May be passed as /dev/sda or just sda."},
-			"mode":      schema.StringAttribute{Required: true, MarkdownDescription: "* QUICK: Write zeros to the first and last 32MB of device. * FULL: Write whole disk with zeros. * FULL_RANDOM: Write whole disk with random bytes."},
-			"synccache": schema.BoolAttribute{Optional: true, MarkdownDescription: "Synchronize the device with the database."},
+			"dev":       schema.StringAttribute{Required: true, MarkdownDescription: "The device to perform the disk wipe operation on. May be passed as /dev/sda or just sda.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"mode":      schema.StringAttribute{Required: true, MarkdownDescription: "* QUICK: Write zeros to the first and last 32MB of device. * FULL: Write whole disk with zeros. * FULL_RANDOM: Write whole disk with random bytes.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"synccache": schema.BoolAttribute{Optional: true, MarkdownDescription: "Synchronize the device with the database.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,7 +41,7 @@ func (r *ActionAuditExportResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Generate an audit report based on the specified `query-filters` and `query-options` for the specified `services` in the specified `export_format`.  Supported export_formats are CSV, JSON, and YAML. Th",
 		Attributes: map[string]schema.Attribute{
-			"data": schema.StringAttribute{Optional: true, MarkdownDescription: "Audit export configuration specifying services, filters, and format."},
+			"data": schema.StringAttribute{Optional: true, MarkdownDescription: "Audit export configuration specifying services, filters, and format.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

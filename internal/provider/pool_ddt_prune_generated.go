@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,9 +43,9 @@ func (r *PoolDdt_PruneResource) Schema(ctx context.Context, req resource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prune DDT entries in pool `pool_name` based on the specified options.  `percentage` is the percentage of DDT entries to prune.  `days` is the number of days to prune DDT entries.",
 		Attributes: map[string]schema.Attribute{
-			"pool_name":  schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prune deduplication table entries from."},
-			"percentage": schema.Int64Attribute{Optional: true, MarkdownDescription: "Percentage of deduplication table entries to prune."},
-			"days":       schema.Int64Attribute{Optional: true, MarkdownDescription: "Remove entries older than this many days."},
+			"pool_name":  schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to prune deduplication table entries from.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"percentage": schema.Int64Attribute{Optional: true, MarkdownDescription: "Percentage of deduplication table entries to prune.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"days":       schema.Int64Attribute{Optional: true, MarkdownDescription: "Remove entries older than this many days.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

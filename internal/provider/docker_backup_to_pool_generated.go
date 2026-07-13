@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *DockerBackup_To_PoolResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a backup of existing apps on `target_pool`.  This creates a backup of existing apps on the `target_pool` specified. If this is executed multiple times, in the next iteration it will incremental",
 		Attributes: map[string]schema.Attribute{
-			"target_pool": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the storage pool to backup Docker data to."},
+			"target_pool": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the storage pool to backup Docker data to.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

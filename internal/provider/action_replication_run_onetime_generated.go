@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,7 +41,7 @@ func (r *ActionReplicationRun_OnetimeResource) Schema(ctx context.Context, req r
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run replication task without creating it.",
 		Attributes: map[string]schema.Attribute{
-			"replication_run_onetime": schema.StringAttribute{Required: true, MarkdownDescription: "ReplicationRunOnetimeArgs parameters."},
+			"replication_run_onetime": schema.StringAttribute{Required: true, MarkdownDescription: "ReplicationRunOnetimeArgs parameters.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

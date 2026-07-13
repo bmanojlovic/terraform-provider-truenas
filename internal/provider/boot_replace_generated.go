@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *BootReplaceResource) Schema(ctx context.Context, req resource.SchemaReq
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Replace device `label` on boot pool with `dev`.",
 		Attributes: map[string]schema.Attribute{
-			"label": schema.StringAttribute{Required: true, MarkdownDescription: "Label of the disk in the boot pool to replace."},
-			"dev":   schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path of the replacement disk."},
+			"label": schema.StringAttribute{Required: true, MarkdownDescription: "Label of the disk in the boot pool to replace.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"dev":   schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path of the replacement disk.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

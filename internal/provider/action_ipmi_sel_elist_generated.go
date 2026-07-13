@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionIpmiSelElistResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Query IPMI System Event Log (SEL) extended list",
 		Attributes: map[string]schema.Attribute{
-			"filters": schema.StringAttribute{Optional: true, MarkdownDescription: "List of filters for query results. See API documentation for \"Query Methods\" for more guidance."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Query options including pagination, ordering, and additional parameters."},
+			"filters": schema.StringAttribute{Optional: true, MarkdownDescription: "List of filters for query results. See API documentation for \"Query Methods\" for more guidance.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Query options including pagination, ordering, and additional parameters.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionAppRollbackResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rollback `app_name` app to previous version.",
 		Attributes: map[string]schema.Attribute{
-			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to rollback."},
-			"options":  schema.StringAttribute{Required: true, MarkdownDescription: "Rollback options."},
+			"app_name": schema.StringAttribute{Required: true, MarkdownDescription: "Name of the application to rollback.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options":  schema.StringAttribute{Required: true, MarkdownDescription: "Rollback options.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

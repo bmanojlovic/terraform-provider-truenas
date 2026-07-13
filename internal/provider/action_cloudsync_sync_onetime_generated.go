@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionCloudsyncSync_OnetimeResource) Schema(ctx context.Context, req re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Run cloud sync task without creating it.",
 		Attributes: map[string]schema.Attribute{
-			"cloud_sync_sync_onetime":         schema.StringAttribute{Required: true, MarkdownDescription: "Cloud sync task configuration for one-time execution."},
-			"cloud_sync_sync_onetime_options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the one-time sync operation."},
+			"cloud_sync_sync_onetime":         schema.StringAttribute{Required: true, MarkdownDescription: "Cloud sync task configuration for one-time execution.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"cloud_sync_sync_onetime_options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the one-time sync operation.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

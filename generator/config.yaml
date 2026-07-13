@@ -105,6 +105,14 @@ query_datasources:
   # Filesystem
   - filesystem.acltemplate
 
+# Lookup datasources: methods that take a single string arg and return object data.
+# Pattern: method(path_or_name) → {field: value, ...}
+# Input field name is derived from the method's accepts schema.
+lookup_datasources:
+  - filesystem.stat
+  - filesystem.statfs
+  - filesystem.get_zfs_attributes
+
 # Actions: job-based or keyword-matched methods
 actions:
   keywords:

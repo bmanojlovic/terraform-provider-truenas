@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *PoolDatasetExport_Keys_For_ReplicationResource) Schema(ctx context.Cont
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Export keys for replication task `id` for source dataset(s) which are stored in the system. The exported file is a JSON file which has a dictionary containing dataset names as keys and their keys as t",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "The pool ID to export dataset keys for replication purposes."},
+			"id": schema.Int64Attribute{Required: true, MarkdownDescription: "The pool ID to export dataset keys for replication purposes.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,7 +40,7 @@ func (r *SystemGeneralUi_RestartResource) Schema(ctx context.Context, req resour
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restart HTTP server to use latest UI settings.  HTTP server will be restarted after `delay` seconds.",
 		Attributes: map[string]schema.Attribute{
-			"delay": schema.Int64Attribute{Optional: true, MarkdownDescription: "How long to wait before the UI is restarted."},
+			"delay": schema.Int64Attribute{Optional: true, MarkdownDescription: "How long to wait before the UI is restarted.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

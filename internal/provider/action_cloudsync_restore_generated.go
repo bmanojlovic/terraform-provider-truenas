@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionCloudsyncRestoreResource) Schema(ctx context.Context, req resourc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).",
 		Attributes: map[string]schema.Attribute{
-			"id":   schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to restore from."},
-			"opts": schema.StringAttribute{Required: true, MarkdownDescription: "Restore operation configuration options."},
+			"id":   schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud sync task to restore from.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"opts": schema.StringAttribute{Required: true, MarkdownDescription: "Restore operation configuration options.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

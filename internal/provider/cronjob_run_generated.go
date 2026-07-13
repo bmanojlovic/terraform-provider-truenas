@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +42,8 @@ func (r *CronjobRunResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Job to run cronjob task of `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":            schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cron job to run immediately."},
-			"skip_disabled": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to skip execution if the cron job is disabled."},
+			"id":            schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cron job to run immediately.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"skip_disabled": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to skip execution if the cron job is disabled.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

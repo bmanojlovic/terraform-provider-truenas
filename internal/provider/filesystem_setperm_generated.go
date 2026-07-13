@@ -8,6 +8,10 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -46,15 +50,15 @@ func (r *FilesystemSetpermResource) Schema(ctx context.Context, req resource.Sch
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Set unix permissions on given `path`.  If `mode` is specified then the mode will be applied to the path and files and subdirectories depending on which `options` are selected. Mode should be formatted",
 		Attributes: map[string]schema.Attribute{
-			"path":              schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify."},
-			"uid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged."},
-			"user":              schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged."},
-			"gid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged."},
-			"group":             schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged."},
-			"mode":              schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions to set (octal format). `null` to leave unchanged."},
-			"options_recursive": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to apply the operation recursively to subdirectories."},
-			"options_traverse":  schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem."},
-			"options_stripacl":  schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to remove existing Access Control Lists when setting permissions."},
+			"path":              schema.StringAttribute{Required: true, MarkdownDescription: "Filesystem path to modify.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"uid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric user ID to set as owner. `null` to leave unchanged.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"user":              schema.StringAttribute{Optional: true, MarkdownDescription: "Username to set as owner. `null` to leave unchanged.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"gid":               schema.Int64Attribute{Optional: true, MarkdownDescription: "Numeric group ID to set as group owner. `null` to leave unchanged.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"group":             schema.StringAttribute{Optional: true, MarkdownDescription: "Group name to set as group owner. `null` to leave unchanged.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"mode":              schema.StringAttribute{Optional: true, MarkdownDescription: "Unix permissions to set (octal format). `null` to leave unchanged.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options_recursive": schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to apply the operation recursively to subdirectories.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"options_traverse":  schema.BoolAttribute{Optional: true, MarkdownDescription: "If set do not limit to single dataset / filesystem.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"options_stripacl":  schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to remove existing Access Control Lists when setting permissions.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

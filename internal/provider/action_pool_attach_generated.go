@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +43,8 @@ func (r *ActionPoolAttachResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "`target_vdev` is the GUID of the vdev where the disk needs to be attached. In case of STRIPED vdev, this is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will",
 		Attributes: map[string]schema.Attribute{
-			"oid":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to attach a disk to."},
-			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk attachment operation."},
+			"oid":     schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the pool to attach a disk to.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Required: true, MarkdownDescription: "Configuration for the disk attachment operation.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionBootAttachResource) Schema(ctx context.Context, req resource.Sche
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Attach a disk to the boot pool, turning a stripe into a mirror.  `expand` option will determine whether the new disk partition will be          the maximum available or the same size as the current di",
 		Attributes: map[string]schema.Attribute{
-			"dev":     schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path to attach to the boot pool."},
-			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the attach operation."},
+			"dev":     schema.StringAttribute{Required: true, MarkdownDescription: "Device name or path to attach to the boot pool.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options": schema.StringAttribute{Optional: true, MarkdownDescription: "Options for the attach operation.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

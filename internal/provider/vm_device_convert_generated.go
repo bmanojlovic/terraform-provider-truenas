@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *VmDeviceConvertResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Convert between disk images and ZFS volumes. Supported disk image formats         are qcow2, qed, raw, vdi, vhdx, and vmdk. The conversion direction is determined         automatically based on file e",
 		Attributes: map[string]schema.Attribute{
-			"source":      schema.StringAttribute{Required: true, MarkdownDescription: "Source path for the conversion (disk image file or ZFS volume)."},
-			"destination": schema.StringAttribute{Required: true, MarkdownDescription: "Destination path for the conversion (disk image file or ZFS volume)."},
+			"source":      schema.StringAttribute{Required: true, MarkdownDescription: "Source path for the conversion (disk image file or ZFS volume).", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"destination": schema.StringAttribute{Required: true, MarkdownDescription: "Destination path for the conversion (disk image file or ZFS volume).", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

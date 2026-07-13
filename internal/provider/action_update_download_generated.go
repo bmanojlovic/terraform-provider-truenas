@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *ActionUpdateDownloadResource) Schema(ctx context.Context, req resource.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Download updates.",
 		Attributes: map[string]schema.Attribute{
-			"train":   schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
-			"version": schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to download. `null` to download the latest version from the specified train."},
+			"train":   schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"version": schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to download. `null` to download the latest version from the specified train.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

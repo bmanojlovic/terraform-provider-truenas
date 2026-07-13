@@ -8,6 +8,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -42,11 +45,11 @@ func (r *UpdateRunResource) Schema(ctx context.Context, req resource.SchemaReque
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Downloads (if not already in cache) and apply an update.",
 		Attributes: map[string]schema.Attribute{
-			"dataset_name": schema.StringAttribute{Optional: true, MarkdownDescription: "Name of the ZFS dataset to use for the new boot environment. `null` for automatic naming."},
-			"resume":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c"},
-			"train":        schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used."},
-			"version":      schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to update to. `null` to use the latest version from the specified train."},
-			"reboot":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to automatically reboot the system after applying the update."},
+			"dataset_name": schema.StringAttribute{Optional: true, MarkdownDescription: "Name of the ZFS dataset to use for the new boot environment. `null` for automatic naming.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"resume":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning     that an upgrade can be performed with a warning and that warning is accepted. In that c", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
+			"train":        schema.StringAttribute{Optional: true, MarkdownDescription: "Specifies the train from which to download the update. If both `train` and `version` are `null``, the most     recent version that matches the currently selected update profile is used.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"version":      schema.StringAttribute{Optional: true, MarkdownDescription: "Specific version to update to. `null` to use the latest version from the specified train.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"reboot":       schema.BoolAttribute{Optional: true, MarkdownDescription: "Whether to automatically reboot the system after applying the update.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

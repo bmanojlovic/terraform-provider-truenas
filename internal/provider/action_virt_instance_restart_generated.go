@@ -9,6 +9,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,8 +42,8 @@ func (r *ActionVirtInstanceRestartResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restart an instance.  Timeout is how long it should wait for the instance to shutdown cleanly.",
 		Attributes: map[string]schema.Attribute{
-			"id":        schema.StringAttribute{Required: true, MarkdownDescription: "ID of the virtual instance to stop."},
-			"stop_args": schema.StringAttribute{Optional: true, MarkdownDescription: "Arguments controlling how the instance is stopped."},
+			"id":        schema.StringAttribute{Required: true, MarkdownDescription: "ID of the virtual instance to stop.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"stop_args": schema.StringAttribute{Optional: true, MarkdownDescription: "Arguments controlling how the instance is stopped.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -217,6 +217,9 @@ def gen_flat_action_resource(method_name, method_spec, templates, resource_bases
     # Check for update config
     update_config = action_config.get("update")
     force_new = set(action_config.get("force_new", []))
+    # Non-updatable actions: all input fields force replacement (user sees destroy+create in plan)
+    if not update_config and not force_new:
+        force_new = set(n for n, _ in flat_props)
 
     # Generate fields
     fields = "\n".join(
@@ -226,13 +229,17 @@ def gen_flat_action_resource(method_name, method_spec, templates, resource_bases
 
     # Generate schema with RequiresReplace for force_new fields
     schema_lines = []
+    used_modifiers = set()
     for n, p in flat_props:
         tf_type = get_tf_type(p)
         req = p.get("_required_", False)
         d = p.get("description", "").replace('"', '\\"').replace("\n", " ")[:200]
         req_opt = "Required" if req else "Optional"
         if n in force_new:
-            schema_lines.append(f'\t\t\t"{safe_attr(n)}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}", PlanModifiers: []planmodifier.{tf_type}{{{"string" if tf_type == "String" else tf_type.lower()}planmodifier.RequiresReplace()}}}},')
+            modifier_type = "string" if tf_type == "String" else tf_type.lower()
+            modifier_pkg = f"{modifier_type}planmodifier"
+            used_modifiers.add(modifier_pkg)
+            schema_lines.append(f'\t\t\t"{safe_attr(n)}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}", PlanModifiers: []planmodifier.{tf_type}{{{modifier_pkg}.RequiresReplace()}}}},')
         else:
             schema_lines.append(f'\t\t\t"{safe_attr(n)}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}"}},')
 
@@ -314,6 +321,7 @@ def gen_flat_action_resource(method_name, method_spec, templates, resource_bases
         "{fields}": fields, "{schema_attrs}": "\n".join(schema_lines),
         "{param_building}": "\n".join(param_lines), "{method_name}": method_name,
         "{description}": desc, "{is_job}": "true" if method_spec.get("job") else "false",
+        "{planmodifier_imports}": ('\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"\n' + "\n".join(f'\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/{m}"' for m in sorted(used_modifiers))) if used_modifiers else "",
     }.items():
         code = code.replace(k, v)
     return code
@@ -344,14 +352,18 @@ def gen_action_resource(method_name, method_spec, templates):
     ) if properties else ""
 
     schema_lines = []
+    used_modifiers = set()
     for n, p in properties.items():
         tf_type = get_tf_type(p) if get_tf_type(p) not in ("List", "Object") else "String"
         req = p.get("_required_", False)
         d = p.get("description", "").replace('"', '\\"').replace("\n", " ")[:200]
         req_opt = "Required" if req else "Optional"
         attr_name = safe_attr(n)
-        schema_lines.append(f'\t\t\t"{attr_name}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}"}},')
-
+        # All input fields force replacement since actions cannot be updated
+        modifier_type = tf_type.lower() if tf_type != "String" else "string"
+        modifier_pkg = f"{modifier_type}planmodifier"
+        used_modifiers.add(modifier_pkg)
+        schema_lines.append(f'\t\t\t"{attr_name}": schema.{tf_type}Attribute{{{req_opt}: true, MarkdownDescription: "{d}", PlanModifiers: []planmodifier.{tf_type}{{{modifier_pkg}.RequiresReplace()}}}},')
     param_lines = ["\tparams := []interface{}{}"]
     needs_json = False
     for n, p in properties.items():
@@ -397,12 +409,17 @@ def gen_action_resource(method_name, method_spec, templates):
                 param_lines.append(f"\tif !data.{field}.IsNull() {{ params = append(params, data.{field}.{val_method}()) }}")
 
     code = templates["action_resource.go"]
+    if used_modifiers:
+        planmodifier_imports = '\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"\n' + "\n".join(f'\t"github.com/hashicorp/terraform-plugin-framework/resource/schema/{m}"' for m in sorted(used_modifiers))
+    else:
+        planmodifier_imports = ""
     for k, v in {
         "{resource_name}": resource_name, "{resource_type_name}": resource_type,
         "{fields}": fields, "{schema_attrs}": "\n".join(schema_lines),
         "{param_building}": "\n".join(param_lines), "{method_name}": method_name,
         "{description}": desc, "{is_job}": "true" if method_spec.get("job") else "false",
         "{extra_imports}": '\n\t"encoding/json"' if needs_json else "",
+        "{planmodifier_imports}": planmodifier_imports,
     }.items():
         code = code.replace(k, v)
     return code
@@ -537,6 +554,103 @@ def gen_datasource(base_name, methods, templates):
         read_mapping=gen_read_mapping(properties, skip_id=True),
         extra_imports=extra_imports, id_param=id_param,
     )
+
+
+def gen_lookup_datasource(method_name, methods, templates):
+    """Generate lookup data source (single string input → object output)."""
+    method_spec = methods.get(method_name, {})
+    accepts = method_spec.get("accepts", [])
+    returns = method_spec.get("returns", [])
+    if not accepts or not returns:
+        return None
+
+    # Input: single string argument
+    input_schema = accepts[0] if isinstance(accepts, list) else accepts
+    input_name = input_schema.get("_name_", input_schema.get("title", "path"))
+
+    # Output: object with properties
+    ret_schema = returns[0] if isinstance(returns, list) else returns
+    properties = ret_schema.get("properties", {})
+    if not properties:
+        return None
+
+    # Names
+    tf_name = method_name.replace(".", "_")
+    resource_name = tf_name.title().replace("_", "")
+    desc = (method_spec.get("description") or f"Lookup {tf_name}").split("\n")[0][:200].replace('"', '\\"')
+    input_desc = input_schema.get("description", "Input parameter").split("\n")[0][:100].replace('"', '\\"')
+
+    # Build schema attrs (input + computed outputs)
+    schema_lines = [f'\t\t\t"{input_name}": schema.StringAttribute{{Required: true, Description: "{input_desc}"}},']
+    schema_lines.append(f'\t\t\t"exists": schema.BoolAttribute{{Computed: true, Description: "Whether the path exists."}},')
+    for name, prop in properties.items():
+        if name == input_name:
+            continue
+        prop = prop[0] if isinstance(prop, list) else prop
+        tf_type = get_tf_type(prop)
+        if tf_type == "List":
+            continue  # Skip complex list fields
+        field_desc = (prop.get("description", "") if isinstance(prop, dict) else "")[:100].replace('"', '\\"').replace("\n", " ")
+        schema_lines.append(f'\t\t\t"{name}": schema.{tf_type}Attribute{{Computed: true, Description: "{field_desc}"}},')
+
+    # Build fields
+    field_lines = [f'\t{to_field_name(input_name)} types.String `tfsdk:"{input_name}"`']
+    field_lines.append(f'\tExists types.Bool `tfsdk:"exists"`')
+    for name, prop in properties.items():
+        if name == input_name:
+            continue
+        tf_type = get_tf_type(prop if not isinstance(prop, list) else prop[0])
+        if tf_type == "List":
+            continue  # Skip complex list fields
+        field_lines.append(f'\t{to_field_name(name)} types.{tf_type} `tfsdk:"{name}"`')
+
+    # Build read mapping
+    read_lines = [
+        "\tresultMap, ok := result.(map[string]interface{})",
+        "\tif !ok {",
+        '\t\tresp.Diagnostics.AddError("Parse Error", "Failed to parse API response")',
+        "\t\treturn",
+        "\t}",
+    ]
+    for name, prop in properties.items():
+        if name == input_name:
+            continue
+        field = to_field_name(name)
+        tf_type = get_tf_type(prop if not isinstance(prop, list) else prop[0])
+        if tf_type == "List":
+            continue  # Skip list fields in lookup datasources for now
+        if tf_type == "Bool":
+            read_lines.append(f'\tif v, ok := resultMap["{name}"]; ok {{ if bv, ok := v.(bool); ok {{ data.{field} = types.BoolValue(bv) }} }}')
+        elif tf_type == "Int64":
+            read_lines.append(f'\tif v, ok := resultMap["{name}"]; ok {{ if fv, ok := v.(float64); ok {{ data.{field} = types.Int64Value(int64(fv)) }} }}')
+        elif tf_type == "Float64":
+            read_lines.append(f'\tif v, ok := resultMap["{name}"]; ok {{ if fv, ok := v.(float64); ok {{ data.{field} = types.Float64Value(fv) }} }}')
+        else:
+            read_lines.append(f'\tif v, ok := resultMap["{name}"]; ok {{ data.{field} = types.StringValue(fmt.Sprintf("%v", v)) }}')
+
+    # Use datasource template with method_name as the API call
+    template = templates["datasource.go"]
+    code = template.format(
+        resource_name=resource_name, name=tf_name, api_name=method_name,
+        description=desc,
+        fields="\n".join(field_lines),
+        schema_attrs="\n".join(schema_lines),
+        read_mapping="\n".join(read_lines),
+        extra_imports="", id_param=f'data.{to_field_name(input_name)}.ValueString()',
+    ).replace(f".get_instance", "")
+
+    # Replace hard error with exists=false pattern
+    code = code.replace(
+        '\t\tresp.Diagnostics.AddError("API Error", fmt.Sprintf("Failed to read ' + tf_name + ': %s", err.Error()))\n\t\treturn',
+        '\t\tdata.Exists = types.BoolValue(false)\n\t\tresp.Diagnostics.Append(resp.State.Set(ctx, &data)...)\n\t\treturn'
+    )
+    # Add exists=true before the read mapping
+    code = code.replace(
+        "\tresultMap, ok := result.(map[string]interface{})",
+        "\tdata.Exists = types.BoolValue(true)\n\tresultMap, ok := result.(map[string]interface{})"
+    )
+
+    return code
 
 
 def gen_query_datasource(base_name, methods, templates):
@@ -830,6 +944,18 @@ def main():
 
     print(f"✅ Generated {len(generated_ds)} datasources, {len(generated_query)} query datasources", file=sys.stderr)
 
+    # Lookup datasources (single string input → object output)
+    generated_lookup = []
+    for method_name in config.get("lookup_datasources", []):
+        if method_name in methods:
+            code = gen_lookup_datasource(method_name, methods, templates)
+            if code:
+                tf_name = method_name.replace(".", "_")
+                (output_dir / f"datasource_{tf_name}_generated.go").write_text(code)
+                generated_lookup.append(tf_name)
+    if generated_lookup:
+        print(f"✅ Generated {len(generated_lookup)} lookup datasources", file=sys.stderr)
+
     # Singleton configs
     generated_singletons = []
     singletons = config.get("singletons", {})
@@ -842,7 +968,7 @@ def main():
     if generated_singletons:
         print(f"✅ Generated {len(generated_singletons)} singleton configs", file=sys.stderr)
 
-    gen_provider(generated_resources, generated_ds + generated_query, generated_actions, generated_flat_actions, generated_uploadables, generated_singletons, templates)
+    gen_provider(generated_resources, generated_ds + generated_query + generated_lookup, generated_actions, generated_flat_actions, generated_uploadables, generated_singletons, templates)
 
     # Coverage tracking
     generated = set()

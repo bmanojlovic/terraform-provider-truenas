@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -40,9 +42,9 @@ func (r *DirectoryservicesLeaveResource) Schema(ctx context.Context, req resourc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directo",
 		Attributes: map[string]schema.Attribute{
-			"credential_credential_type": schema.StringAttribute{Required: true, MarkdownDescription: "Credential type identifier for Kerberos user authentication."},
-			"credential_username":        schema.StringAttribute{Required: true, MarkdownDescription: "Username of the account to use to create a kerberos ticket for authentication to directory services. This     account must exist on the domain controller. "},
-			"credential_password":        schema.StringAttribute{Required: true, MarkdownDescription: "The password for the user account that will obtain the kerberos ticket. "},
+			"credential_credential_type": schema.StringAttribute{Required: true, MarkdownDescription: "Credential type identifier for Kerberos user authentication.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"credential_username":        schema.StringAttribute{Required: true, MarkdownDescription: "Username of the account to use to create a kerberos ticket for authentication to directory services. This     account must exist on the domain controller. ", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"credential_password":        schema.StringAttribute{Required: true, MarkdownDescription: "The password for the user account that will obtain the kerberos ticket. ", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

@@ -9,6 +9,9 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -43,11 +46,11 @@ func (r *ActionCloud_BackupRestoreResource) Schema(ctx context.Context, req reso
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder` created by the cloud backup job `id`.",
 		Attributes: map[string]schema.Attribute{
-			"id":               schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud backup task."},
-			"snapshot_id":      schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to restore."},
-			"subfolder":        schema.StringAttribute{Required: true, MarkdownDescription: "Path within the snapshot to restore."},
-			"destination_path": schema.StringAttribute{Required: true, MarkdownDescription: "Local path to restore to."},
-			"options":          schema.StringAttribute{Optional: true, MarkdownDescription: "Additional restore options."},
+			"id":               schema.Int64Attribute{Required: true, MarkdownDescription: "ID of the cloud backup task.", PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()}},
+			"snapshot_id":      schema.StringAttribute{Required: true, MarkdownDescription: "ID of the snapshot to restore.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"subfolder":        schema.StringAttribute{Required: true, MarkdownDescription: "Path within the snapshot to restore.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"destination_path": schema.StringAttribute{Required: true, MarkdownDescription: "Local path to restore to.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"options":          schema.StringAttribute{Optional: true, MarkdownDescription: "Additional restore options.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",

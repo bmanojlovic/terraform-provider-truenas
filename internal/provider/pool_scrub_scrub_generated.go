@@ -8,6 +8,8 @@ import (
 	"github.com/bmanojlovic/terraform-provider-truenas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -39,8 +41,8 @@ func (r *PoolScrubScrubResource) Schema(ctx context.Context, req resource.Schema
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Start/Stop/Pause a scrub on pool `name`.",
 		Attributes: map[string]schema.Attribute{
-			"name":   schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to perform scrub action on."},
-			"action": schema.StringAttribute{Optional: true, MarkdownDescription: "The scrub action to perform on the pool."},
+			"name":   schema.StringAttribute{Required: true, MarkdownDescription: "Name of the pool to perform scrub action on.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
+			"action": schema.StringAttribute{Optional: true, MarkdownDescription: "The scrub action to perform on the pool.", PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"action_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Action execution identifier",
