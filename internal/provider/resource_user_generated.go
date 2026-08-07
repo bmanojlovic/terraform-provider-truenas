@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
 	"strings"
@@ -61,12 +62,12 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a new user.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"uid": schema.Int64Attribute{
 				Optional:      true,
 				Computed:      true,
 				Description:   "UNIX UID. If not provided, it is automatically filled with the next one available.",
-				PlanModifiers: []planmodifier.Int64{int64planmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown(), int64planmodifier.RequiresReplace()},
 			},
 			"username": schema.StringAttribute{
 				Required:    true,

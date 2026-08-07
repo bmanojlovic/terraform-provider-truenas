@@ -12,7 +12,14 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None, re
     if not has_start and not required:  # datasource
         lines.append('\t\t\t"id": schema.StringAttribute{Required: true, Description: "Resource ID"},')
     elif "id" not in properties:
-        lines.append('\t\t\t"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},')
+        # A resource's own id never changes on update — without
+        # UseStateForUnknown, id goes "known -> unknown" on ANY unrelated
+        # attribute update (Computed with no plan modifier), which then
+        # cascades into any OTHER resource referencing this one's id as a
+        # Required+RequiresReplace input (e.g. an action resource like
+        # vm.start taking the target VM's id), force-replacing THAT
+        # resource even though nothing about the id actually changed.
+        lines.append('\t\t\t"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},')
 
     if has_start:
         lines.append('\t\t\t"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},')
@@ -22,7 +29,9 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None, re
             if not has_start and not required:
                 continue
             tf_type = get_tf_type(prop)
-            lines.append(f'\t\t\t"id": schema.{tf_type}Attribute{{Computed: true, Description: "Resource ID"}},')
+            id_mod_map = {"String": "stringplanmodifier", "Int64": "int64planmodifier", "Bool": "boolplanmodifier"}
+            id_mods = f"PlanModifiers: []planmodifier.{tf_type}{{{id_mod_map[tf_type]}.UseStateForUnknown()}}, " if tf_type in id_mod_map else ""
+            lines.append(f'\t\t\t"id": schema.{tf_type}Attribute{{Computed: true, {id_mods}Description: "Resource ID"}},')
             continue
         if name == "provider":
             continue
@@ -35,8 +44,10 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None, re
 
         lines.append(f'\t\t\t"{attr_name}": schema.{tf_type}Attribute{{')
 
+        is_computed = False
         if not has_start and not required:  # datasource
             lines.append("\t\t\t\tComputed: true,")
+            is_computed = True
         else:
             is_auto = not is_req and isinstance(prop, dict) and "generate" in prop.get("description", "").lower()
             # Mark as Computed if:
@@ -46,6 +57,7 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None, re
             if is_auto or has_server_default:
                 lines.append("\t\t\t\tOptional: true,")
                 lines.append("\t\t\t\tComputed: true,")
+                is_computed = True
             else:
                 lines.append(f"\t\t\t\tRequired: {str(is_req).lower()},")
                 lines.append(f"\t\t\t\tOptional: {str(not is_req).lower()},")
@@ -56,8 +68,29 @@ def gen_schema_attrs(properties, required, has_start=False, create_only=None, re
 
         if name in create_only and name != "name":
             mod_map = {"String": "stringplanmodifier", "Int64": "int64planmodifier", "Bool": "boolplanmodifier"}
+            use_state_map = {
+                "String": "stringplanmodifier.UseStateForUnknown()",
+                "Int64": "int64planmodifier.UseStateForUnknown()",
+                "Bool": "boolplanmodifier.UseStateForUnknown()",
+            }
             if tf_type in mod_map:
-                lines.append(f"\t\t\t\tPlanModifiers: []planmodifier.{tf_type}{{{mod_map[tf_type]}.RequiresReplace()}},")
+                modifiers = []
+                # UseStateForUnknown MUST come before RequiresReplace: for a
+                # Computed attribute left unset in config, the framework's
+                # default plan value is unknown on ANY update to the
+                # resource (not just when this field's own value changes).
+                # RequiresReplace treats "known -> unknown" as a change and
+                # force-replaces the whole resource — so every unrelated
+                # attribute edit (e.g. bumping VM memory) was silently
+                # forcing a destroy+recreate of Computed create_only fields
+                # like bootloader_ovmf/enable_secure_boot. UseStateForUnknown
+                # resolves the unknown back to the prior state value first
+                # when config doesn't set it, so RequiresReplace only fires
+                # on a genuine config-vs-state difference.
+                if is_computed and tf_type in use_state_map:
+                    modifiers.append(use_state_map[tf_type])
+                modifiers.append(f"{mod_map[tf_type]}.RequiresReplace()")
+                lines.append(f"\t\t\t\tPlanModifiers: []planmodifier.{tf_type}{{{', '.join(modifiers)}}},")
 
         lines.append("\t\t\t},")
 

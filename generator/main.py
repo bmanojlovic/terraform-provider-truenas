@@ -161,6 +161,12 @@ def gen_resource(base_name, methods, templates, config):
     if has_stop: imports.append('"time"')
 
     mods = {get_tf_type(properties[f]) for f in create_only if f != "name" and f in properties}
+    # id is always Computed+UseStateForUnknown for a CRUD resource (mirrors
+    # gen_schema_attrs' own id-handling condition) — make sure the plan
+    # modifier package it needs gets imported even when no create_only
+    # field would otherwise have triggered it.
+    if has_start or required:
+        mods.add(get_tf_type(properties["id"]) if "id" in properties else "String")
     if mods & {"String", "Int64", "Bool"}:
         imports.append('"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"')
     for t, m in [("String", "stringplanmodifier"), ("Int64", "int64planmodifier"), ("Bool", "boolplanmodifier")]:

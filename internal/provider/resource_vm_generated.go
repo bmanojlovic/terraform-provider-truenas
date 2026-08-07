@@ -69,7 +69,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a Virtual Machine (VM).",
 		Attributes: map[string]schema.Attribute{
-			"id":              schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id":              schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},
 			"command_line_args": schema.StringAttribute{
 				Optional:    true,
@@ -165,7 +165,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Optional:      true,
 				Computed:      true,
 				Description:   "OVMF firmware file to use for UEFI boot.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"autostart": schema.BoolAttribute{
 				Optional:    true,
@@ -211,7 +211,7 @@ func (r *VmResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Optional:      true,
 				Computed:      true,
 				Description:   "Whether to enable UEFI Secure Boot for enhanced security.",
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown(), boolplanmodifier.RequiresReplace()},
 			},
 		},
 	}

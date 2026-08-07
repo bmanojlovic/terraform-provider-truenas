@@ -48,12 +48,12 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create an app with `app_name` using `catalog_app` with `train` and `version`.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"custom_app": schema.BoolAttribute{
 				Optional:      true,
 				Computed:      true,
 				Description:   "Whether to create a custom application (`true`) or install from catalog (`false`).",
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown(), boolplanmodifier.RequiresReplace()},
 			},
 			"values": schema.StringAttribute{
 				Required:    false,
@@ -92,7 +92,7 @@ func (r *AppResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Optional:      true,
 				Computed:      true,
 				Description:   "The version of the application to install.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 		},
 	}

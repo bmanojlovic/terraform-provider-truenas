@@ -42,7 +42,7 @@ func (r *KeychaincredentialResource) Schema(ctx context.Context, req resource.Sc
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a Keychain Credential.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"name": schema.StringAttribute{
 				Required:    true,
 				Optional:    false,

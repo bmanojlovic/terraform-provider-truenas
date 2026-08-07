@@ -78,7 +78,7 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Creates a dataset/zvol.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"name": schema.StringAttribute{
 				Required:    true,
 				Optional:    false,
@@ -213,7 +213,7 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:      true,
 				Computed:      true,
 				Description:   "Type of dataset to create - volume (zvol).",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"aclmode": schema.StringAttribute{
 				Optional:    true,
@@ -234,7 +234,7 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:      true,
 				Computed:      true,
 				Description:   "File name case sensitivity setting.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"quota": schema.Int64Attribute{
 				Optional:    true,
@@ -260,7 +260,7 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:      true,
 				Computed:      true,
 				Description:   "Whether to use sparse (thin) provisioning for the volume.",
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown(), boolplanmodifier.RequiresReplace()},
 			},
 			"volsize": schema.Int64Attribute{
 				Optional:    true,
@@ -271,7 +271,7 @@ func (r *PoolDatasetResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:      true,
 				Computed:      true,
 				Description:   "Defaults to `128K` if the parent pool is a DRAID pool or `16K` otherwise.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"user_properties_update": schema.ListAttribute{
 				Required:    false,

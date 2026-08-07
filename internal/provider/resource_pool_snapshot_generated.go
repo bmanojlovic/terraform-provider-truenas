@@ -49,7 +49,7 @@ func (r *PoolSnapshotResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Take a snapshot from a given dataset.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"dataset": schema.StringAttribute{
 				Required:      true,
 				Optional:      false,
@@ -78,7 +78,7 @@ func (r *PoolSnapshotResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:      true,
 				Computed:      true,
 				Description:   "Object mapping ZFS property names to values to set on the snapshot.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"name": schema.StringAttribute{
 				Optional:    true,
@@ -89,7 +89,7 @@ func (r *PoolSnapshotResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:      true,
 				Computed:      true,
 				Description:   "Naming schema pattern to generate the snapshot name automatically.",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"user_properties_update": schema.ListAttribute{
 				Required:    false,

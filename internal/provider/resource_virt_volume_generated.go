@@ -41,7 +41,7 @@ func (r *VirtVolumeResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "TrueNAS virt_volume resource",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id": schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"name": schema.StringAttribute{
 				Required:    true,
 				Optional:    false,
@@ -51,7 +51,7 @@ func (r *VirtVolumeResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional:      true,
 				Computed:      true,
 				Description:   "",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"size": schema.Int64Attribute{
 				Required:    false,
@@ -62,7 +62,7 @@ func (r *VirtVolumeResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional:      true,
 				Computed:      true,
 				Description:   "Storage pool in which to create the volume. This must be one of pools listed     in virt.global.conf",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 		},
 	}

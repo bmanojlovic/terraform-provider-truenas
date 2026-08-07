@@ -60,7 +60,7 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a new virtualized instance.",
 		Attributes: map[string]schema.Attribute{
-			"id":              schema.StringAttribute{Computed: true, Description: "Resource ID"},
+			"id":              schema.StringAttribute{Computed: true, Description: "Resource ID", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"start_on_create": schema.BoolAttribute{Optional: true, Description: "Start the resource immediately after creation (default: false)"},
 			"name": schema.StringAttribute{
 				Required:    true,
@@ -77,7 +77,7 @@ func (r *VirtInstanceResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:      true,
 				Computed:      true,
 				Description:   "Storage pool under which to allocate root filesystem. Must be one of the pools     listed in virt.gl",
-				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()},
 			},
 			"image": schema.StringAttribute{
 				Required:      true,
